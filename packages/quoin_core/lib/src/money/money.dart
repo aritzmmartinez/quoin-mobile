@@ -1,5 +1,4 @@
 import '../decimal/dec.dart';
-import '../decimal/decimal_error.dart';
 
 /// The currency every projection reports in. An amount quoted in another one
 /// is converted at an ECB rate or left unvalued, never mixed.
