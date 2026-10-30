@@ -10,7 +10,7 @@ flows: `docs/ARCHITECTURE.md`.
 - `lib/src/core`: `error/` (exceptions, failures, Result), `theme/`, `l10n/`.
 - `lib/src/ui`: shared widgets by atomic level: `atoms/`, `molecules/`, `organisms/`, `templates/`.
 - `lib/src/features/<feature>/{data,domain,presentation}`: features are portfolio, import, analysis, tax, settings, sync.
-- `packages/quoin_core`: pure Dart domain shared with `../quoin` (`Dec`, `Money`).
+- `packages/quoin_core`: pure Dart domain shared with `../quoin`: `Dec`, `Money`, calendar, ledger, fx, swap and the portfolio projections. Golden cases in `test/contract/` are copied from `../quoin/test/contract/` and never edited.
 
 ## Architecture
 
@@ -18,6 +18,7 @@ flows: `docs/ARCHITECTURE.md`.
 - Domain imports only `dart:`, `quoin_core`, `core/error` and domain: no Flutter, Riverpod or storage.
 - Presentation never imports data; only `app/` sees both.
 - Shared domain logic goes in `quoin_core`; features use it, never copy it.
+- `computePositions` holds the AVCO loop today; when realised gains arrive, extract `walkAvco` and share it between the two, as in Quoin.
 - Create only the folders a feature uses; no empty folders.
 - Data sources throw `core/error/exceptions.dart` types only.
 - Repositories catch them and return `Result<T>` (`Ok`/`Err` with a sealed `Failure`); no dartz.
@@ -38,7 +39,8 @@ flows: `docs/ARCHITECTURE.md`.
 - Amounts and quantities are `Dec` or `Money`, never `double`.
 - Doubles only for chart coordinates and the projection loop, via `toDouble()` at the edge.
 - Build them from text only (`Money.parse`, `Dec.parse`), never from a `double`.
-- Operate through their methods; there are no operators on purpose.
+- `Money` has no operators on purpose: operate through its methods. `Dec` is the numeric type and has them.
+- Ratios (weights, returns) are `Dec` rounded to six places, as the web stores them.
 - `Dec` is decimal.js (40 digits, ROUND_HALF_UP); if a case in `packages/quoin_core/test/contract/decimal.json` fails, the port is wrong.
 - No real portfolio data in the repo: fixtures, tests or screenshots.
 

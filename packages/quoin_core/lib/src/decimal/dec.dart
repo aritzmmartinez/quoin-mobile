@@ -89,6 +89,20 @@ final class Dec implements Comparable<Dec> {
     return _normalized(_roundDropping(_unscaled, _scale - places), places);
   }
 
+  /// decimal.js `toFixed(places)`: rounded half up and padded with zeros, so a
+  /// weight of one reads `1.000000`, and a negative that rounds to zero keeps
+  /// its sign (`-0.000000`).
+  String toFixed(int places) {
+    final rounded = roundTo(places);
+    var text = rounded.toString();
+    if (places > 0) {
+      final point = text.indexOf('.');
+      final decimals = point < 0 ? 0 : text.length - point - 1;
+      text = '$text${point < 0 ? '.' : ''}${'0' * (places - decimals)}';
+    }
+    return isNegative && rounded.isZero ? '-$text' : text;
+  }
+
   @override
   int compareTo(Dec other) {
     final scale = math.max(_scale, other._scale);
