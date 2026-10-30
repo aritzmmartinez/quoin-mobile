@@ -66,7 +66,7 @@ flows: `docs/ARCHITECTURE.md`.
 - Segmented controls: `QuoinSegmented` (honours reduce motion).
 - No ink ripples (`NoSplash` in the theme): a pressed control changes colour (themed `highlightColor`, button overlays) or scales (`Pressable`).
 - Icons: Hugeicons stroke rounded, stroke 1.5; declared in `core/theme/quoin_icons.dart`, drawn with `ui/atoms/quoin_icon.dart`; only those two import `hugeicons` (a test checks it).
-- Bottom bar: our buttons and the central «+» on liquid glass (`liquid_glass_widgets` only in `QuoinBarSurface`); content scrolls under it (`QuoinPage.list`).
+- Bottom bar: 4 equal tabs on a liquid glass pill and the «+» as its own glass circle, as high as the pill, 10 px away; where it sits is `QuoinBarActionPlacement` (trailing by default; leading, above, or inside the pill at the centre). Both shapes share one `QuoinGlassLayer` (one backdrop capture, no blending). `liquid_glass_widgets` only in `quoin_bar_surface.dart`; content scrolls under the bar (`QuoinPage.list`).
 - The bar's glass is `GlassQuality.premium` (the standard shader keeps a hard rim over dark backdrops).
 - Bottom bar active tab: accent icon and label plus a pill that springs under it (jumps with reduce motion); a tab scales to 0.92 when pressed and clicks with `HapticFeedback.selectionClick`.
 - Navigation bar hidden natively in `MainActivity`, which passes its inset to Flutter; never `SystemChrome.setEnabledSystemUIMode`.

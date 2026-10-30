@@ -15,6 +15,7 @@ import 'package:quoin/src/ui/molecules/quoin_segmented.dart';
 import 'package:quoin/src/ui/molecules/quoin_text_field.dart';
 import 'package:quoin/src/ui/molecules/position_row.dart';
 import 'package:quoin/src/ui/molecules/settings_row.dart';
+import 'package:quoin/src/ui/organisms/quoin_bottom_bar.dart';
 import 'package:quoin/src/ui/organisms/settings_section.dart';
 import 'package:quoin/src/ui/templates/quoin_page.dart';
 
@@ -40,6 +41,8 @@ class _ComponentGalleryPageState extends State<ComponentGalleryPage> {
   var _range = '1M';
   var _segment = 0;
   var _filter = 'Todas';
+  var _placement = QuoinBarActionPlacement.trailing;
+  var _tab = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -133,6 +136,57 @@ class _ComponentGalleryPageState extends State<ComponentGalleryPage> {
             label: 'Nota',
             hint: 'Por qué cambia el plan',
             maxLines: 4,
+          ),
+          label('Barra inferior'),
+          QuoinSegmented<QuoinBarActionPlacement>(
+            segments: const [
+              (QuoinBarActionPlacement.trailing, 'Derecha'),
+              (QuoinBarActionPlacement.leading, 'Izquierda'),
+              (QuoinBarActionPlacement.above, 'Encima'),
+              (QuoinBarActionPlacement.center, 'Centro'),
+            ],
+            selected: _placement,
+            onChanged: (v) => setState(() => _placement = v),
+          ),
+          const SizedBox(height: 12),
+          // Stripes behind the preview so the glass has something to bend.
+          ClipRRect(
+            borderRadius: BorderRadius.circular(QuoinRadius.card),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [c.dn1, c.dn3, c.dn5, c.dn2],
+                  stops: const [0, 0.35, 0.7, 1],
+                ),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.only(top: 24),
+                child: MediaQuery.removePadding(
+                  context: context,
+                  removeBottom: true,
+                  child: QuoinBottomBar(
+                    items: const [
+                      QuoinBarItem(icon: QuoinIcons.home, label: 'Inicio'),
+                      QuoinBarItem(
+                        icon: QuoinIcons.portfolio,
+                        label: 'Cartera',
+                      ),
+                      QuoinBarItem(
+                        icon: QuoinIcons.analysis,
+                        label: 'Análisis',
+                      ),
+                      QuoinBarItem(icon: QuoinIcons.settings, label: 'Ajustes'),
+                    ],
+                    currentIndex: _tab,
+                    onSelected: (i) => setState(() => _tab = i),
+                    addIcon: QuoinIcons.add,
+                    addLabel: 'Añadir',
+                    onAdd: () {},
+                    placement: _placement,
+                  ),
+                ),
+              ),
+            ),
           ),
           label('Tarjeta'),
           QuoinCard(
