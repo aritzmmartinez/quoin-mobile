@@ -21,7 +21,7 @@ void main() {
         theme: theme,
         home: Scaffold(
           body: Center(
-            child: QuoinChip(
+            child: QuoinChip.code(
               label: '1M',
               selected: selected,
               onTap: onTap ?? () {},
@@ -72,5 +72,28 @@ void main() {
     );
     await tester.tap(find.byType(QuoinChip));
     expect(taps, 1);
+  });
+
+  testWidgets('a code chip is mono and a text chip is not', (tester) async {
+    Future<String?> family(Widget chip) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: quoinDarkTheme,
+          home: Scaffold(body: Center(child: chip)),
+        ),
+      );
+      return tester.widget<Text>(find.byType(Text)).style!.fontFamily;
+    }
+
+    expect(
+      await family(QuoinChip.code(label: '1M', selected: false, onTap: () {})),
+      'GeistMono',
+    );
+    expect(
+      await family(
+        QuoinChip.text(label: 'Cripto', selected: false, onTap: () {}),
+      ),
+      'Geist',
+    );
   });
 }

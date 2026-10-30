@@ -13,7 +13,11 @@ void main() {
     tester.platformDispatcher.textScaleFactorTestValue = 2;
     addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
 
-    await pumpApp(tester, prefs: {'locale': 'es'});
+    await pumpApp(
+      tester,
+      prefs: {'locale': 'es'},
+      database: await sampleDatabase(),
+    );
 
     Future<void> scrollToEnd() async {
       final list = find.descendant(
@@ -28,6 +32,7 @@ void main() {
       await tester.pumpAndSettle();
     }
 
+    await scrollToEnd();
     for (final tab in ['Cartera', 'Análisis', 'Ajustes']) {
       await tester.tap(
         find.descendant(

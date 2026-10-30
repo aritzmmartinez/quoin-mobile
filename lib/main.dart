@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:quoin/src/app/app.dart';
 import 'package:quoin/src/app/dependencies.dart';
+import 'package:quoin/src/features/portfolio/data/database/quoin_database.dart';
 import 'package:quoin/src/features/settings/data/datasources/settings_local_datasource.dart';
 
 Future<void> main() async {
@@ -25,7 +26,7 @@ Future<void> main() async {
   await LiquidGlassWidgets.initialize();
   runApp(
     ProviderScope(
-      overrides: dependencies(prefs),
+      overrides: dependencies(prefs, QuoinDatabase.open()),
       child: LiquidGlassWidgets.wrap(
         brightnessResolver: Theme.maybeBrightnessOf,
         child: const QuoinApp(),

@@ -1,0 +1,12 @@
+targets:
+  $default:
+    builders:
+      drift_dev:
+        options:
+          store_date_time_values_as_text: true
+          case_from_dart_to_sql: preserve
+          generate_manager: false
+          sql:
+            dialect: sqlite
+            options:
+              version: "3.45"
