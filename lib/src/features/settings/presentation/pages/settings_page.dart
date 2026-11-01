@@ -144,6 +144,11 @@ class SettingsPage extends ConsumerWidget {
                 ),
               ),
               SettingsRow(
+                icon: QuoinIcons.upload,
+                label: 'Importar lote de ejemplo',
+                onTap: () => context.push(Routes.importSample),
+              ),
+              SettingsRow(
                 icon: QuoinIcons.clearData,
                 label: 'Vaciar cartera',
                 onTap: () => _debugWrite(

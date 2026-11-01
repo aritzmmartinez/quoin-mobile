@@ -39,6 +39,7 @@ extension InstrumentRowModel on InstrumentRow {
     id: id,
     name: name,
     type: type,
+    assetClass: assetClass,
     exposureKind: exposureKind == null ? null : ExposureKind.of(exposureKind!),
   );
 }
@@ -49,6 +50,7 @@ extension PriceSnapshotRowModel on PriceSnapshotRow {
     price: Money.parse(price),
     currency: currency,
     asOf: asOf.toUtc(),
+    source: source,
   );
 }
 

@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:quoin_core/quoin_core.dart' show ecbSource;
 
 import 'package:quoin/src/core/error/exceptions.dart';
 import 'package:quoin/src/features/portfolio/data/database/quoin_database.dart';
@@ -13,7 +14,6 @@ final portfolioLocalDataSourceProvider = Provider<PortfolioLocalDataSource>(
   (ref) => PortfolioLocalDataSource(ref.watch(quoinDatabaseProvider)),
 );
 
-/// The stored rows the portfolio is computed from.
 class PortfolioRows {
   const PortfolioRows({
     required this.settings,
@@ -26,8 +26,6 @@ class PortfolioRows {
   final SettingsRow settings;
   final List<InstrumentRow> instruments;
   final List<LedgerEntryRow> entries;
-
-  /// Oldest first, so the last one of an instrument is its latest.
   final List<PriceSnapshotRow> prices;
   final List<FxRateRow> rates;
 }
@@ -48,7 +46,9 @@ class PortfolioLocalDataSource {
         prices: await (_db.select(
           _db.priceSnapshot,
         )..orderBy([(p) => OrderingTerm.asc(p.asOf)])).get(),
-        rates: await _db.select(_db.fxRate).get(),
+        rates: await (_db.select(
+          _db.fxRate,
+        )..where((r) => r.source.equals(ecbSource))).get(),
       ),
     ),
   );
@@ -61,8 +61,7 @@ class PortfolioLocalDataSource {
         batch
           ..insertAll(_db.instrument, sample.instruments)
           ..insertAll(_db.ledgerEntry, sample.entries)
-          ..insertAll(_db.priceSnapshot, sample.prices)
-          ..insertAll(_db.fxRate, sample.rates);
+          ..insertAll(_db.priceSnapshot, sample.prices);
       });
     }),
   );

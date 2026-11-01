@@ -4,9 +4,11 @@ import 'package:quoin_core/quoin_core.dart' hide Instrument, PriceSnapshot;
 import 'package:quoin/src/features/portfolio/data/database/quoin_database.dart';
 
 /// An invented portfolio for debug builds, dated around [now] so its prices
-/// and rates are always recent. Every name and figure is made up; it exists to
-/// exercise the screens: categories, a position in dollars, a crypto swap, a
-/// closed position, one with no price and one with no category.
+/// are always recent. Every name and figure is made up; it exists to exercise
+/// the screens: categories, a position in dollars, a crypto swap, a closed
+/// position, one with no price and one with no category. It stores no
+/// exchange rates (only the ECB's are ever stored), so its dollar position is
+/// shown without a value until an import fetches the series.
 class SamplePortfolio {
   SamplePortfolio(DateTime now) : _now = now.toUtc();
 
@@ -51,18 +53,6 @@ class SamplePortfolio {
     _price(_coin, '4380'),
     _price(_token, '3.42'),
     _price(_property, '23.70'),
-  ];
-
-  late final rates = [
-    FxRateCompanion.insert(
-      id: 'sample-rate',
-      base: baseCurrency,
-      quote: 'USD',
-      day: rateDayFor(shiftDay(dayOf(_now, _zone), -1)),
-      rate: '1.0912',
-      source: 'ECB',
-      createdAt: _now,
-    ),
   ];
 
   static const _zone = 'Europe/Madrid';

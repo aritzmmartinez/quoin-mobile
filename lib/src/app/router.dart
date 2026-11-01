@@ -17,6 +17,9 @@ abstract final class Routes {
   static const analysis = '/analysis';
   static const settings = '/settings';
   static const import = '/import';
+
+  /// Debug builds only: the wizard over an invented batch.
+  static const importSample = '/import?sample=1';
   static const gallery = '/settings/gallery';
 }
 
@@ -49,8 +52,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: Routes.import,
-        pageBuilder: (context, state) =>
-            const MaterialPage(fullscreenDialog: true, child: ImportPage()),
+        pageBuilder: (context, state) => MaterialPage(
+          fullscreenDialog: true,
+          child: ImportPage(
+            sample: kDebugMode && state.uri.queryParameters['sample'] == '1',
+          ),
+        ),
       ),
     ],
   );

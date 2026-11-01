@@ -22,8 +22,8 @@ packages/quoin_core/     Dec, Money and the domain rules shared with ../quoin
 ```
 
 A folder exists only when it holds something: a feature has only the layers
-it uses. Today `settings` and `portfolio` have all three; `analysis` and
-`import` have only `presentation/pages`.
+it uses. Today `settings`, `portfolio` and `import` have all three;
+`analysis` has only `presentation/pages`.
 
 ## Layers
 
@@ -34,7 +34,7 @@ Dependencies point inwards: `presentation → domain ← data`.
   imports only `dart:` (not `dart:ui`), `quoin_core`, `core/error` and other
   features' domain. No Flutter, no Riverpod, no storage.
 - **data**: implements the domain's repositories. Data sources talk to the
-  platform (shared_preferences now, drift and the network later) and throw
+  platform (shared_preferences, drift, the file picker, the network) and throw
   typed exceptions. Models mirror what is stored and convert with
   `toEntity()`; they do not extend the entity.
 - **presentation**: Riverpod providers, pages and feature widgets. It sees
@@ -50,6 +50,13 @@ rules. Features import it and never copy it. A feature's own `domain/` holds
 only what is specific to the app (preferences, screens' use cases), built on
 top of quoin_core types.
 
+Its golden cases, `test/contract/*.json`, are Quoin's, never edited here.
+`dart run tool/sync_contracts.dart [../quoin]` copies them from a clean Quoin
+checkout (LF line ends) and writes the commit they come from to
+`test/contract/SOURCE`; CI fetches that commit of `aritzmmartinez/quoin` and
+runs the script with `--check`, failing when a file is missing, extra or
+different.
+
 ## Local store
 
 `features/portfolio/data/database` holds the drift database. `schema.drift`
@@ -64,6 +71,53 @@ The portfolio screens read the ledger, the latest price of each instrument and
 the ECB rates, and run the web's home chain through `quoin_core`
 (`GetPortfolioOverview`): positions, prices in euros, market values, summary,
 allocation and top positions.
+
+## Import
+
+`features/import` turns a broker's CSV into ledger rows. The file comes from
+the system's document picker (`file_selector`: the Storage Access Framework on
+Android, no storage permission) and is decoded as strict UTF-8, with or without
+a BOM (`decodeCsv`). The broker is detected from the header (`detectBroker`),
+never picked. The adapters live in `quoin_core` (`planIngest`, with
+`trade_republic.dart` and `kraken.dart`), ported from Quoin and checked against
+its ingest contract (`test/contract/ingest.json`) case by case: they read the
+file as Quoin's Papa Parse does, map rows to events, set aside what the ledger
+does not hold (with a reason and the row's detail), note what the user should
+know, name the rows they cannot read, and refuse a file they cannot read at all.
+
+An import is a `MappedBatch`. `PlanImport` reads what the adapters need from the
+store (`IngestContext`: the residence's zone, the stored ECB rates, crypto price
+histories, instrument names, Kraken refids booked as rewards), plans, and when
+rows lack a rate fetches the missing series and plans again, as Quoin's
+`planWithRates`. The wizard previews the batch (new and existing operations, by
+`(source, externalId)`; discards, notices and row errors with their detail), and
+only on confirmation `ImportLocalDataSource.write` stores it in one
+transaction: instruments upserted without their manual fields, events not yet
+stored inserted, and stored cash rows the batch knows to be in kind marked
+`IN_KIND` (never back). `CommitImport` checks every event against the ledger's
+write rules first. A refused file opens a modal that names the reason and says
+the portfolio was not changed. The review shows dates in the residence's zone,
+as the web does, not the device's. Debug builds can run the wizard over an
+invented Trade Republic export, through the real adapter (Settings → Debug).
+
+Amounts are stored as the text they were read from (`Dec.text`): a figure
+copied from the file or the rate book keeps its digits («1.0500»), one computed
+is written as decimal.js writes it, so both clients store the same row the same
+way. Equality and arithmetic use the value.
+
+Rows in another currency are booked at the ECB's rate of their day.
+`EnsureRates` brings each currency's series up to date from the ECB data API
+(one currency per request, CSV with the data only, through `http`) and stores
+it in `FxRate`; a stored day is never overwritten (`planFxWrite`), and a
+currency the service cannot give is listed, not an error: its rows stay
+`fx-unavailable` and the review says so; so does a fetched series that
+contradicts a stored rate, which is then not updated. Both rate books, for
+booking and for valuation, read only the ECB's series (`ecbSource`), as in
+Quoin. Tests answer for the ECB with
+`MockClient`. This is the app's only network traffic: public data in, and
+nothing out but the currency code. Kraken rewards and swaps without Kraken's
+own USD figure are valued from stored prices only; the app does not download
+price histories yet.
 
 ## Errors
 

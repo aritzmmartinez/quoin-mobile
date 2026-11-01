@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:quoin/src/core/l10n/quoin_format.dart';
 import 'package:quoin_core/quoin_core.dart';
 
@@ -70,5 +71,12 @@ void main() {
       expect(es.quantity(Dec.parse(value)), inEs);
       expect(en.quantity(Dec.parse(value)), inEn);
     }
+  });
+
+  test('a date is the day in the given zone, not the device one', () async {
+    await initializeDateFormatting();
+    final lateNight = DateTime.utc(2026, 3, 1, 23, 30);
+    expect(es.date(lateNight, 'Europe/Madrid'), '2 mar 2026');
+    expect(es.date(lateNight, 'Atlantic/Canary'), '1 mar 2026');
   });
 }
