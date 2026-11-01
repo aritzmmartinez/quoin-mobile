@@ -19,8 +19,11 @@ final _lineEnd = RegExp(r'\r?\n');
 final _separator = RegExp('[,;\t|]');
 final _quoted = RegExp(r'^"(.*)"$');
 
+// Written by code point: a byte order mark is invisible.
+final _bom = String.fromCharCode(0xFEFF);
+
 Broker? detectBroker(String csv) {
-  final text = csv.startsWith('﻿') ? csv.substring(1) : csv;
+  final text = csv.startsWith(_bom) ? csv.substring(1) : csv;
   final header =
       text.split(_lineEnd).where((line) => line.trim().isNotEmpty).firstOrNull;
   if (header == null) return null;

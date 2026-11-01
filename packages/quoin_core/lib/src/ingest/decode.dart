@@ -2,6 +2,9 @@ import 'dart:convert';
 
 import 'reasons.dart';
 
+// Written by code point: a byte order mark is invisible.
+final _bom = String.fromCharCode(0xFEFF);
+
 String decodeCsv(List<int> bytes) {
   final String text;
   try {
@@ -9,5 +12,5 @@ String decodeCsv(List<int> bytes) {
   } on FormatException {
     throw const CsvFileError(FileErrorReason.invalidEncoding);
   }
-  return text.startsWith('﻿') ? text.substring(1) : text;
+  return text.startsWith(_bom) ? text.substring(1) : text;
 }

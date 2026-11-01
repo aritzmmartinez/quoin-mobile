@@ -14,7 +14,8 @@ void main() {
   });
 
   test('columns are trimmed, lowercased and lose a BOM', () {
-    expect(detectBroker('﻿RefID ,type\n'), Broker.kraken);
+    expect(detectBroker('${String.fromCharCode(0xFEFF)}RefID ,type\n'),
+        Broker.kraken);
     expect(detectBroker('\n\n  Transaction_ID\n'), Broker.tradeRepublic);
   });
 

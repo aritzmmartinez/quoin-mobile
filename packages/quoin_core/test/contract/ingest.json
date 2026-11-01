@@ -100,7 +100,9 @@
             "fees": "1"
           }
         ],
-        "operationOf": [0],
+        "operationOf": [
+          0
+        ],
         "discarded": {},
         "discardedDetails": {},
         "noticed": {},
@@ -227,7 +229,15 @@
             "grossAmount": "50"
           }
         ],
-        "operationOf": [0, 1, 2, 3, 4, 5, 6],
+        "operationOf": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
         "discarded": {
           "card-spending": 1
         },
@@ -249,7 +259,9 @@
       "stored": {
         "names": {},
         "rewardRefids": [],
-        "existing": ["TR_CSV::t1"]
+        "existing": [
+          "TR_CSV::t1"
+        ]
       },
       "expect": {
         "broker": "trade-republic",
@@ -293,7 +305,10 @@
             "fees": "0"
           }
         ],
-        "operationOf": [0, 1],
+        "operationOf": [
+          0,
+          1
+        ],
         "discarded": {},
         "discardedDetails": {},
         "noticed": {},
@@ -385,7 +400,12 @@
             "funding": "IN_KIND"
           }
         ],
-        "operationOf": [0, 0, 1, 1],
+        "operationOf": [
+          0,
+          0,
+          1,
+          1
+        ],
         "discarded": {
           "saveback-unpaired": 1
         },
@@ -458,7 +478,9 @@
             "fxDate": "2025-03-03"
           }
         ],
-        "operationOf": [0],
+        "operationOf": [
+          0
+        ],
         "discarded": {
           "fx-unavailable": 1
         },
@@ -574,7 +596,9 @@
             "fees": "0"
           }
         ],
-        "operationOf": [0],
+        "operationOf": [
+          0
+        ],
         "discarded": {},
         "discardedDetails": {},
         "noticed": {},
@@ -726,7 +750,12 @@
             "grossAmount": "200"
           }
         ],
-        "operationOf": [0, 1, 2, 3],
+        "operationOf": [
+          0,
+          1,
+          2,
+          3
+        ],
         "discarded": {},
         "discardedDetails": {},
         "noticed": {},
@@ -853,7 +882,12 @@
             "funding": "IN_KIND"
           }
         ],
-        "operationOf": [0, 0, 1, 1],
+        "operationOf": [
+          0,
+          0,
+          1,
+          1
+        ],
         "discarded": {
           "reward-unpriced": 1
         },
@@ -957,7 +991,10 @@
             "fxDate": "2025-05-06"
           }
         ],
-        "operationOf": [0, 0],
+        "operationOf": [
+          0,
+          0
+        ],
         "discarded": {},
         "discardedDetails": {},
         "noticed": {},
@@ -1022,7 +1059,9 @@
         "names": {
           "TESTCOIN": "Test Coin"
         },
-        "rewardRefids": ["I1"],
+        "rewardRefids": [
+          "I1"
+        ],
         "existing": []
       },
       "expect": {
