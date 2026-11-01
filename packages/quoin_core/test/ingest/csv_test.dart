@@ -80,9 +80,70 @@ void main() {
     });
   });
 
-  test('typedRows drops the rows without a type', () {
-    final table = parseCsv('type,amount\nBUY,1\n,2\n  ,3\nSELL,4\n');
-    expect(typedRows(table).map((r) => r['amount']), ['1', '4']);
-    expect(typedRows(parseCsv('amount\n1\n')), isEmpty);
+  group('readCsv', () {
+    Object? reasonOf(void Function() read) {
+      try {
+        read();
+      } on CsvFileError catch (e) {
+        return e.reason;
+      }
+      return null;
+    }
+
+    test('drops rows without a type, keeping each row its position', () {
+      final read = readCsv('type,amount\nBUY,1\n,2\n  ,3\nSELL,4\n', [
+        'type',
+        'amount',
+      ]);
+      expect(read.missing, isEmpty);
+      expect(read.records.map((r) => (r.raw['amount'], r.position)), [
+        ('1', 1),
+        ('4', 4),
+      ]);
+    });
+
+    test('a row of the wrong length is kept, marked, with what it reached', () {
+      final read = readCsv('type,a,b\nBUY,1\nBUY,1,2,3\n', ['type', 'a']);
+      expect(read.records.map((r) => r.malformed), [true, true]);
+      expect(read.records.map((r) => r.raw), [
+        {'type': 'BUY', 'a': '1'},
+        {'type': 'BUY', 'a': '1', 'b': '2'},
+      ]);
+    });
+
+    test('names the missing columns; none of them is unparseable', () {
+      expect(readCsv('type,a\n', ['type', 'b']).missing, ['b']);
+      expect(
+        reasonOf(() => requireColumns(readCsv('type,a\n', ['type', 'b']))),
+        FileErrorReason.missingColumn,
+      );
+      expect(
+        reasonOf(() => readCsv('x;y\n1;2\n', ['type'])),
+        FileErrorReason.unparseable,
+      );
+    });
+
+    test('a broken quote is unparseable', () {
+      expect(
+        reasonOf(() => readCsv('type,a\n"BUY,1\n', ['type'])),
+        FileErrorReason.unparseable,
+      );
+    });
+  });
+
+  group('decodeCsv', () {
+    test('drops a BOM and refuses bytes that are not UTF-8', () {
+      expect(decodeCsv([0xEF, 0xBB, 0xBF, 0x61]), 'a');
+      expect(
+        () => decodeCsv([0x61, 0xF3, 0x6E]),
+        throwsA(
+          isA<CsvFileError>().having(
+            (e) => e.reason,
+            'reason',
+            FileErrorReason.invalidEncoding,
+          ),
+        ),
+      );
+    });
   });
 }

@@ -3,10 +3,12 @@ import 'dart:math' as math;
 import 'decimal_error.dart';
 
 final class Dec implements Comparable<Dec> {
-  const Dec._(this._unscaled, this._scale);
+  const Dec._(this._unscaled, this._scale, [this._text]);
 
   final BigInt _unscaled;
   final int _scale;
+
+  final String? _text;
 
   static const int precision = 40;
 
@@ -40,7 +42,8 @@ final class Dec implements Comparable<Dec> {
     final digits = '$integer$fraction';
     final magnitude = BigInt.parse(digits.isEmpty ? '0' : digits);
     final unscaled = match.group(1) == '-' ? -magnitude : magnitude;
-    return _normalized(unscaled, fraction.length - exponent);
+    final value = _normalized(unscaled, fraction.length - exponent);
+    return Dec._(value._unscaled, value._scale, text);
   }
 
   factory Dec.fromInt(int value) => _normalized(BigInt.from(value), 0);
@@ -55,7 +58,9 @@ final class Dec implements Comparable<Dec> {
 
   Dec operator -() => Dec._(-_unscaled, _scale);
 
-  Dec abs() => isNegative ? -this : this;
+  Dec abs() => Dec._(_unscaled.abs(), _scale);
+
+  String get text => _text ?? toString();
 
   Dec operator +(Dec other) {
     final scale = math.max(_scale, other._scale);

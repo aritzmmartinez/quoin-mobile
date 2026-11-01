@@ -304,3 +304,111 @@ bool _isDay(String day) {
     return false;
   }
 }
+
+String ledgerTypeOf(LedgerEvent event) => switch (event) {
+      TradeEvent(:final type) => type.code,
+      DividendEvent() => 'DIVIDEND',
+      CashEvent(:final type) => type.code,
+    };
+
+bool isUnconvertedForeign(LedgerEvent event) =>
+    event.fxSource == FxSource.identity &&
+    event.currency != baseCurrency &&
+    event.fxRate == null &&
+    event.fxDirection == null &&
+    event.fxDate == null;
+
+LedgerEvent convertedAt(
+  LedgerEvent event, {
+  required FxSource source,
+  required Dec rate,
+  required String day,
+}) =>
+    _rebuilt(
+      event,
+      fxSource: source,
+      fxRate: rate,
+      fxDirection: FxDirection.quotePerBase,
+      fxDate: day,
+    );
+
+LedgerEvent fundedInKind(LedgerEvent event) =>
+    _rebuilt(event, funding: Funding.inKind);
+
+LedgerEvent _rebuilt(
+  LedgerEvent e, {
+  FxSource? fxSource,
+  Dec? fxRate,
+  FxDirection? fxDirection,
+  String? fxDate,
+  Funding? funding,
+}) =>
+    switch (e) {
+      TradeEvent() => TradeEvent(
+          id: e.id,
+          ts: e.ts,
+          type: e.type,
+          instrumentId: e.instrumentId,
+          quantity: e.quantity,
+          price: e.price,
+          grossAmount: e.grossAmount,
+          fees: e.fees,
+          currency: e.currency,
+          funding: funding ?? e.funding,
+          fxSource: fxSource ?? e.fxSource,
+          fxDate: fxDate ?? e.fxDate,
+          fxRate: fxRate ?? e.fxRate,
+          fxDirection: fxDirection ?? e.fxDirection,
+          originalAmount: e.originalAmount,
+          originalCurrency: e.originalCurrency,
+          valuationSource: e.valuationSource,
+          linkId: e.linkId,
+          linkKind: e.linkKind,
+          account: e.account,
+          source: e.source,
+          externalId: e.externalId,
+          note: e.note,
+        ),
+      DividendEvent() => DividendEvent(
+          id: e.id,
+          ts: e.ts,
+          instrumentId: e.instrumentId,
+          grossAmount: e.grossAmount,
+          taxWithheld: e.taxWithheld,
+          currency: e.currency,
+          funding: funding ?? e.funding,
+          fxSource: fxSource ?? e.fxSource,
+          fxDate: fxDate ?? e.fxDate,
+          fxRate: fxRate ?? e.fxRate,
+          fxDirection: fxDirection ?? e.fxDirection,
+          originalAmount: e.originalAmount,
+          originalCurrency: e.originalCurrency,
+          valuationSource: e.valuationSource,
+          linkId: e.linkId,
+          linkKind: e.linkKind,
+          account: e.account,
+          source: e.source,
+          externalId: e.externalId,
+          note: e.note,
+        ),
+      CashEvent() => CashEvent(
+          id: e.id,
+          ts: e.ts,
+          type: e.type,
+          grossAmount: e.grossAmount,
+          currency: e.currency,
+          fxSource: fxSource ?? e.fxSource,
+          fxDate: fxDate ?? e.fxDate,
+          fxRate: fxRate ?? e.fxRate,
+          fxDirection: fxDirection ?? e.fxDirection,
+          originalAmount: e.originalAmount,
+          originalCurrency: e.originalCurrency,
+          valuationSource: e.valuationSource,
+          linkId: e.linkId,
+          linkKind: e.linkKind,
+          account: e.account,
+          source: e.source,
+          externalId: e.externalId,
+          note: e.note,
+        ),
+    };

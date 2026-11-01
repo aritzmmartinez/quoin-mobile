@@ -1,18 +1,15 @@
-/// A CSV the importer cannot read: an unclosed quote, text after a closing
-/// quote, or a row whose field count differs from the header's.
+import 'reasons.dart';
+
 final class CsvFormatException implements Exception {
   const CsvFormatException(this.message, this.line);
 
   final String message;
-
-  /// 1-based line where the faulty record starts.
   final int line;
 
   @override
   String toString() => 'CsvFormatException (line $line): $message';
 }
 
-/// A parsed CSV: the header as written and one map per data row.
 final class CsvTable {
   const CsvTable(this.fields, this.rows);
 
@@ -20,13 +17,6 @@ final class CsvTable {
   final List<Map<String, String>> rows;
 }
 
-/// Reads [text] as the web reads an export with Papa Parse (`header: true`,
-/// `skipEmptyLines: "greedy"`): comma separated, RFC 4180 quoting, CRLF, LF or
-/// CR line ends. Rows of blanks are skipped, before and after the header, and
-/// a row with more or fewer fields than the header is an error, as Papa's
-/// field-mismatch error makes the web reject the file.
-///
-/// The text arrives decoded and without a byte order mark.
 CsvTable parseCsv(String text) {
   List<String>? fields;
   final rows = <Map<String, String>>[];
@@ -46,15 +36,64 @@ CsvTable parseCsv(String text) {
   return CsvTable(fields ?? const [], rows);
 }
 
-/// Drops the rows without a `type`, as both brokers' adapters do in Quoin:
-/// exports end in summary lines that carry none.
-List<Map<String, String>> typedRows(CsvTable table) => [
-      for (final row in table.rows)
-        if ((row['type'] ?? '').trim().isNotEmpty) row,
-    ];
+final class CsvRecord {
+  const CsvRecord(this.raw, this.position, {required this.malformed});
 
-/// The records of [text] with the line each starts on, rows of blanks left
-/// out. Lazy, so the header can be read without parsing the rest.
+  final Map<String, String> raw;
+  final int position;
+  final bool malformed;
+}
+
+final class CsvRecords {
+  const CsvRecords(this.missing, this.records);
+  final List<String> missing;
+  final List<CsvRecord> records;
+}
+
+CsvRecords readCsv(String csv, List<String> columns) {
+  List<String>? fields;
+  final records = <CsvRecord>[];
+  var position = 0;
+  try {
+    for (final (_, record) in csvRecords(csv)) {
+      final header = fields;
+      if (header == null) {
+        fields = record;
+        continue;
+      }
+      position += 1;
+      final malformed = record.length != header.length;
+      final raw = {
+        for (var i = 0; i < header.length && i < record.length; i += 1)
+          header[i]: record[i],
+      };
+      if (malformed || (raw['type'] ?? '').trim().isNotEmpty) {
+        records.add(CsvRecord(raw, position, malformed: malformed));
+      }
+    }
+  } on CsvFormatException {
+    throw const CsvFileError(FileErrorReason.unparseable);
+  }
+  final header = fields ?? const <String>[];
+  final missing = [
+    for (final column in columns)
+      if (!header.contains(column)) column,
+  ];
+  if (missing.length == columns.length) {
+    throw const CsvFileError(FileErrorReason.unparseable);
+  }
+  return CsvRecords(missing, records);
+}
+
+void requireColumns(CsvRecords csv) {
+  if (csv.missing.isNotEmpty) {
+    throw CsvFileError(
+      FileErrorReason.missingColumn,
+      column: csv.missing.first,
+    );
+  }
+}
+
 Iterable<(int, List<String>)> csvRecords(String text) sync* {
   var i = 0;
   var line = 1;

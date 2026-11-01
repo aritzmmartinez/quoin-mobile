@@ -37,7 +37,6 @@ void main() {
         await failureOf('date,amount\n1,2\n'),
         isA<UnknownBrokerFailure>(),
       );
-      expect(await failureOf('a;refid\n1;2\n'), isA<UnknownBrokerFailure>());
     });
 
     test('a broken CSV is unparseable', () async {

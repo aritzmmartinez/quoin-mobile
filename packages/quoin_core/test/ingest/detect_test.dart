@@ -24,6 +24,12 @@ void main() {
     expect(detectBroker(''), isNull);
   });
 
+  test('the header splits on , ; tab or | and loses its quotes', () {
+    expect(detectBroker('a;refid\n1;2\n'), Broker.kraken);
+    expect(detectBroker('"Transaction_ID"\tb\n'), Broker.tradeRepublic);
+    expect(detectBroker('a|refid|b\n'), Broker.kraken);
+  });
+
   test('only the header is read', () {
     expect(detectBroker('refid\n"unclosed\n'), Broker.kraken);
   });
