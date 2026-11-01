@@ -50,6 +50,13 @@ rules. Features import it and never copy it. A feature's own `domain/` holds
 only what is specific to the app (preferences, screens' use cases), built on
 top of quoin_core types.
 
+Its golden cases, `test/contract/*.json`, are Quoin's, never edited here.
+`dart run tool/sync_contracts.dart [../quoin]` copies them from a clean Quoin
+checkout (LF line ends) and writes the commit they come from to
+`test/contract/SOURCE`; CI fetches that commit of `aritzmmartinez/quoin` and
+runs the script with `--check`, failing when a file is missing, extra or
+different.
+
 ## Local store
 
 `features/portfolio/data/database` holds the drift database. `schema.drift`

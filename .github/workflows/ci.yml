@@ -40,6 +40,13 @@ jobs:
           channel: stable
           cache: true
       - run: flutter pub get
+      - name: Contracts match Quoin at SOURCE
+        run: |
+          sha=$(cat packages/quoin_core/test/contract/SOURCE)
+          git init -q "$RUNNER_TEMP/quoin"
+          git -C "$RUNNER_TEMP/quoin" fetch -q --depth 1 https://github.com/aritzmmartinez/quoin.git "$sha"
+          git -C "$RUNNER_TEMP/quoin" checkout -q FETCH_HEAD -- test/contract
+          dart run tool/sync_contracts.dart --check "$RUNNER_TEMP/quoin"
       - name: Generated code is up to date
         run: |
           dart run build_runner build --delete-conflicting-outputs
