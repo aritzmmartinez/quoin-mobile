@@ -7,23 +7,27 @@ import 'package:quoin/src/core/theme/quoin_type.dart';
 import 'package:quoin/src/ui/atoms/display_figure.dart';
 import 'package:quoin/src/ui/atoms/quoin_card.dart';
 import 'package:quoin/src/ui/atoms/quoin_chip.dart';
+import 'package:quoin/src/ui/molecules/allocation_donut.dart';
 import 'package:quoin/src/ui/molecules/empty_state.dart';
+import 'package:quoin/src/ui/molecules/gain_badge.dart';
 import 'package:quoin/src/ui/molecules/icon_tile.dart';
 import 'package:quoin/src/ui/molecules/quoin_segmented.dart';
 import 'package:quoin/src/ui/molecules/quoin_text_field.dart';
+import 'package:quoin/src/ui/molecules/position_row.dart';
 import 'package:quoin/src/ui/molecules/settings_row.dart';
+import 'package:quoin/src/ui/organisms/quoin_bottom_bar.dart';
 import 'package:quoin/src/ui/organisms/settings_section.dart';
 import 'package:quoin/src/ui/templates/quoin_page.dart';
 
 const _positions = [
-  ('Índice Global Acc', 'IGA', '12.450,20 €', '+1,41 %', true),
-  ('Bonos Euro Corto', 'BEC', '6.120,00 €', '-0,12 %', false),
-  ('Oro Físico', 'ORO', '3.240,55 €', '+0,37 %', true),
-  ('Mercados Emergentes', 'MEM', '2.980,10 €', '-1,08 %', false),
-  ('Tecnología Norteamérica', 'TNA', '2.310,45 €', '+2,64 %', true),
-  ('Cripto Uno', 'CR1', '1.890,00 €', '+6,78 %', true),
-  ('Inmobiliario Europa', 'INE', '1.204,90 €', '-0,55 %', false),
-  ('Salud Mundial', 'SAM', '980,30 €', '+0,21 %', true),
+  ('Índice Global Acc', 'IGA', '12.450,20 €', '+1,41 %', 1),
+  ('Bonos Euro Corto', 'BEC', '6120,00 €', '-0,12 %', -1),
+  ('Oro Físico', 'ORO', '3240,55 €', '+0,37 %', 1),
+  ('Mercados Emergentes', 'MEM', '2980,10 €', '-1,08 %', -1),
+  ('Tecnología Norteamérica', 'TNA', '2310,45 €', '0,0 %', 0),
+  ('Cripto Uno', 'CR1', '1890,00 €', '+6,78 %', 1),
+  ('Inmobiliario Europa', 'INE', '1204,90 €', '-0,55 %', -1),
+  ('Salud Mundial', 'SAM', '980,30 €', '+0,21 %', 1),
 ];
 
 class ComponentGalleryPage extends StatefulWidget {
@@ -36,6 +40,9 @@ class ComponentGalleryPage extends StatefulWidget {
 class _ComponentGalleryPageState extends State<ComponentGalleryPage> {
   var _range = '1M';
   var _segment = 0;
+  var _filter = 'Todas';
+  var _placement = QuoinBarActionPlacement.trailing;
+  var _tab = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -71,15 +78,28 @@ class _ComponentGalleryPageState extends State<ComponentGalleryPage> {
               const FilledButton(onPressed: null, child: Text('Desactivado')),
             ],
           ),
-          label('Chips de rango'),
+          label('Chips de rango (código)'),
           Wrap(
             spacing: 8,
             children: [
               for (final r in ['1D', '1S', '1M', '1A', 'Todo'])
-                QuoinChip(
+                QuoinChip.code(
                   label: r,
                   selected: r == _range,
                   onTap: () => setState(() => _range = r),
+                ),
+            ],
+          ),
+          label('Chips de filtro'),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final k in ['Todas', 'Fondo de renta variable', 'Cripto'])
+                QuoinChip.text(
+                  label: k,
+                  selected: k == _filter,
+                  onTap: () => setState(() => _filter = k),
                 ),
             ],
           ),
@@ -116,6 +136,57 @@ class _ComponentGalleryPageState extends State<ComponentGalleryPage> {
             label: 'Nota',
             hint: 'Por qué cambia el plan',
             maxLines: 4,
+          ),
+          label('Barra inferior'),
+          QuoinSegmented<QuoinBarActionPlacement>(
+            segments: const [
+              (QuoinBarActionPlacement.trailing, 'Derecha'),
+              (QuoinBarActionPlacement.leading, 'Izquierda'),
+              (QuoinBarActionPlacement.above, 'Encima'),
+              (QuoinBarActionPlacement.center, 'Centro'),
+            ],
+            selected: _placement,
+            onChanged: (v) => setState(() => _placement = v),
+          ),
+          const SizedBox(height: 12),
+          // Stripes behind the preview so the glass has something to bend.
+          ClipRRect(
+            borderRadius: BorderRadius.circular(QuoinRadius.card),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [c.dn1, c.dn3, c.dn5, c.dn2],
+                  stops: const [0, 0.35, 0.7, 1],
+                ),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.only(top: 24),
+                child: MediaQuery.removePadding(
+                  context: context,
+                  removeBottom: true,
+                  child: QuoinBottomBar(
+                    items: const [
+                      QuoinBarItem(icon: QuoinIcons.home, label: 'Inicio'),
+                      QuoinBarItem(
+                        icon: QuoinIcons.portfolio,
+                        label: 'Cartera',
+                      ),
+                      QuoinBarItem(
+                        icon: QuoinIcons.analysis,
+                        label: 'Análisis',
+                      ),
+                      QuoinBarItem(icon: QuoinIcons.settings, label: 'Ajustes'),
+                    ],
+                    currentIndex: _tab,
+                    onSelected: (i) => setState(() => _tab = i),
+                    addIcon: QuoinIcons.add,
+                    addLabel: 'Añadir',
+                    onAdd: () {},
+                    placement: _placement,
+                  ),
+                ),
+              ),
+            ),
           ),
           label('Tarjeta'),
           QuoinCard(
@@ -172,14 +243,55 @@ class _ComponentGalleryPageState extends State<ComponentGalleryPage> {
               ),
             ),
           ),
+          label('Badge de plusvalía'),
+          const Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              GainBadge(text: '+349,15 € (+1,4 %)', sign: 1),
+              GainBadge(text: '−80,00 € (−13,8 %)', sign: -1),
+              GainBadge(text: '0,00 €', sign: 0),
+            ],
+          ),
+          label('Distribución'),
+          const QuoinCard(
+            child: AllocationDonut(
+              slices: [
+                DonutSlice(
+                  label: 'Fondo de renta variable',
+                  fraction: 0.46,
+                  percent: '46,1 %',
+                ),
+                DonutSlice(
+                  label: 'Fondo de bonos',
+                  fraction: 0.3,
+                  percent: '30,1 %',
+                ),
+                DonutSlice(label: 'Acción', fraction: 0.17, percent: '17,2 %'),
+                DonutSlice(label: 'Cripto', fraction: 0.05, percent: '4,9 %'),
+                DonutSlice(
+                  label: 'Sin clasificar',
+                  fraction: 0.02,
+                  percent: '1,7 %',
+                ),
+              ],
+            ),
+          ),
           label('Posiciones (para ver el cristal de la barra)'),
           QuoinCard(
             padding: EdgeInsets.zero,
             child: Column(
               children: [
+                const PositionRow(
+                  name: 'Sin Precio Ejemplo',
+                  detail: '12',
+                  value: '720,00 € de coste',
+                  valueMuted: true,
+                  change: Text('Sin precio'),
+                ),
                 for (var i = 0; i < 32; i++) ...[
-                  if (i > 0) const Divider(height: 1),
-                  _PositionRow(_positions[i % _positions.length]),
+                  const Divider(height: 1),
+                  _row(_positions[i % _positions.length]),
                 ],
               ],
             ),
@@ -190,78 +302,12 @@ class _ComponentGalleryPageState extends State<ComponentGalleryPage> {
   }
 }
 
-class _PositionRow extends StatelessWidget {
-  const _PositionRow(this.position);
-
-  final (String, String, String, String, bool) position;
-
-  @override
-  Widget build(BuildContext context) {
-    final (name, ticker, value, change, up) = position;
-    final c = QuoinColors.of(context);
-    final type = QuoinType.of(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final width = constraints.maxWidth;
-          return Row(
-            spacing: 12,
-            children: [
-              CircleAvatar(
-                radius: 18,
-                backgroundColor: c.accent.withValues(alpha: 0.15),
-                // A fixed circle: the initial shrinks rather than overflow it.
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Text(
-                    name[0],
-                    style: type.row.mono.copyWith(
-                      color: c.accent,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  spacing: 4,
-                  children: [
-                    Text(name, style: type.row),
-                    Text(
-                      ticker,
-                      style: type.secondary.mono.copyWith(color: c.muted),
-                    ),
-                  ],
-                ),
-              ),
-              // Figures don't wrap: past 55 % of the row (a large system font)
-              // they shrink to fit instead.
-              ConstrainedBox(
-                constraints: BoxConstraints(maxWidth: width * 0.55),
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: AlignmentDirectional.centerEnd,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    spacing: 4,
-                    children: [
-                      Text(value, style: type.row.mono.copyWith(color: c.text)),
-                      Text(
-                        change,
-                        style: type.secondary.mono.copyWith(
-                          color: up ? c.positive : c.negative,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          );
-        },
-      ),
-    );
-  }
+PositionRow _row((String, String, String, String, int) position) {
+  final (name, ticker, value, change, sign) = position;
+  return PositionRow(
+    name: name,
+    detail: ticker,
+    value: value,
+    change: GainBadge(text: change, sign: sign),
+  );
 }

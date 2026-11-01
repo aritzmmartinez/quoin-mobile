@@ -1,0 +1,93 @@
+-- The tables of ../quoin/prisma/schema.prisma this phase reads, with the same
+-- names, CHECKs and unique keys, so sync can map rows one to one. Amounts are
+-- TEXT decimals; DATETIME columns hold ISO-8601 UTC text. The sync marks
+-- (*Hlc) are added with sync, by ADD COLUMN, as Quoin did.
+
+CREATE TABLE "Instrument" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "name" TEXT NOT NULL,
+    "type" TEXT NOT NULL,
+    "assetClass" TEXT,
+    "quoteSymbol" TEXT,
+    "exposureKind" TEXT,
+    "exposureLeafId" TEXT,
+    "ter" TEXT,
+    "hedgedToBase" BOOLEAN NOT NULL DEFAULT 0,
+    "thesis" TEXT NOT NULL DEFAULT 'CORE'
+        CHECK ("thesis" IN ('CORE', 'CONVICTION', 'TACTICAL')),
+    "createdAt" DATETIME NOT NULL
+) AS InstrumentRow;
+
+CREATE TABLE "LedgerEntry" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "ts" DATETIME NOT NULL,
+    "type" TEXT NOT NULL,
+    "instrumentId" TEXT
+        REFERENCES "Instrument" ("id") ON DELETE SET NULL ON UPDATE CASCADE,
+    "quantity" TEXT,
+    "price" TEXT,
+    "grossAmount" TEXT NOT NULL,
+    "fees" TEXT NOT NULL DEFAULT '0',
+    "taxWithheld" TEXT NOT NULL DEFAULT '0',
+    "currency" TEXT NOT NULL,
+    "fxSource" TEXT NOT NULL DEFAULT 'IDENTITY'
+        CONSTRAINT "LedgerEntry_fxSource_check"
+        CHECK ("fxSource" IN ('IDENTITY', 'BROKER', 'ECB', 'MARKET', 'MANUAL')),
+    "fxDate" TEXT,
+    "fxRate" TEXT,
+    "fxDirection" TEXT
+        CONSTRAINT "LedgerEntry_fxDirection_check"
+        CHECK ("fxDirection" IN ('QUOTE_PER_BASE', 'BASE_PER_QUOTE')),
+    "originalAmount" TEXT,
+    "originalCurrency" TEXT,
+    "valuationSource" TEXT,
+    "linkId" TEXT,
+    "linkKind" TEXT,
+    "funding" TEXT NOT NULL DEFAULT 'CASH'
+        CONSTRAINT "LedgerEntry_funding_check"
+        CHECK ("funding" IN ('CASH', 'IN_KIND')),
+    "account" TEXT NOT NULL DEFAULT 'trade-republic',
+    "source" TEXT NOT NULL DEFAULT 'MANUAL',
+    "externalId" TEXT,
+    "note" TEXT,
+    "createdAt" DATETIME NOT NULL,
+    CONSTRAINT "LedgerEntry_type_check" CHECK ("type" IN ('BUY', 'SELL', 'DIVIDEND', 'DEPOSIT', 'WITHDRAWAL', 'INTEREST'))
+) AS LedgerEntryRow;
+
+CREATE UNIQUE INDEX "LedgerEntry_source_externalId_key" ON "LedgerEntry" ("source", "externalId");
+CREATE INDEX "LedgerEntry_ts_idx" ON "LedgerEntry" ("ts");
+CREATE INDEX "LedgerEntry_instrumentId_idx" ON "LedgerEntry" ("instrumentId");
+
+CREATE TABLE "PriceSnapshot" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "instrumentId" TEXT NOT NULL
+        REFERENCES "Instrument" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
+    "price" TEXT NOT NULL,
+    "currency" TEXT NOT NULL,
+    "asOf" DATETIME NOT NULL,
+    "source" TEXT NOT NULL DEFAULT 'YAHOO',
+    "createdAt" DATETIME NOT NULL
+) AS PriceSnapshotRow;
+
+CREATE INDEX "PriceSnapshot_instrumentId_idx" ON "PriceSnapshot" ("instrumentId");
+CREATE INDEX "PriceSnapshot_asOf_idx" ON "PriceSnapshot" ("asOf");
+CREATE UNIQUE INDEX "PriceSnapshot_instrumentId_asOf_key" ON "PriceSnapshot" ("instrumentId", "asOf");
+
+CREATE TABLE "FxRate" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "base" TEXT NOT NULL,
+    "quote" TEXT NOT NULL,
+    "day" TEXT NOT NULL,
+    "rate" TEXT NOT NULL,
+    "source" TEXT NOT NULL,
+    "createdAt" DATETIME NOT NULL
+) AS FxRateRow;
+
+CREATE INDEX "FxRate_quote_idx" ON "FxRate" ("quote");
+CREATE UNIQUE INDEX "FxRate_source_base_quote_day_key" ON "FxRate" ("source", "base", "quote", "day");
+
+CREATE TABLE "Settings" (
+    "id" INTEGER NOT NULL PRIMARY KEY DEFAULT 1 CHECK ("id" = 1),
+    "residence" TEXT NOT NULL
+) AS SettingsRow;
+

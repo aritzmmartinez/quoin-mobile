@@ -44,6 +44,10 @@ abstract final class QuoinIcons {
   static const gallery = QuoinIconData._(
     HugeIcons.strokeRoundedDashboardSquare01,
   );
+  static const sampleData = QuoinIconData._(
+    HugeIcons.strokeRoundedDatabaseImport,
+  );
+  static const clearData = QuoinIconData._(HugeIcons.strokeRoundedDelete02);
 
   // Generic.
   static const chevronRight = QuoinIconData._(
@@ -52,4 +56,5 @@ abstract final class QuoinIcons {
   static const check = QuoinIconData._(HugeIcons.strokeRoundedTick02);
   static const close = QuoinIconData._(HugeIcons.strokeRoundedCancel01);
   static const search = QuoinIconData._(HugeIcons.strokeRoundedSearch01);
+  static const sort = QuoinIconData._(HugeIcons.strokeRoundedArrowUpDown);
 }

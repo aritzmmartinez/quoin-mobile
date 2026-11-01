@@ -10,7 +10,7 @@ flows: `docs/ARCHITECTURE.md`.
 - `lib/src/core`: `error/` (exceptions, failures, Result), `theme/`, `l10n/`.
 - `lib/src/ui`: shared widgets by atomic level: `atoms/`, `molecules/`, `organisms/`, `templates/`.
 - `lib/src/features/<feature>/{data,domain,presentation}`: features are portfolio, import, analysis, tax, settings, sync.
-- `packages/quoin_core`: pure Dart domain shared with `../quoin` (`Dec`, `Money`).
+- `packages/quoin_core`: pure Dart domain shared with `../quoin`: `Dec`, `Money`, calendar, ledger, fx, swap and the portfolio projections. Golden cases in `test/contract/` are copied from `../quoin/test/contract/` and never edited.
 
 ## Architecture
 
@@ -18,12 +18,15 @@ flows: `docs/ARCHITECTURE.md`.
 - Domain imports only `dart:`, `quoin_core`, `core/error` and domain: no Flutter, Riverpod or storage.
 - Presentation never imports data; only `app/` sees both.
 - Shared domain logic goes in `quoin_core`; features use it, never copy it.
+- `computePositions` holds the AVCO loop today; when realised gains arrive, extract `walkAvco` and share it between the two, as in Quoin.
 - Create only the folders a feature uses; no empty folders.
 - Data sources throw `core/error/exceptions.dart` types only.
 - Repositories catch them and return `Result<T>` (`Ok`/`Err` with a sealed `Failure`); no dartz.
 - Presentation handles a `Result` with an exhaustive `switch`.
 - Models convert with `toEntity()` and never extend the entity.
-- State and injection: Riverpod only (no get_it, bloc, provider), no code generation.
+- State and injection: Riverpod only (no get_it, bloc, provider), no code generation for them.
+- Local store: drift, only in `data/`. Tables in `features/portfolio/data/database/schema.drift`, same names, CHECKs and unique keys as `../quoin/prisma/schema.prisma`; instants as ISO-8601 UTC text (`build.yaml`). Migrations by hand in `QuoinDatabase.migration`.
+- drift's `*.g.dart` is committed; CI regenerates it and fails on any diff.
 - One provider per link: data source → repository → use case → screen state.
 - A repository's provider is typed abstract in presentation and bound in `app/dependencies.dart`.
 - `ui/` widgets take data and callbacks: no features, providers or router.
@@ -38,7 +41,8 @@ flows: `docs/ARCHITECTURE.md`.
 - Amounts and quantities are `Dec` or `Money`, never `double`.
 - Doubles only for chart coordinates and the projection loop, via `toDouble()` at the edge.
 - Build them from text only (`Money.parse`, `Dec.parse`), never from a `double`.
-- Operate through their methods; there are no operators on purpose.
+- `Money` has no operators on purpose: operate through its methods. `Dec` is the numeric type and has them.
+- Ratios (weights, returns) are `Dec` rounded to six places, as the web stores them.
 - `Dec` is decimal.js (40 digits, ROUND_HALF_UP); if a case in `packages/quoin_core/test/contract/decimal.json` fails, the port is wrong.
 - No real portfolio data in the repo: fixtures, tests or screenshots.
 
@@ -58,14 +62,15 @@ flows: `docs/ARCHITECTURE.md`.
 - Icon tiles: circle for entities (position, broker), `RoundedSuperellipseBorder` for functions.
 - Text input: `QuoinTextField` only; label above, required except `.search`; unit suffix in Geist Mono.
 - A hint is short and never carries what the user needs; the search hint is «Buscar», its description is the accessibility label.
+- Chips: `QuoinChip.code` (Geist Mono) for ranges and codes, `QuoinChip.text` (Geist) for filters that are words, such as categories.
 - Segmented controls: `QuoinSegmented` (honours reduce motion).
 - No ink ripples (`NoSplash` in the theme): a pressed control changes colour (themed `highlightColor`, button overlays) or scales (`Pressable`).
 - Icons: Hugeicons stroke rounded, stroke 1.5; declared in `core/theme/quoin_icons.dart`, drawn with `ui/atoms/quoin_icon.dart`; only those two import `hugeicons` (a test checks it).
-- Bottom bar: our buttons and the central «+» on liquid glass (`liquid_glass_widgets` only in `QuoinBarSurface`); content scrolls under it (`QuoinPage.list`).
+- Bottom bar: 4 equal tabs on a liquid glass pill and the «+» as its own glass circle, as high as the pill, 10 px away; where it sits is `QuoinBarActionPlacement` (trailing by default; leading, above, or inside the pill at the centre). Both shapes share one `QuoinGlassLayer` (one backdrop capture, no blending). `liquid_glass_widgets` only in `quoin_bar_surface.dart`; content scrolls under the bar (`QuoinPage.list`).
 - The bar's glass is `GlassQuality.premium` (the standard shader keeps a hard rim over dark backdrops).
 - Bottom bar active tab: accent icon and label plus a pill that springs under it (jumps with reduce motion); a tab scales to 0.92 when pressed and clicks with `HapticFeedback.selectionClick`.
 - Navigation bar hidden natively in `MainActivity`, which passes its inset to Flutter; never `SystemChrome.setEnabledSystemUIMode`.
-- Component gallery: debug only (`kDebugMode`, Settings → Debug), the only place for invented data, not localised.
+- Component gallery and the sample portfolio: debug only (`kDebugMode`, Settings → Debug), the only places for invented data, not localised.
 - No visible string in code: Spanish template `app_es.arb`, full English; both ARBs have the same keys (a test checks it).
 - `lib/src/core/l10n/gen/` is generated by `flutter pub get`; never commit it.
 - Device preferences (theme, language) in `SharedPreferencesWithCache`, never synced, never in the database.
@@ -76,6 +81,7 @@ flows: `docs/ARCHITECTURE.md`.
 - Regenerate the sources from `docs/design/logo/quoin-mark-light.svg`: `dart run tool/branding/generate.dart` (plain Dart, no packages).
 - Regenerate icons: `dart run flutter_launcher_icons` (config in `flutter_launcher_icons.yaml`).
 - Regenerate splash: `dart run flutter_native_splash:create` (config in `flutter_native_splash.yaml`).
+- Regenerate drift code after changing `schema.drift` or a database class: `dart run build_runner build`.
 - Strict analysis (`strict-casts`, `strict-inference`, `strict-raw-types`) in the app and in `quoin_core`.
 - Use the dart-flutter plugin (MCP server and skills); if a skill contradicts this file or the prompt, this file and the prompt win, and say so.
 - Before handing back: `dart analyze` and `dart test` in `packages/quoin_core`; `flutter analyze` and `flutter test` at the root.

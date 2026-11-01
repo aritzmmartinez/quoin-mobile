@@ -22,8 +22,8 @@ packages/quoin_core/     Dec, Money and the domain rules shared with ../quoin
 ```
 
 A folder exists only when it holds something: a feature has only the layers
-it uses. Today `settings` has all three; `portfolio`, `analysis` and `import`
-have only `presentation/pages`.
+it uses. Today `settings` and `portfolio` have all three; `analysis` and
+`import` have only `presentation/pages`.
 
 ## Layers
 
@@ -49,6 +49,21 @@ Dependencies point inwards: `presentation → domain ← data`.
 rules. Features import it and never copy it. A feature's own `domain/` holds
 only what is specific to the app (preferences, screens' use cases), built on
 top of quoin_core types.
+
+## Local store
+
+`features/portfolio/data/database` holds the drift database. `schema.drift`
+declares the tables of `../quoin/prisma/schema.prisma` that are read so far
+(`Instrument`, `LedgerEntry`, `PriceSnapshot`, `FxRate`, `Settings`) with the
+same names, CHECKs and unique keys, so sync can map rows one to one. Amounts
+are decimal text, days `YYYY-MM-DD`, instants ISO-8601 UTC text. Migrations are
+hand-written steps in `QuoinDatabase.migration`; the generated `.g.dart` is
+committed and CI fails if regenerating it changes anything.
+
+The portfolio screens read the ledger, the latest price of each instrument and
+the ECB rates, and run the web's home chain through `quoin_core`
+(`GetPortfolioOverview`): positions, prices in euros, market values, summary,
+allocation and top positions.
 
 ## Errors
 

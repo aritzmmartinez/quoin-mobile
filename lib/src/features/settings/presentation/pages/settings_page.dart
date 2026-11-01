@@ -9,6 +9,7 @@ import 'package:quoin/src/core/l10n/gen/app_localizations.dart';
 import 'package:quoin/src/core/theme/quoin_icons.dart';
 import 'package:quoin/src/core/theme/quoin_tokens.dart';
 import 'package:quoin/src/core/theme/quoin_type.dart';
+import 'package:quoin/src/features/portfolio/presentation/providers/portfolio_providers.dart';
 import 'package:quoin/src/features/settings/presentation/providers/settings_providers.dart';
 import 'package:quoin/src/ui/atoms/quoin_icon.dart';
 import 'package:quoin/src/ui/molecules/settings_row.dart';
@@ -133,6 +134,24 @@ class SettingsPage extends ConsumerWidget {
                 label: 'Galería de componentes',
                 onTap: () => context.push(Routes.gallery),
               ),
+              SettingsRow(
+                icon: QuoinIcons.sampleData,
+                label: 'Cargar cartera de ejemplo',
+                onTap: () => _debugWrite(
+                  context,
+                  ref,
+                  ref.read(loadSamplePortfolioProvider)(DateTime.now()),
+                ),
+              ),
+              SettingsRow(
+                icon: QuoinIcons.clearData,
+                label: 'Vaciar cartera',
+                onTap: () => _debugWrite(
+                  context,
+                  ref,
+                  ref.read(clearPortfolioProvider)(),
+                ),
+              ),
             ],
           ),
         ],
@@ -155,6 +174,26 @@ Future<void> _save(BuildContext context, Future<Result<void>> saving) async {
         ),
       );
   }
+}
+
+/// Debug only, so not localised: invented data is never shown in release.
+Future<void> _debugWrite(
+  BuildContext context,
+  WidgetRef ref,
+  Future<Result<void>> writing,
+) async {
+  final result = await writing;
+  ref.invalidate(portfolioOverviewProvider);
+  if (!context.mounted) return;
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text(switch (result) {
+        Ok() => 'Hecho',
+        Err() => 'No se ha podido escribir en la base',
+      }),
+      duration: const Duration(seconds: 2),
+    ),
+  );
 }
 
 Future<void> _choose<T>(
