@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 import 'package:quoin/src/app/app.dart';
 import 'package:quoin/src/app/router.dart';
+import 'package:quoin/src/features/import/data/datasources/ecb_remote_datasource.dart';
 import 'package:quoin/src/features/import/data/datasources/import_file_datasource.dart';
 import 'package:quoin/src/features/import/domain/entities/import_batch.dart';
 
 import '../../helpers.dart';
 
-/// Hands back an invented file instead of opening the system picker.
 class _Files implements ImportFileDataSource {
   const _Files(this.text);
 
@@ -18,6 +20,10 @@ class _Files implements ImportFileDataSource {
   Future<ImportFile?> pick() async =>
       ImportFile(name: 'movimientos.csv', size: text.length, text: text);
 }
+
+final offline = httpClientProvider.overrideWithValue(
+  MockClient((_) async => throw http.ClientException('offline')),
+);
 
 void main() {
   Future<void> open(WidgetTester tester, String location) async {
@@ -32,23 +38,30 @@ void main() {
   testWidgets('the sample batch goes through review, import and done', (
     tester,
   ) async {
-    await pumpApp(tester, prefs: {'locale': 'es'});
+    await pumpApp(tester, prefs: {'locale': 'es'}, overrides: [offline]);
     await open(tester, Routes.importSample);
 
     expect(find.text('Revisa antes de importar'), findsOneWidget);
-    expect(find.text('7'), findsOneWidget, reason: 'new operations');
-    expect(find.text('3'), findsOneWidget, reason: 'warnings');
+    expect(find.text('6'), findsOneWidget, reason: 'new operations');
+    expect(find.text('5'), findsOneWidget, reason: 'warnings and errors');
+    expect(
+      find.textContaining('No se ha podido consultar el BCE'),
+      findsOneWidget,
+    );
     expect(find.text('Pagos con tarjeta'), findsOneWidget);
+    expect(find.text('Clase de activo sin soporte'), findsOneWidget);
+    expect(find.text('Con error'), findsOneWidget);
+    expect(find.text('fila 12'), findsOneWidget);
 
     await tester.tap(find.text('Ver detalle'));
     await tester.pumpAndSettle();
     expect(find.text('Fondo Ejemplo Mundial'), findsWidgets);
 
-    await tester.tap(find.text('Importar 7 movimientos'));
+    await tester.tap(find.text('Importar 6 movimientos'));
     await tester.pumpAndSettle();
     expect(find.text('Importación completada'), findsOneWidget);
     expect(
-      find.text('Se han añadido 7 movimientos a tu cartera'),
+      find.text('Se han añadido 6 movimientos a tu cartera'),
       findsOneWidget,
     );
 
@@ -109,9 +122,7 @@ void main() {
     expect(find.text('Aún no has importado ningún movimiento'), findsOneWidget);
   });
 
-  testWidgets('a recognised export says its format is not supported yet', (
-    tester,
-  ) async {
+  testWidgets('an old Kraken export is refused, naming why', (tester) async {
     await pumpApp(
       tester,
       prefs: {'locale': 'es'},
@@ -128,7 +139,8 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Continuar'));
     await tester.pumpAndSettle();
-    expect(find.textContaining('Formato aún no soportado'), findsOneWidget);
+    expect(find.textContaining('export antiguo de Kraken'), findsOneWidget);
+    expect(find.text('Tu cartera actual no se ha modificado.'), findsOneWidget);
   });
 
   testWidgets('every step fits at 200 % text size', (tester) async {
@@ -142,6 +154,7 @@ void main() {
       tester,
       prefs: {'locale': 'es'},
       overrides: [
+        offline,
         importFileDataSourceProvider.overrideWithValue(
           const _Files('fecha,importe\n'),
         ),
@@ -164,7 +177,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.drag(find.byType(Scrollable).last, const Offset(0, -3000));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Importar 7 movimientos'));
+    await tester.tap(find.text('Importar 6 movimientos'));
     await tester.pumpAndSettle();
     expect(find.text('Importación completada'), findsOneWidget);
   });

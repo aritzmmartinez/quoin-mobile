@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:quoin_core/quoin_core.dart';
 
 import 'package:quoin/src/core/error/exceptions.dart';
-import 'package:quoin/src/features/import/data/datasources/ecb_remote_datasource.dart';
 import 'package:quoin/src/features/portfolio/data/database/quoin_database.dart'
     show FxRateCompanion, QuoinDatabase;
 import 'package:quoin/src/features/portfolio/data/datasources/portfolio_local_datasource.dart';
@@ -13,7 +12,6 @@ final fxLocalDataSourceProvider = Provider(
   (ref) => FxLocalDataSource(ref.watch(quoinDatabaseProvider)),
 );
 
-/// The stored ECB series in the `FxRate` table.
 class FxLocalDataSource {
   const FxLocalDataSource(this._db);
 
@@ -50,7 +48,7 @@ class FxLocalDataSource {
               base: rate.base,
               quote: rate.quote,
               day: rate.day,
-              rate: '${rate.rate}',
+              rate: rate.rate.text,
               source: rate.source,
               createdAt: now,
             ),
@@ -67,6 +65,15 @@ class FxLocalDataSource {
                   r.source.equals(ecbSource) &
                   r.base.equals(baseCurrency) &
                   r.quote.isIn(quotes),
+            ))
+            .get();
+    return [for (final row in rows) row.toEntity()];
+  });
+
+  Future<List<FxRate>> all() => _guard(() async {
+    final rows =
+        await (_db.select(_db.fxRate)..where(
+              (r) => r.source.equals(ecbSource) & r.base.equals(baseCurrency),
             ))
             .get();
     return [for (final row in rows) row.toEntity()];

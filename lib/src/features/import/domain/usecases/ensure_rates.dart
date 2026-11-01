@@ -2,24 +2,23 @@ import 'package:quoin_core/quoin_core.dart';
 
 import 'package:quoin/src/core/error/failures.dart';
 import 'package:quoin/src/core/error/result.dart';
+import 'package:quoin/src/features/import/domain/entities/import_batch.dart';
 import 'package:quoin/src/features/import/domain/repositories/fx_repository.dart';
 
-/// Days fetched before a currency's first use, so a row on a holiday finds
-/// the rate before it.
 const firstUseMarginDays = 7;
 
-/// The stored series of the currencies an import needs, and the ones the ECB
-/// could not be asked for.
 final class EnsuredRates {
-  const EnsuredRates({required this.book, required this.unavailable});
+  const EnsuredRates({
+    required this.book,
+    required this.unavailable,
+    this.conflicts = const [],
+  });
 
   final RateBook book;
   final List<String> unavailable;
+  final List<RateConflict> conflicts;
 }
 
-/// Where fetching a series starts: [needed] when nothing is stored or the
-/// currency is first used before the stored series begins, else its last
-/// stored day (fetched again, to notice a revision).
 String syncStart(
   String needed,
   String? firstUse,
@@ -31,11 +30,6 @@ String syncStart(
   return last;
 }
 
-/// Brings the ECB series of each currency in [needs] (currency → first day it
-/// is used) up to today and returns them, as Quoin's `ensureRates`. A currency
-/// the service cannot be asked for is listed as unavailable, not an error: its
-/// rows become warnings. A series whose fetched rates disagree with the stored
-/// ones keeps the stored ones.
 class EnsureRates {
   const EnsureRates(this._fx);
 
@@ -56,6 +50,7 @@ class EnsureRates {
 
     final to = today(zone, now);
     final unavailable = <String>[];
+    final conflicts = <RateConflict>[];
     for (final quote in currencies) {
       final used = needs[quote]!;
       final ({String? first, String? last}) stored;
@@ -76,14 +71,24 @@ class EnsureRates {
         case Err(:final failure):
           return Err(failure);
       }
-      if (await _fx.save(quote, rates) case Err(:final failure)) {
-        return Err(failure);
+      switch (await _fx.save(quote, rates)) {
+        case Ok(value: FxWritePlan(conflicts: [_, ...] && final found)):
+          final days = [for (final c in found) c.stored.day]..sort();
+          conflicts.add((currency: quote, day: days.first));
+        case Ok():
+          break;
+        case Err(:final failure):
+          return Err(failure);
       }
     }
 
     return switch (await _fx.book(currencies)) {
       Ok(:final value) => Ok(
-        EnsuredRates(book: value, unavailable: unavailable),
+        EnsuredRates(
+          book: value,
+          unavailable: unavailable,
+          conflicts: conflicts,
+        ),
       ),
       Err(:final failure) => Err(failure),
     };

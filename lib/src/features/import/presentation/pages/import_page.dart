@@ -8,15 +8,11 @@ import 'package:quoin/src/core/theme/quoin_icons.dart';
 import 'package:quoin/src/core/theme/quoin_tokens.dart';
 import 'package:quoin/src/features/import/presentation/providers/import_providers.dart';
 import 'package:quoin/src/features/import/presentation/widgets/import_steps.dart';
-import 'package:quoin/src/features/portfolio/presentation/providers/portfolio_providers.dart';
 import 'package:quoin/src/ui/atoms/quoin_icon.dart';
 
-/// The import wizard: how to export, the file, the review, done. Nothing is
-/// written until the user confirms the review.
 class ImportPage extends ConsumerStatefulWidget {
   const ImportPage({super.key, this.sample = false});
 
-  /// Debug builds only: start from the invented batch.
   final bool sample;
 
   @override
@@ -29,9 +25,7 @@ class _ImportPageState extends ConsumerState<ImportPage> {
     super.initState();
     if (widget.sample) {
       Future.microtask(
-        () => ref
-            .read(importFlowProvider.notifier)
-            .processSample(ref.read(nowProvider)()),
+        () => ref.read(importFlowProvider.notifier).processSample(),
       );
     }
   }
@@ -44,11 +38,7 @@ class _ImportPageState extends ConsumerState<ImportPage> {
 
     ref.listen(importFlowProvider.select((s) => s.failure), (_, failure) async {
       if (failure == null) return;
-      final retry = await showImportFailure(
-        context,
-        failure,
-        zone: ref.read(importFlowProvider).preview?.zone,
-      );
+      final retry = await showImportFailure(context, failure);
       if (!context.mounted) return;
       flow.dismissFailure();
       if (!retry) Navigator.of(context).pop();

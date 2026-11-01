@@ -5,7 +5,8 @@ import 'package:quoin/src/features/portfolio/data/datasources/portfolio_local_da
 import 'package:quoin/src/features/portfolio/data/repositories/portfolio_repository_impl.dart';
 import 'package:quoin/src/features/portfolio/domain/entities/portfolio_ledger.dart';
 import 'package:quoin/src/features/portfolio/domain/usecases/get_portfolio_overview.dart';
-import 'package:quoin_core/quoin_core.dart' show Residence, otherCategory;
+import 'package:quoin_core/quoin_core.dart'
+    show Residence, dayOf, otherCategory, rateDayFor, shiftDay;
 
 import '../../helpers.dart';
 
@@ -64,18 +65,55 @@ void main() {
     expect('${fund.position.costBasis}', '7033');
     expect('${fund.value.marketValue}', '8131.5');
 
-    // 2170 USD and 1.09 USD of fees at 1.085 per euro: 2000 + 1.00.
+    // 2170 USD and 1.09 USD of fees at 1.085 per euro: 2000 + 1.00. Its
+    // price is in dollars and the sample stores no ECB rate: no value.
     final tech = byName['Ejemplo Tecnología Inc.']!;
     expect('${tech.position.costBasis}', '2001');
-    expect(tech.isPriced, isTrue);
+    expect(tech.isPriced, isFalse);
 
     expect(byName.containsKey('Salud Mundial'), isFalse, reason: 'closed');
     expect(byName['Fondo Emergentes']!.isPriced, isFalse);
     expect(byName['Inmobiliario Europa']!.category, otherCategory);
-    expect(overview.summary.unpricedCount, 1);
-    expect(overview.summary.pricedCount, 7);
-    expect(overview.unrated, isEmpty);
+    expect(overview.summary.unpricedCount, 2);
+    expect(overview.summary.pricedCount, 6);
+    expect(overview.unrated, ['Ejemplo Tecnología Inc.']);
     expect(overview.top, hasLength(topPositions));
+  });
+
+  test('valuation reads only the ECB series, as Quoin does', () async {
+    await repository.loadSample(testNow);
+    final day = rateDayFor(shiftDay(dayOf(testNow, 'Europe/Madrid'), -1));
+    await db
+        .into(db.fxRate)
+        .insert(
+          FxRateCompanion.insert(
+            id: 'other',
+            base: 'EUR',
+            quote: 'USD',
+            day: day,
+            rate: '1.0912',
+            source: 'MANUAL',
+            createdAt: testNow,
+          ),
+        );
+    var overview = overviewOf(await load(), testNow);
+    expect(overview.unrated, ['Ejemplo Tecnología Inc.'], reason: 'ignored');
+
+    await db
+        .into(db.fxRate)
+        .insert(
+          FxRateCompanion.insert(
+            id: 'ecb',
+            base: 'EUR',
+            quote: 'USD',
+            day: day,
+            rate: '1.0950',
+            source: 'ECB',
+            createdAt: testNow,
+          ),
+        );
+    overview = overviewOf(await load(), testNow);
+    expect(overview.unrated, isEmpty, reason: 'the same day, two sources');
   });
 
   test('clearing leaves the empty state', () async {

@@ -2,11 +2,16 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:quoin/src/core/error/failures.dart';
 import 'package:quoin/src/core/error/result.dart';
 import 'package:quoin/src/features/import/data/datasources/import_file_datasource.dart';
+import 'package:quoin/src/features/import/domain/usecases/plan_import.dart';
+import 'package:quoin/src/features/import/domain/usecases/ensure_rates.dart';
+import 'package:quoin/src/features/import/domain/repositories/fx_repository.dart';
+import 'package:quoin/src/features/import/data/datasources/fx_local_datasource.dart';
 import 'package:quoin/src/features/import/data/datasources/import_local_datasource.dart';
 import 'package:quoin/src/features/import/data/repositories/import_repository_impl.dart';
 import 'package:quoin/src/features/import/domain/entities/import_batch.dart';
 import 'package:quoin/src/features/import/domain/usecases/commit_import.dart';
-import 'package:quoin/src/features/portfolio/data/database/quoin_database.dart';
+import 'package:quoin/src/features/portfolio/data/database/quoin_database.dart'
+    show LedgerEntryRow, QuoinDatabase;
 import 'package:quoin_core/quoin_core.dart' hide Instrument;
 import 'package:quoin_core/quoin_core.dart' as core show Instrument;
 
@@ -42,13 +47,28 @@ TradeEvent buy(
   externalId: externalId,
 );
 
-ImportBatch batchOf(List<LedgerEvent> events, {List<int>? operationOf}) =>
-    ImportBatch(
-      total: events.length,
-      instruments: [instrument()],
-      events: events,
-      operationOf: operationOf,
-    );
+MappedBatch batchOf(
+  List<LedgerEvent> events, {
+  List<int>? operationOf,
+  List<core.Instrument>? instruments,
+}) => MappedBatch(
+  total: events.length,
+  instruments: instruments ?? [instrument()],
+  events: events,
+  operationOf: operationOf ?? [for (var i = 0; i < events.length; i += 1) i],
+  discarded: const {},
+  discardedDetails: const {},
+  noticed: const {},
+  errors: const [],
+  ratesNeeded: const {},
+);
+
+ImportPreview previewOf(MappedBatch batch) => ImportPreview(
+  batch: batch,
+  imported: 0,
+  duplicates: 0,
+  zone: 'Europe/Madrid',
+);
 
 void main() {
   late QuoinDatabase db;
@@ -60,6 +80,7 @@ void main() {
     repository = ImportRepositoryImpl(
       const ImportFileDataSource(),
       ImportLocalDataSource(db),
+      FxLocalDataSource(db),
       now: () => at,
     );
     commit = CommitImport(repository);
@@ -73,22 +94,25 @@ void main() {
 
   Future<List<LedgerEntryRow>> entries() => db.select(db.ledgerEntry).get();
 
+  Future<Set<(String, String)>> stored(MappedBatch batch) async =>
+      ok(await repository.existing(batch.events));
+
   test('a batch is written once; importing it again adds nothing', () async {
     final batch = batchOf([buy('a'), buy('b')]);
-    expect(ok(await repository.preview(batch)).imported, 2);
+    expect(countOperations(batch, await stored(batch)).imported, 2);
 
-    final first = ok(await commit(batch));
+    final first = ok(await commit(previewOf(batch)));
     expect((first.imported, first.duplicates), (2, 0));
     expect(await entries(), hasLength(2));
 
-    final again = ok(await commit(batch));
+    final again = ok(await commit(previewOf(batch)));
     expect((again.imported, again.duplicates), (0, 2));
     expect(await entries(), hasLength(2));
-    expect(ok(await repository.preview(batch)).imported, 0);
+    expect(countOperations(batch, await stored(batch)).imported, 0);
   });
 
   test('rows are stored as Quoin writes them', () async {
-    ok(await commit(batchOf([buy('a')])));
+    ok(await commit(previewOf(batchOf([buy('a')]))));
     final row = (await entries()).single;
     expect(row.type, 'BUY');
     expect(row.quantity, '2');
@@ -107,8 +131,33 @@ void main() {
     expect(ts.read<String>('ts'), '2026-03-02T10:00:00.000Z');
   });
 
+  test('amounts keep the text they were read from', () async {
+    final usd = TradeEvent(
+      id: 'id-usd',
+      ts: at,
+      type: TradeType.buy,
+      instrumentId: fund,
+      quantity: Dec.parse('2'),
+      price: Money.parse('50.50'),
+      grossAmount: Money.parse('101'),
+      fees: Money.zero,
+      currency: 'USD',
+      fxSource: FxSource.ecb,
+      fxRate: Dec.parse('1.0500'),
+      fxDirection: FxDirection.quotePerBase,
+      fxDate: '2026-03-02',
+      account: 'trade-republic',
+      source: 'TR_CSV',
+      externalId: 'usd',
+    );
+    ok(await commit(previewOf(batchOf([usd]))));
+    final row = (await entries()).single;
+    expect(row.price, '50.50');
+    expect(row.fxRate, '1.0500');
+  });
+
   test('an instrument keeps the fields set by hand', () async {
-    ok(await commit(batchOf([buy('a')])));
+    ok(await commit(previewOf(batchOf([buy('a')]))));
     await db.customStatement(
       'UPDATE "Instrument" SET "ter" = \'0.2\', "thesis" = \'CONVICTION\', '
       '"quoteSymbol" = \'QTEST.DE\', "exposureKind" = \'EQUITY_FUND\', '
@@ -117,10 +166,11 @@ void main() {
 
     ok(
       await commit(
-        ImportBatch(
-          total: 1,
-          instruments: [instrument(name: 'Fondo Prueba Acc')],
-          events: [buy('b')],
+        previewOf(
+          batchOf(
+            [buy('b')],
+            instruments: [instrument(name: 'Fondo Prueba Acc')],
+          ),
         ),
       ),
     );
@@ -137,9 +187,11 @@ void main() {
   test(
     'a stored cash row the batch knows to be in kind is marked so',
     () async {
-      ok(await commit(batchOf([buy('a'), buy('b')])));
+      ok(await commit(previewOf(batchOf([buy('a'), buy('b')]))));
       final result = ok(
-        await commit(batchOf([buy('a', funding: Funding.inKind), buy('b')])),
+        await commit(
+          previewOf(batchOf([buy('a', funding: Funding.inKind), buy('b')])),
+        ),
       );
       expect(result.imported, 0);
       final funding = {
@@ -150,8 +202,8 @@ void main() {
   );
 
   test('an in-kind row never goes back to cash', () async {
-    ok(await commit(batchOf([buy('a', funding: Funding.inKind)])));
-    ok(await commit(batchOf([buy('a')])));
+    ok(await commit(previewOf(batchOf([buy('a', funding: Funding.inKind)]))));
+    ok(await commit(previewOf(batchOf([buy('a')]))));
     expect((await entries()).single.funding, 'IN_KIND');
   });
 
@@ -160,15 +212,19 @@ void main() {
       buy('s1', type: TradeType.sell, swap: 'x'),
       buy('s2', swap: 'x'),
     ];
-    final first = ok(await commit(batchOf(legs, operationOf: [0, 0])));
+    final first = ok(
+      await commit(previewOf(batchOf(legs, operationOf: [0, 0]))),
+    );
     expect((first.imported, first.duplicates), (1, 0));
-    final again = ok(await commit(batchOf(legs, operationOf: [0, 0])));
+    final again = ok(
+      await commit(previewOf(batchOf(legs, operationOf: [0, 0]))),
+    );
     expect((again.imported, again.duplicates), (0, 1));
   });
 
   test('a failed write leaves nothing behind', () async {
     final result = await commit(
-      batchOf([buy('a'), buy('b', instrumentId: 'XX00QMISSING')]),
+      previewOf(batchOf([buy('a'), buy('b', instrumentId: 'XX00QMISSING')])),
     );
     expect(result, isA<Err<ImportPreview>>());
     expect((result as Err).failure, isA<StorageFailure>());
@@ -191,19 +247,64 @@ void main() {
       source: 'TR_CSV',
       externalId: 'usd',
     );
-    final result = await commit(batchOf([buy('a'), foreign]));
+    final result = await commit(previewOf(batchOf([buy('a'), foreign])));
     final failure = (result as Err).failure;
     expect(failure, isA<InvalidLedgerEventFailure>());
     expect((failure as InvalidLedgerEventFailure).currency, 'USD');
+    expect(failure.day, '2026-03-02');
     expect(await entries(), isEmpty);
   });
 
-  test('the sample batch is valid and writes every kind of row', () async {
-    final batch = repository.sampleBatch(at);
-    final result = ok(await commit(batch));
-    expect(result.imported, 7);
+  test('the sample export goes through the adapter and imports once', () async {
+    final plan = PlanImport(repository, const EnsureRates(_Offline()));
+    final preview = ok(await plan(repository.sampleFile(at), now: at));
+    expect(preview.ratesUnavailable, ['USD']);
+    expect(
+      preview.batch.discarded.keys,
+      containsAll([
+        DiscardReason.fxUnavailable,
+        DiscardReason.cardSpending,
+        DiscardReason.unsupportedAssetClass,
+        DiscardReason.savebackUnpaired,
+      ]),
+    );
+    expect(preview.batch.errors.single.reason, RowErrorReason.wrongFieldCount);
+    final result = ok(await commit(preview));
+    expect(result.imported, 6, reason: 'a saveback and its purchase are one');
     final types = {for (final r in await entries()) r.type};
-    expect(types, {'DEPOSIT', 'BUY', 'SELL', 'DIVIDEND'});
-    expect(ok(await commit(batch)).imported, 0);
+    expect(types, {'DEPOSIT', 'BUY', 'SELL', 'DIVIDEND', 'INTEREST'});
+
+    final again = ok(await plan(repository.sampleFile(at), now: at));
+    expect((again.imported, again.duplicates), (0, 6));
   });
+
+  test('the context reads the residence zone and the stored rates', () async {
+    await db.customStatement(
+      'INSERT INTO "FxRate" ("id", "base", "quote", "day", "rate", "source", '
+      '"createdAt") VALUES (\'r1\', \'EUR\', \'USD\', \'2026-03-02\', '
+      '\'1.0500\', \'ECB\', \'2026-03-02T00:00:00.000Z\')',
+    );
+    final context = ok(await repository.context());
+    expect(context.zone, 'Europe/Madrid');
+    expect(context.rates['USD']!.single.rate.text, '1.0500');
+  });
+}
+
+class _Offline implements FxRepository {
+  const _Offline();
+
+  @override
+  Future<Result<({String? first, String? last})>> span(String quote) async =>
+      const Ok((first: null, last: null));
+
+  @override
+  Future<Result<List<FxRate>>> fetch(String q, String f, String t) async =>
+      const Err(NetworkFailure());
+
+  @override
+  Future<Result<FxWritePlan>> save(String quote, List<FxRate> rates) =>
+      throw UnimplementedError();
+
+  @override
+  Future<Result<RateBook>> book(List<String> quotes) async => const Ok({});
 }

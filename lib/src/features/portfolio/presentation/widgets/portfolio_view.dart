@@ -16,8 +16,6 @@ import 'package:quoin/src/ui/molecules/gain_badge.dart';
 import 'package:quoin/src/ui/molecules/position_row.dart';
 import 'package:quoin/src/ui/templates/quoin_page.dart';
 
-/// A portfolio screen through its states: nothing while it loads, the
-/// failure, [empty] when nothing was ever imported, else [builder].
 class PortfolioView extends StatelessWidget {
   const PortfolioView({
     super.key,
@@ -77,8 +75,9 @@ Widget sectionLabel(BuildContext context, String text, {Widget? action}) {
   );
 }
 
-/// What the portfolio leaves out, named: instruments with no recent rate and
-/// those with a trade that has none.
+String _end(List<String> names) =>
+    names.isNotEmpty && names.last.endsWith('.') ? 'dot' : 'none';
+
 List<Widget> valuationNotices(BuildContext context, PortfolioOverview o) {
   final l10n = AppLocalizations.of(context);
   final style = QuoinType.of(context).secondary
@@ -86,11 +85,14 @@ List<Widget> valuationNotices(BuildContext context, PortfolioOverview o) {
   return [
     if (o.unrated.isNotEmpty) ...[
       const SizedBox(height: 8),
-      Text(l10n.fxUnrated(o.unrated.join(', ')), style: style),
+      Text(l10n.fxUnrated(o.unrated.join(', '), _end(o.unrated)), style: style),
     ],
     if (o.unconvertible.isNotEmpty) ...[
       const SizedBox(height: 8),
-      Text(l10n.fxUnconvertible(o.unconvertible.join(', ')), style: style),
+      Text(
+        l10n.fxUnconvertible(o.unconvertible.join(', '), _end(o.unconvertible)),
+        style: style,
+      ),
     ],
   ];
 }
@@ -105,8 +107,6 @@ String categoryLabel(AppLocalizations l10n, String category) =>
       null => l10n.categoryOther,
     };
 
-/// [holdings] as rows in one card. An unpriced position shows its cost,
-/// muted, and says it has no price: it is named, never added to the value.
 Widget holdingsCard(
   BuildContext context,
   List<Holding> holdings, {

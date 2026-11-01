@@ -25,17 +25,13 @@ class QuoinFormat {
   String get _group => _es ? '.' : ',';
   String get _decimal => _es ? ',' : '.';
 
-  /// The day [instant] falls on in [zone], as Intl writes it: «4 sept 2026»,
-  /// «Sep 4, 2026». The web shows dates in the residence's zone, not the
-  /// device's.
-  String date(DateTime instant, String zone) {
-    final day = calendarDateOf(instant, zone);
-    return DateFormat.yMMMd(languageCode)
-        .format(DateTime(day.year, day.month, day.day));
-  }
+  String date(DateTime instant, String zone) =>
+      day(calendarDateOf(instant, zone));
 
-  /// «1234,56 €», «€1,234.56». With [floorNonZero], a positive amount that
-  /// rounds to zero reads «<0,01 €».
+  String day(CalendarDate date) =>
+      DateFormat.yMMMd(languageCode)
+          .format(DateTime(date.year, date.month, date.day));
+
   String money(Money value, {bool floorNonZero = false}) {
     final amount = value.amount;
     if (floorNonZero && amount.isPositive && amount.roundTo(2).isZero) {
@@ -46,8 +42,6 @@ class QuoinFormat {
     return _es ? '$sign$number$_nbsp€' : '$sign€$number';
   }
 
-  /// The magnitude with «+» or «−» (U+2212) in front, and which sign it is;
-  /// zero carries none.
   ({String text, int sign}) signedMoney(Money value) {
     final magnitude = money(value.isNegative ? value.negate() : value);
     final sign = value.amount.sign;
@@ -59,9 +53,6 @@ class QuoinFormat {
     return (text: '$prefix$magnitude', sign: sign);
   }
 
-  /// [fraction] as a percentage: «12,3 %», «12.3%». [signed] puts «+» or «-»
-  /// in front of anything that does not round to zero. With [floorNonZero], a
-  /// positive fraction that rounds to zero reads «<0,1 %».
   String percent(
     Dec fraction, {
     int decimals = 1,
@@ -85,7 +76,6 @@ class QuoinFormat {
     return _es ? '$sign$number$_nbsp%' : '$sign$number%';
   }
 
-  /// A number of units, up to [maxDecimals] places: «12.345», «0,5».
   String quantity(Dec value, {int minDecimals = 0, int maxDecimals = 10}) {
     final number = _number(
       value.abs(),

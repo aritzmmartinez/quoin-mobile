@@ -17,13 +17,10 @@ final ecbRemoteDataSourceProvider = Provider(
   (ref) => EcbRemoteDataSource(ref.watch(httpClientProvider)),
 );
 
-const ecbSource = 'ECB';
 const ecbTimeout = Duration(seconds: 60);
 
 final _ecbCode = RegExp(r'^[A-Z]{3}$');
 
-/// The ECB's daily reference rate series of [quote] per euro, as CSV with the
-/// data only.
 Uri ecbRatesUrl(String quote, String from, String to) => Uri.https(
   'data-api.ecb.europa.eu',
   '/service/data/EXR/D.$quote.$baseCurrency.SP00.A',
@@ -35,14 +32,12 @@ Uri ecbRatesUrl(String quote, String from, String to) => Uri.https(
   },
 );
 
-/// The ECB data API, one currency per request, as in Quoin.
 class EcbRemoteDataSource {
   const EcbRemoteDataSource(this._client, {this.timeout = ecbTimeout});
 
   final http.Client _client;
   final Duration timeout;
 
-  /// Empty for a code the ECB does not publish (a stablecoin, say).
   Future<List<FxRate>> rates(String quote, String from, String to) async {
     if (!_ecbCode.hasMatch(quote)) return const [];
     final http.Response response;
@@ -85,9 +80,6 @@ const _columns = [
 
 final _positiveDecimal = RegExp(r'^\d+(\.\d+)?$');
 
-/// Reads the ECB's CSV for [quote], oldest first. Throws [FormatException]
-/// (or [CsvFormatException]) on anything but daily rates of [quote] per euro.
-/// A day without a value is skipped.
 List<FxRate> parseEcbCsv(String body, String quote) {
   if (body.trim().isEmpty) return const [];
   final table = parseCsv(body);

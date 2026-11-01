@@ -109,5 +109,7 @@ void main() {
     );
     final ensured = await run({'USD': '2026-03-03'});
     expect(ensured.book['USD']!.single.rate, Dec.parse('1.08'));
+    expect(ensured.conflicts, [(currency: 'USD', day: '2026-03-02')]);
+    expect(ensured.unavailable, isEmpty);
   });
 }

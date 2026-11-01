@@ -4,9 +4,10 @@ import '../money/money.dart';
 import '../series/as_of.dart';
 import '../sort.dart';
 
+const String ecbSource = 'ECB';
+
 const int valuationRateMaxAgeDays = 7;
 
-/// A published exchange rate: units of [quote] per one [base] on [day].
 final class FxRate {
   const FxRate({
     required this.source,
@@ -19,13 +20,10 @@ final class FxRate {
   final String source;
   final String base;
   final String quote;
-
-  /// `YYYY-MM-DD`, the source's reference date.
   final String day;
   final Dec rate;
 }
 
-/// Each currency's rates against the euro, oldest first.
 typedef RateBook = Map<String, List<FxRate>>;
 
 RateBook rateBookFrom(Iterable<FxRate> rates) {
@@ -55,7 +53,6 @@ List<FxRate> _checked(String quote, List<FxRate> series) {
   return series;
 }
 
-/// The rate a ledger row of [day] is booked at: that TARGET day's, or none.
 FxRate? bookingRate(RateBook book, String currency, String day) {
   final series = book[currency];
   if (series == null) return null;
@@ -64,8 +61,6 @@ FxRate? bookingRate(RateBook book, String currency, String day) {
   return found?.day == wanted ? found : null;
 }
 
-/// The rate a price of [day] is valued at: the last one published on or before
-/// it, at most a week old.
 FxRate? valuationRate(RateBook book, String currency, String day) {
   final series = book[currency];
   if (series == null) return null;

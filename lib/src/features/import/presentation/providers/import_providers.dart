@@ -9,8 +9,6 @@ import 'package:quoin/src/features/import/domain/usecases/commit_import.dart';
 import 'package:quoin/src/features/import/domain/usecases/ensure_rates.dart';
 import 'package:quoin/src/features/import/domain/usecases/pick_import_file.dart';
 import 'package:quoin/src/features/import/domain/usecases/plan_import.dart';
-import 'package:quoin/src/features/import/domain/usecases/preview_import.dart';
-import 'package:quoin/src/features/import/domain/usecases/sample_import_batch.dart';
 import 'package:quoin/src/features/portfolio/presentation/providers/portfolio_providers.dart';
 
 final importRepositoryProvider = Provider<ImportRepository>(
@@ -23,28 +21,21 @@ final fxRepositoryProvider = Provider<FxRepository>(
 final pickImportFileProvider = Provider(
   (ref) => PickImportFile(ref.watch(importRepositoryProvider)),
 );
-final planImportProvider = Provider((ref) => const PlanImport());
-final previewImportProvider = Provider(
-  (ref) => PreviewImport(ref.watch(importRepositoryProvider)),
+final ensureRatesProvider = Provider(
+  (ref) => EnsureRates(ref.watch(fxRepositoryProvider)),
+);
+final planImportProvider = Provider(
+  (ref) => PlanImport(
+    ref.watch(importRepositoryProvider),
+    ref.watch(ensureRatesProvider),
+  ),
 );
 final commitImportProvider = Provider(
   (ref) => CommitImport(ref.watch(importRepositoryProvider)),
 );
-final sampleImportBatchProvider = Provider(
-  (ref) => SampleImportBatch(ref.watch(importRepositoryProvider)),
-);
 
-/// Used by the brokers' adapters for rows in another currency.
-final ensureRatesProvider = Provider(
-  (ref) => EnsureRates(ref.watch(fxRepositoryProvider)),
-);
-
-/// The wizard's steps, in order.
 enum ImportStage { help, select, processing, review, writing, done }
 
-/// Where the wizard is. A [failure] is shown over the current stage, which is
-/// the one the user goes back to: choosing a file for anything that went wrong
-/// before the review, the review for a failed write.
 final class ImportState {
   const ImportState(this.stage, {this.file, this.preview, this.failure});
 
@@ -81,25 +72,19 @@ class ImportFlow extends Notifier<ImportState> {
   Future<void> process() async {
     final file = state.file;
     if (file == null) return;
+    await _plan(file);
+  }
+
+  Future<void> processSample() => _plan(
+    ref.read(importRepositoryProvider).sampleFile(ref.read(nowProvider)()),
+  );
+
+  Future<void> _plan(ImportFile file) async {
     state = ImportState(ImportStage.processing, file: file);
-    final result = await ref.read(planImportProvider)(file);
-    if (!ref.mounted) return;
-    switch (result) {
-      case Ok(:final value):
-        await _review(value);
-      case Err(:final failure):
-        state = ImportState(ImportStage.select, failure: failure);
-    }
-  }
-
-  /// Debug builds only: the invented batch, straight to the review.
-  Future<void> processSample(DateTime now) async {
-    state = const ImportState(ImportStage.processing);
-    await _review(ref.read(sampleImportBatchProvider)(now));
-  }
-
-  Future<void> _review(ImportBatch batch) async {
-    final result = await ref.read(previewImportProvider)(batch);
+    final result = await ref.read(planImportProvider)(
+      file,
+      now: ref.read(nowProvider)(),
+    );
     if (!ref.mounted) return;
     state = switch (result) {
       Ok(:final value) => ImportState(ImportStage.review, preview: value),
@@ -111,7 +96,7 @@ class ImportFlow extends Notifier<ImportState> {
     final preview = state.preview;
     if (preview == null) return;
     state = ImportState(ImportStage.writing, preview: preview);
-    final result = await ref.read(commitImportProvider)(preview.batch);
+    final result = await ref.read(commitImportProvider)(preview);
     if (!ref.mounted) return;
     switch (result) {
       case Ok(:final value):

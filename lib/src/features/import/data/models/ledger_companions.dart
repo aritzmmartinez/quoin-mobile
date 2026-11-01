@@ -1,13 +1,9 @@
 import 'package:drift/drift.dart';
 import 'package:quoin_core/quoin_core.dart';
 
-import 'package:quoin/src/features/import/domain/usecases/commit_import.dart';
 import 'package:quoin/src/features/portfolio/data/database/quoin_database.dart'
     show InstrumentCompanion, LedgerEntryCompanion;
 
-/// The instrument fields an import writes. The manual ones (quote symbol,
-/// exposure, TER, hedging, thesis) are left as they are, as Quoin's
-/// `InstrumentWriteData`.
 extension InstrumentWrite on Instrument {
   InstrumentCompanion toInsert(DateTime createdAt) =>
       InstrumentCompanion.insert(
@@ -26,7 +22,8 @@ extension InstrumentWrite on Instrument {
 }
 
 /// A ledger row as Quoin's `eventToCreateData` writes it: the original amount
-/// and currency default to the gross amount and currency.
+/// and currency default to the gross amount and currency, and every amount
+/// keeps the text it was read from ([Dec.text]).
 extension LedgerEventWrite on LedgerEvent {
   LedgerEntryCompanion toInsert(DateTime createdAt) {
     final (gross, extra) = switch (this) {
@@ -34,9 +31,9 @@ extension LedgerEventWrite on LedgerEvent {
         e.grossAmount,
         LedgerEntryCompanion(
           instrumentId: Value(e.instrumentId),
-          quantity: Value('${e.quantity}'),
-          price: Value('${e.price.amount}'),
-          fees: Value('${e.fees.amount}'),
+          quantity: Value(e.quantity.text),
+          price: Value(e.price.text),
+          fees: Value(e.fees.text),
           funding: Value(e.funding.code),
         ),
       ),
@@ -44,7 +41,7 @@ extension LedgerEventWrite on LedgerEvent {
         e.grossAmount,
         LedgerEntryCompanion(
           instrumentId: Value(e.instrumentId),
-          taxWithheld: Value('${e.taxWithheld.amount}'),
+          taxWithheld: Value(e.taxWithheld.text),
           funding: Value(e.funding.code),
         ),
       ),
@@ -53,14 +50,14 @@ extension LedgerEventWrite on LedgerEvent {
     return extra.copyWith(
       id: Value(id),
       ts: Value(ts.toUtc()),
-      type: Value(typeCodeOf(this)),
-      grossAmount: Value('${gross.amount}'),
+      type: Value(ledgerTypeOf(this)),
+      grossAmount: Value(gross.text),
       currency: Value(currency),
       fxSource: Value(fxSource.code),
       fxDate: Value(fxDate),
-      fxRate: Value(fxRate?.toString()),
+      fxRate: Value(fxRate?.text),
       fxDirection: Value(fxDirection?.code),
-      originalAmount: Value('${(originalAmount ?? gross).amount}'),
+      originalAmount: Value((originalAmount ?? gross).text),
       originalCurrency: Value(originalCurrency ?? currency),
       valuationSource: Value(valuationSource),
       linkId: Value(linkId),

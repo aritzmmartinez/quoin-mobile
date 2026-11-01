@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:quoin/src/core/l10n/gen/app_localizations.dart';
 import 'package:quoin/src/features/portfolio/presentation/pages/portfolio_page.dart';
 import 'package:quoin/src/ui/molecules/allocation_donut.dart';
 import 'package:quoin/src/ui/molecules/position_row.dart';
@@ -18,7 +19,14 @@ void main() {
     );
 
     expect(find.text('Patrimonio total'), findsOneWidget);
-    expect(find.textContaining('1 sin valorar'), findsOneWidget);
+    expect(find.textContaining('2 sin valorar'), findsOneWidget);
+    expect(
+      find.text(
+        'Sin tipo de cambio reciente, quedan sin valorar: '
+        'Ejemplo Tecnología Inc.',
+      ),
+      findsOneWidget,
+    );
     expect(find.byType(AllocationDonut), findsOneWidget);
     expect(find.text('Sin clasificar'), findsOneWidget);
     expect(find.byType(PositionRow), findsNWidgets(5));
@@ -48,11 +56,11 @@ void main() {
     // Eight open positions; the closed one is gone.
     expect(find.textContaining('8 posiciones'), findsOneWidget);
     await tester.scrollUntilVisible(
-      find.text('Sin precio'),
+      find.text('Sin precio').first,
       200,
       scrollable: find.byType(Scrollable).first,
     );
-    expect(find.text('Sin precio'), findsOneWidget);
+    expect(find.text('Sin precio'), findsWidgets);
 
     await tester.tap(find.text('Cripto'));
     await tester.pumpAndSettle();
@@ -66,6 +74,19 @@ void main() {
         .widgetList<PositionRow>(find.byType(PositionRow))
         .map((row) => row.name);
     expect(names, ['Moneda Ejemplo', 'Token Ejemplo']);
+  });
+
+  test('a notice closes its sentence once', () {
+    for (final locale in const [Locale('es'), Locale('en')]) {
+      final l10n = lookupAppLocalizations(locale);
+      expect(l10n.fxUnrated('Acme', 'none'), endsWith(': Acme.'));
+      expect(l10n.fxUnrated('Tesla Inc.', 'dot'), endsWith(': Tesla Inc.'));
+      expect(l10n.fxUnconvertible('Acme', 'none'), endsWith(': Acme.'));
+      expect(
+        l10n.fxUnconvertible('Acme, Tesla Inc.', 'dot'),
+        endsWith(': Acme, Tesla Inc.'),
+      );
+    }
   });
 
   testWidgets('with nothing imported both screens show the empty state', (

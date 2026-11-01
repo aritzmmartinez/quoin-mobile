@@ -4,10 +4,10 @@ import 'package:quoin_core/quoin_core.dart';
 
 import 'package:quoin/src/core/error/exceptions.dart';
 import 'package:quoin/src/features/import/data/models/ledger_companions.dart';
-import 'package:quoin/src/features/import/domain/entities/import_batch.dart';
 import 'package:quoin/src/features/portfolio/data/database/quoin_database.dart'
     show LedgerEntryCompanion, QuoinDatabase;
 import 'package:quoin/src/features/portfolio/data/datasources/portfolio_local_datasource.dart';
+import 'package:quoin/src/features/portfolio/data/models/portfolio_rows.dart';
 
 final importLocalDataSourceProvider = Provider(
   (ref) => ImportLocalDataSource(ref.watch(quoinDatabaseProvider)),
@@ -25,6 +25,35 @@ class ImportLocalDataSource {
     () async => (await _db.select(_db.settings).getSingle()).residence,
   );
 
+  Future<Map<String, String>> names() => _guard(() async {
+    final rows = await _db.select(_db.instrument).get();
+    return {for (final row in rows) row.id: row.name};
+  });
+
+  Future<Set<String>> rewardRefids() => _guard(() async {
+    final e = _db.ledgerEntry;
+    final rows =
+        await (_db.selectOnly(e)
+              ..addColumns([e.externalId])
+              ..where(
+                e.source.equals('KRAKEN_CSV') &
+                    e.type.equals(TradeType.buy.code) &
+                    e.note.equals(krakenRewardNote) &
+                    e.externalId.isNotNull(),
+              ))
+            .get();
+    return {for (final row in rows) row.read(e.externalId)!};
+  });
+
+  Future<List<PriceSnapshot>> cryptoPrices() => _guard(() async {
+    final p = _db.priceSnapshot;
+    final i = _db.instrument;
+    final rows = await (_db.select(p).join([
+      innerJoin(i, i.id.equalsExp(p.instrumentId)),
+    ])..where(i.type.equals('CRYPTO'))).get();
+    return [for (final row in rows) row.readTable(p).toEntity()];
+  });
+
   /// The (source, externalId) keys of [events] already stored.
   Future<Set<(String, String)>> existing(List<LedgerEvent> events) =>
       _guard(() => _existing(events));
@@ -33,7 +62,7 @@ class ImportLocalDataSource {
   /// before it: instruments upserted without their manual fields, events not
   /// yet stored inserted, and stored cash-funded rows the batch says are in
   /// kind marked so (never the other way).
-  Future<Set<(String, String)>> write(ImportBatch batch, DateTime now) =>
+  Future<Set<(String, String)>> write(MappedBatch batch, DateTime now) =>
       _guard(
         () => _db.transaction(() async {
           final at = now.toUtc();

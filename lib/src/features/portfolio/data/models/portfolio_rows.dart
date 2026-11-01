@@ -50,6 +50,7 @@ extension PriceSnapshotRowModel on PriceSnapshotRow {
     price: Money.parse(price),
     currency: currency,
     asOf: asOf.toUtc(),
+    source: source,
   );
 }
 

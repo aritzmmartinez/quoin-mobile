@@ -33,6 +33,7 @@ List<Override> dependencies(
     (ref) => ImportRepositoryImpl(
       ref.watch(importFileDataSourceProvider),
       ref.watch(importLocalDataSourceProvider),
+      ref.watch(fxLocalDataSourceProvider),
     ),
   ),
   fxRepositoryProvider.overrideWith(
