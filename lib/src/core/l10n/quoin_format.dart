@@ -1,4 +1,5 @@
 import 'package:flutter/widgets.dart';
+import 'package:intl/intl.dart';
 import 'package:quoin_core/quoin_core.dart';
 
 // Written by code point: one is invisible, the other looks like a hyphen.
@@ -23,6 +24,15 @@ class QuoinFormat {
   bool get _es => languageCode == 'es';
   String get _group => _es ? '.' : ',';
   String get _decimal => _es ? ',' : '.';
+
+  /// The day [instant] falls on in [zone], as Intl writes it: «4 sept 2026»,
+  /// «Sep 4, 2026». The web shows dates in the residence's zone, not the
+  /// device's.
+  String date(DateTime instant, String zone) {
+    final day = calendarDateOf(instant, zone);
+    return DateFormat.yMMMd(languageCode)
+        .format(DateTime(day.year, day.month, day.day));
+  }
 
   /// «1234,56 €», «€1,234.56». With [floorNonZero], a positive amount that
   /// rounds to zero reads «<0,01 €».
@@ -76,10 +86,10 @@ class QuoinFormat {
   }
 
   /// A number of units, up to [maxDecimals] places: «12.345», «0,5».
-  String quantity(Dec value, {int maxDecimals = 10}) {
+  String quantity(Dec value, {int minDecimals = 0, int maxDecimals = 10}) {
     final number = _number(
       value.abs(),
-      minDecimals: 0,
+      minDecimals: minDecimals,
       maxDecimals: maxDecimals,
     );
     return value.isNegative ? '-$number' : number;

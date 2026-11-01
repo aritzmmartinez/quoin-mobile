@@ -49,9 +49,17 @@ abstract final class QuoinIcons {
   );
   static const clearData = QuoinIconData._(HugeIcons.strokeRoundedDelete02);
 
+  // Import.
+  static const upload = QuoinIconData._(HugeIcons.strokeRoundedUpload04);
+  static const csvFile = QuoinIconData._(HugeIcons.strokeRoundedCsv01);
+  static const alert = QuoinIconData._(HugeIcons.strokeRoundedAlert02);
+
   // Generic.
   static const chevronRight = QuoinIconData._(
     HugeIcons.strokeRoundedArrowRight01,
+  );
+  static const chevronDown = QuoinIconData._(
+    HugeIcons.strokeRoundedArrowDown01,
   );
   static const check = QuoinIconData._(HugeIcons.strokeRoundedTick02);
   static const close = QuoinIconData._(HugeIcons.strokeRoundedCancel01);

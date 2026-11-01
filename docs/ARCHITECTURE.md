@@ -22,8 +22,8 @@ packages/quoin_core/     Dec, Money and the domain rules shared with ../quoin
 ```
 
 A folder exists only when it holds something: a feature has only the layers
-it uses. Today `settings` and `portfolio` have all three; `analysis` and
-`import` have only `presentation/pages`.
+it uses. Today `settings`, `portfolio` and `import` have all three;
+`analysis` has only `presentation/pages`.
 
 ## Layers
 
@@ -34,7 +34,7 @@ Dependencies point inwards: `presentation → domain ← data`.
   imports only `dart:` (not `dart:ui`), `quoin_core`, `core/error` and other
   features' domain. No Flutter, no Riverpod, no storage.
 - **data**: implements the domain's repositories. Data sources talk to the
-  platform (shared_preferences now, drift and the network later) and throw
+  platform (shared_preferences, drift, the file picker, the network) and throw
   typed exceptions. Models mirror what is stored and convert with
   `toEntity()`; they do not extend the entity.
 - **presentation**: Riverpod providers, pages and feature widgets. It sees
@@ -64,6 +64,36 @@ The portfolio screens read the ledger, the latest price of each instrument and
 the ECB rates, and run the web's home chain through `quoin_core`
 (`GetPortfolioOverview`): positions, prices in euros, market values, summary,
 allocation and top positions.
+
+## Import
+
+`features/import` turns a broker's CSV into ledger rows. The file comes from
+the system's document picker (`file_selector`: the Storage Access Framework on
+Android, no storage permission) and is decoded as strict UTF-8, with or without
+a BOM. The broker is detected from the header (`detectBroker` in
+`quoin_core`), never picked, and `parseCsv` reads the file as the web's Papa
+Parse does: commas, RFC 4180 quotes, rows of blanks skipped, a row with the
+wrong number of fields rejected. The brokers' adapters are ported into
+`quoin_core` against Quoin's ingest contract; until then a recognised export
+stops at «format not supported yet».
+
+An import is a batch of instruments, normalised events and warnings. The
+wizard previews it (new and existing operations, by `(source, externalId)`),
+and only on confirmation `ImportLocalDataSource.write` stores it in one
+transaction: instruments upserted without their manual fields, events not yet
+stored inserted, and stored cash rows the batch knows to be in kind marked
+`IN_KIND` (never back). `CommitImport` checks every event against the ledger's
+write rules first. The review shows dates in the residence's zone, as the web
+does, not the device's. Debug builds can run the wizard over an invented batch
+(Settings → Debug).
+
+Rows in another currency are booked at the ECB's rate of their day.
+`EnsureRates` brings each currency's series up to date from the ECB data API
+(one currency per request, CSV with the data only, through `http`) and stores
+it in `FxRate`; a stored day is never overwritten (`planFxWrite`), and a
+currency the service cannot give is listed, not an error. Tests answer for the
+ECB with `MockClient`. This is the app's only network traffic: public data in,
+and nothing out but the currency code.
 
 ## Errors
 

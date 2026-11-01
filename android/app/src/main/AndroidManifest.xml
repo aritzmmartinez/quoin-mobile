@@ -1,4 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Public data only: ECB exchange rates. The request carries the currency
+         code and nothing about the portfolio. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
     <application
         android:label="Quoin"
         android:name="${applicationName}"

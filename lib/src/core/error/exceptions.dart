@@ -6,3 +6,35 @@ class StorageException implements Exception {
   @override
   String toString() => 'StorageException: $cause';
 }
+
+/// A file the user picked that could not be opened or read.
+class FileException implements Exception {
+  const FileException(this.cause);
+
+  final Object cause;
+
+  @override
+  String toString() => 'FileException: $cause';
+}
+
+/// A file whose bytes are not UTF-8 text.
+class EncodingException implements Exception {
+  const EncodingException(this.cause);
+
+  final Object cause;
+
+  @override
+  String toString() => 'EncodingException: $cause';
+}
+
+/// A remote service that could not be reached, answered with an error or
+/// sent a body that could not be read.
+class NetworkException implements Exception {
+  const NetworkException(this.cause, {this.statusCode});
+
+  final Object cause;
+  final int? statusCode;
+
+  @override
+  String toString() => 'NetworkException ($statusCode): $cause';
+}

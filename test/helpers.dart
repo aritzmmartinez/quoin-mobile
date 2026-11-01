@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart' show driftRuntimeOptions;
 import 'package:drift/native.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:quoin/src/app/app.dart';
 import 'package:quoin/src/app/dependencies.dart';
@@ -18,6 +19,7 @@ Future<SharedPreferencesWithCache> pumpApp(
   Map<String, Object> prefs = const {},
   SharedPreferencesAsyncPlatform? store,
   QuoinDatabase? database,
+  List<Override> overrides = const [],
 }) async {
   SharedPreferencesAsyncPlatform.instance =
       store ?? InMemorySharedPreferencesAsync.withData(prefs);
@@ -32,6 +34,7 @@ Future<SharedPreferencesWithCache> pumpApp(
         ...dependencies(cache, database ?? memoryDatabase()),
         appVersionProvider.overrideWith((ref) => '0.0.0-test'),
         nowProvider.overrideWithValue(() => testNow),
+        ...overrides,
       ],
       child: const QuoinApp(),
     ),

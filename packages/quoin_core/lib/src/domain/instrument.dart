@@ -24,6 +24,7 @@ final class Instrument {
     required this.id,
     required this.name,
     required this.type,
+    this.assetClass,
     this.exposureKind,
   });
 
@@ -32,5 +33,8 @@ final class Instrument {
 
   /// ETF | STOCK | CRYPTO | BOND | COMMODITY | CASH.
   final String type;
+
+  /// The broker's own class (`stock`, `fund`, `crypto`…), kept as given.
+  final String? assetClass;
   final ExposureKind? exposureKind;
 }
