@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import 'package:quoin/src/app/router.dart';
 import 'package:quoin/src/core/l10n/gen/app_localizations.dart';
 import 'package:quoin/src/core/l10n/quoin_format.dart';
 import 'package:quoin/src/core/theme/quoin_colors.dart';
@@ -39,6 +41,11 @@ class _PortfolioPageState extends ConsumerState<PortfolioPage> {
       empty: EmptyState(message: l10n.portfolioEmpty),
       builder: (overview) => QuoinPage.list(
         title: l10n.tabPortfolio,
+        trailing: IconButton(
+          icon: const QuoinIcon(QuoinIcons.movements),
+          tooltip: l10n.movementsTitle,
+          onPressed: () => context.push(Routes.movements),
+        ),
         children: _content(context, overview),
       ),
     );

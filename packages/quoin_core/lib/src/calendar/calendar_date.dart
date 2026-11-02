@@ -1,8 +1,8 @@
+import 'dart:math' as math;
+
 import 'package:timezone/data/latest_all.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
 
-/// A day on the calendar, with no zone: what an instant falls on once it is
-/// read in one.
 final class CalendarDate implements Comparable<CalendarDate> {
   CalendarDate(this.year, this.month, this.day) {
     if (month < 1 || month > 12 || day < 1 || day > _daysInMonth(year, month)) {
@@ -12,7 +12,6 @@ final class CalendarDate implements Comparable<CalendarDate> {
 
   static final RegExp _iso = RegExp(r'^(\d{4})-(\d{2})-(\d{2})$');
 
-  /// Inverse of [toString]; refuses anything that is not a real `YYYY-MM-DD`.
   factory CalendarDate.parse(String value) {
     final match = _iso.firstMatch(value);
     if (match == null) throw RangeError('Not a YYYY-MM-DD date: $value');
@@ -49,10 +48,22 @@ final class CalendarDate implements Comparable<CalendarDate> {
 
 int _daysInMonth(int year, int month) => DateTime.utc(year, month + 1, 0).day;
 
+CalendarDate addCalendarMonths(CalendarDate date, int months) {
+  final index = date.year * 12 + (date.month - 1) + months;
+  final year = index ~/ 12;
+  final month = index - year * 12 + 1;
+  return CalendarDate(
+    year,
+    month,
+    math.min(date.day, _daysInMonth(year, month)),
+  );
+}
+
+bool isWithin(CalendarDate date, CalendarDate start, CalendarDate end) =>
+    date.compareTo(start) >= 0 && date.compareTo(end) <= 0;
+
 var _zonesLoaded = false;
 
-/// The IANA database is compiled into the package (`latest_all`), so it loads
-/// the same way under `dart test` and in the app, with no asset to ship.
 tz.Location _location(String zone) {
   if (!_zonesLoaded) {
     tzdata.initializeTimeZones();
@@ -61,14 +72,11 @@ tz.Location _location(String zone) {
   return tz.getLocation(zone);
 }
 
-/// The calendar day [instant] falls on, read in [zone] (an IANA name).
 CalendarDate calendarDateOf(DateTime instant, String zone) {
   final local = tz.TZDateTime.from(instant, _location(zone));
   return CalendarDate(local.year, local.month, local.day);
 }
 
-/// The instant [date] begins in [zone], in UTC. Throws for a zone whose clocks
-/// skip midnight itself (none of the zones Quoin resolves to do).
 DateTime startOfDay(CalendarDate date, String zone) {
   final start = tz.TZDateTime(_location(zone), date.year, date.month, date.day);
   if (CalendarDate(start.year, start.month, start.day) != date ||

@@ -7,9 +7,12 @@ import 'package:quoin/src/app/app_shell.dart';
 import 'package:quoin/src/features/analysis/presentation/pages/analysis_page.dart';
 import 'package:quoin/src/features/import/presentation/pages/import_page.dart';
 import 'package:quoin/src/features/portfolio/presentation/pages/home_page.dart';
+import 'package:quoin/src/features/portfolio/presentation/pages/instrument_page.dart';
+import 'package:quoin/src/features/portfolio/presentation/pages/movements_page.dart';
 import 'package:quoin/src/features/portfolio/presentation/pages/portfolio_page.dart';
 import 'package:quoin/src/features/settings/presentation/pages/component_gallery_page.dart';
 import 'package:quoin/src/features/settings/presentation/pages/settings_page.dart';
+import 'package:quoin/src/features/tax/presentation/pages/realized_page.dart';
 
 abstract final class Routes {
   static const home = '/';
@@ -17,6 +20,14 @@ abstract final class Routes {
   static const analysis = '/analysis';
   static const settings = '/settings';
   static const import = '/import';
+  static const realized = '/realized';
+  static const movements = '/movements';
+
+  static String instrument(String id) =>
+      '/instrument/${Uri.encodeComponent(id)}';
+
+  static String movementsOf(String id) =>
+      Uri(path: movements, queryParameters: {'instrument': id}).toString();
 
   /// Debug builds only: the wizard over an invented batch.
   static const importSample = '/import?sample=1';
@@ -49,6 +60,24 @@ final routerProvider = Provider<GoRouter>((ref) {
             ],
           ),
         ],
+      ),
+      // Detail screens open over the shell, without the bar, as in the design.
+      GoRoute(
+        path: '/instrument/:id',
+        builder: (context, state) =>
+            Scaffold(body: InstrumentPage(id: state.pathParameters['id']!)),
+      ),
+      GoRoute(
+        path: Routes.movements,
+        builder: (context, state) => Scaffold(
+          body: MovementsPage(
+            instrumentId: state.uri.queryParameters['instrument'],
+          ),
+        ),
+      ),
+      GoRoute(
+        path: Routes.realized,
+        builder: (context, state) => const Scaffold(body: RealizedPage()),
       ),
       GoRoute(
         path: Routes.import,

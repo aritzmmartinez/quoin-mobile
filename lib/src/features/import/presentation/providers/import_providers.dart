@@ -100,7 +100,7 @@ class ImportFlow extends Notifier<ImportState> {
     if (!ref.mounted) return;
     switch (result) {
       case Ok(:final value):
-        ref.invalidate(portfolioOverviewProvider);
+        ref.invalidate(ledgerProvider);
         state = ImportState(ImportStage.done, preview: value);
       case Err(:final failure):
         state = ImportState(

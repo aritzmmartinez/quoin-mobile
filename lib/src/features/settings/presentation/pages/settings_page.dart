@@ -188,7 +188,7 @@ Future<void> _debugWrite(
   Future<Result<void>> writing,
 ) async {
   final result = await writing;
-  ref.invalidate(portfolioOverviewProvider);
+  ref.invalidate(ledgerProvider);
   if (!context.mounted) return;
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(

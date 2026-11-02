@@ -1,26 +1,11 @@
 import 'package:quoin_core/quoin_core.dart';
 
-import 'package:quoin/src/core/error/result.dart';
 import 'package:quoin/src/features/portfolio/domain/entities/holding_order.dart';
 import 'package:quoin/src/features/portfolio/domain/entities/portfolio_ledger.dart';
 import 'package:quoin/src/features/portfolio/domain/entities/portfolio_overview.dart';
-import 'package:quoin/src/features/portfolio/domain/repositories/portfolio_repository.dart';
 
 const topPositions = 5;
 
-class GetPortfolioOverview {
-  const GetPortfolioOverview(this._repository);
-
-  final PortfolioRepository _repository;
-
-  Future<Result<PortfolioOverview>> call(DateTime now) async =>
-      switch (await _repository.load()) {
-        Ok(:final value) => Ok(overviewOf(value, now)),
-        Err(:final failure) => Err(failure),
-      };
-}
-
-/// The web's home chain (routes/summary.tsx), at [now].
 PortfolioOverview overviewOf(PortfolioLedger ledger, DateTime now) {
   final jurisdiction = jurisdictionOf(ledger.residence);
   final positions = computePositions(ledger.events, jurisdiction);

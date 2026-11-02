@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
+import 'package:quoin/src/app/router.dart';
 
 import 'package:quoin/src/core/l10n/gen/app_localizations.dart';
 import 'package:quoin/src/core/theme/quoin_colors.dart';
@@ -15,22 +18,34 @@ class AnalysisPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final tools = [
-      (QuoinIcons.projection, l10n.toolProjection, l10n.toolProjectionHint),
+    final tools = <(QuoinIconData, String, String, VoidCallback?)>[
+      (
+        QuoinIcons.realized,
+        l10n.realizedTitle,
+        l10n.realizedHint,
+        () => context.push(Routes.realized),
+      ),
+      (
+        QuoinIcons.projection,
+        l10n.toolProjection,
+        l10n.toolProjectionHint,
+        null,
+      ),
       (
         QuoinIcons.opportunityCost,
         l10n.toolOpportunityCost,
         l10n.toolOpportunityCostHint,
+        null,
       ),
-      (QuoinIcons.ter, l10n.toolTer, l10n.toolTerHint),
-      (QuoinIcons.rebalance, l10n.toolRebalance, l10n.toolRebalanceHint),
+      (QuoinIcons.ter, l10n.toolTer, l10n.toolTerHint, null),
+      (QuoinIcons.rebalance, l10n.toolRebalance, l10n.toolRebalanceHint, null),
     ];
     return QuoinPage.list(
       title: l10n.tabAnalysis,
       children: [
-        for (final (i, (icon, title, hint)) in tools.indexed) ...[
+        for (final (i, (icon, title, hint, onTap)) in tools.indexed) ...[
           if (i > 0) const SizedBox(height: 8),
-          _ToolCard(icon: icon, title: title, hint: hint),
+          _ToolCard(icon: icon, title: title, hint: hint, onTap: onTap),
         ],
       ],
     );
@@ -42,16 +57,19 @@ class _ToolCard extends StatelessWidget {
     required this.icon,
     required this.title,
     required this.hint,
+    this.onTap,
   });
 
   final QuoinIconData icon;
   final String title;
   final String hint;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final type = QuoinType.of(context);
     return QuoinCard(
+      onTap: onTap,
       child: Row(
         spacing: 14,
         children: [

@@ -49,6 +49,11 @@ abstract final class QuoinIcons {
   );
   static const clearData = QuoinIconData._(HugeIcons.strokeRoundedDelete02);
 
+  static const movements = QuoinIconData._(
+    HugeIcons.strokeRoundedArrowDataTransferHorizontal,
+  );
+  static const realized = QuoinIconData._(HugeIcons.strokeRoundedReceiptDollar);
+
   // Import.
   static const upload = QuoinIconData._(HugeIcons.strokeRoundedUpload04);
   static const csvFile = QuoinIconData._(HugeIcons.strokeRoundedCsv01);
@@ -61,6 +66,8 @@ abstract final class QuoinIcons {
   static const chevronDown = QuoinIconData._(
     HugeIcons.strokeRoundedArrowDown01,
   );
+  static const back = QuoinIconData._(HugeIcons.strokeRoundedArrowLeft01);
+  static const info = QuoinIconData._(HugeIcons.strokeRoundedInformationCircle);
   static const check = QuoinIconData._(HugeIcons.strokeRoundedTick02);
   static const close = QuoinIconData._(HugeIcons.strokeRoundedCancel01);
   static const search = QuoinIconData._(HugeIcons.strokeRoundedSearch01);
