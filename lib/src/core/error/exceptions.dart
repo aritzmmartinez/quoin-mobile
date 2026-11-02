@@ -38,3 +38,11 @@ class NetworkException implements Exception {
   @override
   String toString() => 'NetworkException ($statusCode): $cause';
 }
+
+/// A local state that holds the invented sample data, which never syncs.
+class SampleDataException implements Exception {
+  const SampleDataException();
+
+  @override
+  String toString() => 'SampleDataException';
+}
