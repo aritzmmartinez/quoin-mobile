@@ -67,10 +67,15 @@ are decimal text, days `YYYY-MM-DD`, instants ISO-8601 UTC text. Migrations are
 hand-written steps in `QuoinDatabase.migration`; the generated `.g.dart` is
 committed and CI fails if regenerating it changes anything.
 
-The portfolio screens read the ledger, the latest price of each instrument and
-the ECB rates, and run the web's home chain through `quoin_core`
-(`GetPortfolioOverview`): positions, prices in euros, market values, summary,
-allocation and top positions.
+Every screen computed from the store reads it once: `LoadLedger` fills
+`ledgerProvider` with the ledger, the latest price of each instrument and the
+ECB rates, and each screen's provider derives from it with a pure function, so
+a write invalidates `ledgerProvider` alone. Home and Cartera run the web's home
+chain through `quoin_core` (`overviewOf`): positions, prices in euros, market
+values, summary, allocation and top positions. Movimientos (`movementsOf`) and
+the instrument page (`instrumentDetailOf`) read the same ledger; Realizado
+(`features/tax`, `realizedReportOf`) puts the AVCO sales next to the Bizkaia
+tax history, and builds a fiscal year's view when it is chosen.
 
 ## Import
 

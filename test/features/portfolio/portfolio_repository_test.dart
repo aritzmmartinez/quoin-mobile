@@ -5,6 +5,7 @@ import 'package:quoin/src/features/portfolio/data/datasources/portfolio_local_da
 import 'package:quoin/src/features/portfolio/data/repositories/portfolio_repository_impl.dart';
 import 'package:quoin/src/features/portfolio/domain/entities/portfolio_ledger.dart';
 import 'package:quoin/src/features/portfolio/domain/usecases/get_portfolio_overview.dart';
+import 'package:quoin/src/features/portfolio/domain/usecases/movements_of.dart';
 import 'package:quoin_core/quoin_core.dart'
     show Residence, dayOf, otherCategory, rateDayFor, shiftDay;
 
@@ -78,6 +79,20 @@ void main() {
     expect(overview.summary.pricedCount, 6);
     expect(overview.unrated, ['Ejemplo Tecnología Inc.']);
     expect(overview.top, hasLength(topPositions));
+  });
+
+  test('each sample reward is a pair whose cash adds up to nothing', () async {
+    await repository.loadSample(testNow);
+    final inKind = [
+      for (final m in movementsOf(await load()))
+        if (m.inKind) m,
+    ];
+    expect(inKind, hasLength(4));
+    for (final buy in inKind.where((m) => m.type == 'BUY')) {
+      final income = inKind.singleWhere((m) => m.id == '${buy.id}:income');
+      expect(income.ts, buy.ts);
+      expect(buy.amount!.add(income.amount!).isZero, isTrue, reason: buy.id);
+    }
   });
 
   test('valuation reads only the ECB series, as Quoin does', () async {

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:quoin_core/quoin_core.dart';
 
+import 'package:quoin/src/app/router.dart';
 import 'package:quoin/src/core/error/failures.dart';
 import 'package:quoin/src/core/error/result.dart';
 import 'package:quoin/src/core/l10n/gen/app_localizations.dart';
@@ -118,6 +120,7 @@ Widget holdingsCard(
   final type = QuoinType.of(context);
 
   Widget row(Holding h) {
+    void open() => context.push(Routes.instrument(h.instrumentId));
     final value = h.value.marketValue;
     final pct = h.unrealizedPnLPct;
     final pnl = h.value.unrealizedPnL;
@@ -127,6 +130,7 @@ Widget holdingsCard(
         detail: detail(h),
         value: l10n.positionCost(format.money(h.position.costBasis)),
         valueMuted: true,
+        onTap: open,
         change: Text(
           l10n.positionUnpriced,
           style: type.small.copyWith(color: c.muted),
@@ -137,6 +141,7 @@ Widget holdingsCard(
       name: h.name,
       detail: detail(h),
       value: format.money(value),
+      onTap: open,
       change: GainBadge(
         text: pct == null
             ? format.signedMoney(pnl!).text

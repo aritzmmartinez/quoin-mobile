@@ -3,8 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:quoin/src/core/theme/quoin_colors.dart';
 import 'package:quoin/src/core/theme/quoin_type.dart';
 
-/// One position: an initial in a circle, its name and a detail line, and its
-/// value with a [change] (a `GainBadge`, or a note when there is no figure).
 class PositionRow extends StatelessWidget {
   const PositionRow({
     super.key,
@@ -13,21 +11,21 @@ class PositionRow extends StatelessWidget {
     required this.value,
     this.valueMuted = false,
     required this.change,
+    this.onTap,
   });
 
   final String name;
   final String detail;
   final String value;
-
-  /// For a figure that is not a value, such as the cost of an unpriced one.
   final bool valueMuted;
   final Widget change;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final c = QuoinColors.of(context);
     final type = QuoinType.of(context);
-    return Padding(
+    final row = Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: LayoutBuilder(
         builder: (context, constraints) => Row(
@@ -61,8 +59,6 @@ class PositionRow extends StatelessWidget {
                 ],
               ),
             ),
-            // Figures don't wrap: past 55 % of the row (a large system font)
-            // they shrink to one line instead.
             ConstrainedBox(
               constraints: BoxConstraints(
                 maxWidth: constraints.maxWidth * 0.55,
@@ -89,5 +85,6 @@ class PositionRow extends StatelessWidget {
         ),
       ),
     );
+    return onTap == null ? row : InkWell(onTap: onTap, child: row);
   }
 }
