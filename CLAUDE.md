@@ -10,7 +10,7 @@ flows: `docs/ARCHITECTURE.md`.
 - `lib/src/core`: `error/` (exceptions, failures, Result), `theme/`, `l10n/`.
 - `lib/src/ui`: shared widgets by atomic level: `atoms/`, `molecules/`, `organisms/`, `templates/`.
 - `lib/src/features/<feature>/{data,domain,presentation}`: features are portfolio, import, analysis, tax, settings, sync.
-- `packages/quoin_core`: pure Dart domain shared with `../quoin`: `Dec`, `Money`, calendar, ledger, fx, swap and the portfolio projections. Golden cases in `test/contract/` are copied from `../quoin/test/contract/` and never edited.
+- `packages/quoin_core`: pure Dart domain shared with `../quoin`: `Dec`, `Money`, calendar, ledger, fx, swap, the portfolio projections, realised gains and the Bizkaia tax view. Golden cases in `test/contract/` are copied from `../quoin/test/contract/` and never edited.
 
 ## Architecture
 
@@ -18,7 +18,7 @@ flows: `docs/ARCHITECTURE.md`.
 - Domain imports only `dart:`, `quoin_core`, `core/error` and domain: no Flutter, Riverpod or storage.
 - Presentation never imports data; only `app/` sees both.
 - Shared domain logic goes in `quoin_core`; features use it, never copy it.
-- `computePositions` holds the AVCO loop today; when realised gains arrive, extract `walkAvco` and share it between the two, as in Quoin.
+- The AVCO loop is `walkAvco`; `computePositions` and `computeRealizedGains` share it, as in Quoin. The tax view is FIFO (`walkFifo`), a separate walk.
 - Create only the folders a feature uses; no empty folders.
 - Data sources throw `core/error/exceptions.dart` types only.
 - Repositories catch them and return `Result<T>` (`Ok`/`Err` with a sealed `Failure`); no dartz.

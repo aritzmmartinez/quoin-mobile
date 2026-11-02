@@ -4,44 +4,7 @@ import 'dart:io';
 import 'package:quoin_core/quoin_core.dart';
 import 'package:test/test.dart';
 
-typedef Json = Map<String, dynamic>;
-
-/// An absent fxSource is IDENTITY and an absent funding is CASH, as the
-/// contract says.
-LedgerEvent eventOf(Json row) {
-  String? text(String key) => row[key] as String?;
-  final fxRate = text('fxRate');
-  final fxDirection = text('fxDirection');
-  final common = (
-    id: row['id'] as String,
-    ts: DateTime.parse(row['ts'] as String),
-    currency: row['currency'] as String,
-    fxSource: FxSource.of(text('fxSource') ?? 'IDENTITY'),
-    fxRate: fxRate == null ? null : Dec.parse(fxRate),
-    fxDirection: fxDirection == null ? null : FxDirection.of(fxDirection),
-  );
-  return TradeEvent(
-    id: common.id,
-    ts: common.ts,
-    type: TradeType.of(row['type'] as String),
-    instrumentId: row['instrumentId'] as String,
-    quantity: Dec.parse(row['quantity'] as String),
-    price: Money.parse(row['price'] as String),
-    grossAmount: Money.parse(row['grossAmount'] as String),
-    fees: Money.parse(row['fees'] as String),
-    currency: common.currency,
-    funding: Funding.of(text('funding') ?? 'CASH'),
-    fxSource: common.fxSource,
-    fxDate: text('fxDate'),
-    fxRate: common.fxRate,
-    fxDirection: common.fxDirection,
-    linkId: text('linkId'),
-    linkKind: text('linkKind'),
-    account: row['account'] as String,
-    source: row['source'] as String,
-    externalId: text('externalId'),
-  );
-}
+import '../support/ledger_rows.dart';
 
 String? fixed(Dec? value) => value?.toFixed(ratioDecimals);
 
@@ -52,7 +15,6 @@ Json priceJson(PriceSnapshot p) => {
       'asOf': p.asOf.toIso8601String(),
     };
 
-/// The core's answer for one case, written the way the web writes it.
 Json evaluate(Json input) {
   final jurisdiction = jurisdictionOf(
     Residence.values.byName(input['residence'] as String),
