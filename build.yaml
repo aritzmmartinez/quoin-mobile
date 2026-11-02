@@ -6,6 +6,10 @@ targets:
           store_date_time_values_as_text: true
           case_from_dart_to_sql: preserve
           generate_manager: false
+          databases:
+            quoin: lib/src/features/portfolio/data/database/quoin_database.dart
+          schema_dir: drift_schemas/
+          test_dir: test/drift/
           sql:
             dialect: sqlite
             options:

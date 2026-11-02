@@ -121,6 +121,59 @@ class Instrument extends Table with TableInfo<Instrument, InstrumentRow> {
     requiredDuringInsert: true,
     $customConstraints: 'NOT NULL',
   );
+  static const VerificationMeta _quoteSymbolHlcMeta = const VerificationMeta(
+    'quoteSymbolHlc',
+  );
+  late final GeneratedColumn<String> quoteSymbolHlc = GeneratedColumn<String>(
+    'quoteSymbolHlc',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    $customConstraints: '',
+  );
+  static const VerificationMeta _exposureHlcMeta = const VerificationMeta(
+    'exposureHlc',
+  );
+  late final GeneratedColumn<String> exposureHlc = GeneratedColumn<String>(
+    'exposureHlc',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    $customConstraints: '',
+  );
+  static const VerificationMeta _terHlcMeta = const VerificationMeta('terHlc');
+  late final GeneratedColumn<String> terHlc = GeneratedColumn<String>(
+    'terHlc',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    $customConstraints: '',
+  );
+  static const VerificationMeta _hedgedToBaseHlcMeta = const VerificationMeta(
+    'hedgedToBaseHlc',
+  );
+  late final GeneratedColumn<String> hedgedToBaseHlc = GeneratedColumn<String>(
+    'hedgedToBaseHlc',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    $customConstraints: '',
+  );
+  static const VerificationMeta _thesisHlcMeta = const VerificationMeta(
+    'thesisHlc',
+  );
+  late final GeneratedColumn<String> thesisHlc = GeneratedColumn<String>(
+    'thesisHlc',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    $customConstraints: '',
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -134,6 +187,11 @@ class Instrument extends Table with TableInfo<Instrument, InstrumentRow> {
     hedgedToBase,
     thesis,
     createdAt,
+    quoteSymbolHlc,
+    exposureHlc,
+    terHlc,
+    hedgedToBaseHlc,
+    thesisHlc,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -230,6 +288,45 @@ class Instrument extends Table with TableInfo<Instrument, InstrumentRow> {
     } else if (isInserting) {
       context.missing(_createdAtMeta);
     }
+    if (data.containsKey('quoteSymbolHlc')) {
+      context.handle(
+        _quoteSymbolHlcMeta,
+        quoteSymbolHlc.isAcceptableOrUnknown(
+          data['quoteSymbolHlc']!,
+          _quoteSymbolHlcMeta,
+        ),
+      );
+    }
+    if (data.containsKey('exposureHlc')) {
+      context.handle(
+        _exposureHlcMeta,
+        exposureHlc.isAcceptableOrUnknown(
+          data['exposureHlc']!,
+          _exposureHlcMeta,
+        ),
+      );
+    }
+    if (data.containsKey('terHlc')) {
+      context.handle(
+        _terHlcMeta,
+        terHlc.isAcceptableOrUnknown(data['terHlc']!, _terHlcMeta),
+      );
+    }
+    if (data.containsKey('hedgedToBaseHlc')) {
+      context.handle(
+        _hedgedToBaseHlcMeta,
+        hedgedToBaseHlc.isAcceptableOrUnknown(
+          data['hedgedToBaseHlc']!,
+          _hedgedToBaseHlcMeta,
+        ),
+      );
+    }
+    if (data.containsKey('thesisHlc')) {
+      context.handle(
+        _thesisHlcMeta,
+        thesisHlc.isAcceptableOrUnknown(data['thesisHlc']!, _thesisHlcMeta),
+      );
+    }
     return context;
   }
 
@@ -283,6 +380,26 @@ class Instrument extends Table with TableInfo<Instrument, InstrumentRow> {
         DriftSqlType.dateTime,
         data['${effectivePrefix}createdAt'],
       )!,
+      quoteSymbolHlc: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}quoteSymbolHlc'],
+      ),
+      exposureHlc: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}exposureHlc'],
+      ),
+      terHlc: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}terHlc'],
+      ),
+      hedgedToBaseHlc: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}hedgedToBaseHlc'],
+      ),
+      thesisHlc: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}thesisHlc'],
+      ),
     );
   }
 
@@ -307,6 +424,14 @@ class InstrumentRow extends DataClass implements Insertable<InstrumentRow> {
   final bool hedgedToBase;
   final String thesis;
   final DateTime createdAt;
+
+  /// The sync mark of each hand-set field (the exposure pair shares one).
+  /// Null: not changed since the column was added.
+  final String? quoteSymbolHlc;
+  final String? exposureHlc;
+  final String? terHlc;
+  final String? hedgedToBaseHlc;
+  final String? thesisHlc;
   const InstrumentRow({
     required this.id,
     required this.name,
@@ -319,6 +444,11 @@ class InstrumentRow extends DataClass implements Insertable<InstrumentRow> {
     required this.hedgedToBase,
     required this.thesis,
     required this.createdAt,
+    this.quoteSymbolHlc,
+    this.exposureHlc,
+    this.terHlc,
+    this.hedgedToBaseHlc,
+    this.thesisHlc,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -344,6 +474,21 @@ class InstrumentRow extends DataClass implements Insertable<InstrumentRow> {
     map['hedgedToBase'] = Variable<bool>(hedgedToBase);
     map['thesis'] = Variable<String>(thesis);
     map['createdAt'] = Variable<DateTime>(createdAt);
+    if (!nullToAbsent || quoteSymbolHlc != null) {
+      map['quoteSymbolHlc'] = Variable<String>(quoteSymbolHlc);
+    }
+    if (!nullToAbsent || exposureHlc != null) {
+      map['exposureHlc'] = Variable<String>(exposureHlc);
+    }
+    if (!nullToAbsent || terHlc != null) {
+      map['terHlc'] = Variable<String>(terHlc);
+    }
+    if (!nullToAbsent || hedgedToBaseHlc != null) {
+      map['hedgedToBaseHlc'] = Variable<String>(hedgedToBaseHlc);
+    }
+    if (!nullToAbsent || thesisHlc != null) {
+      map['thesisHlc'] = Variable<String>(thesisHlc);
+    }
     return map;
   }
 
@@ -368,6 +513,21 @@ class InstrumentRow extends DataClass implements Insertable<InstrumentRow> {
       hedgedToBase: Value(hedgedToBase),
       thesis: Value(thesis),
       createdAt: Value(createdAt),
+      quoteSymbolHlc: quoteSymbolHlc == null && nullToAbsent
+          ? const Value.absent()
+          : Value(quoteSymbolHlc),
+      exposureHlc: exposureHlc == null && nullToAbsent
+          ? const Value.absent()
+          : Value(exposureHlc),
+      terHlc: terHlc == null && nullToAbsent
+          ? const Value.absent()
+          : Value(terHlc),
+      hedgedToBaseHlc: hedgedToBaseHlc == null && nullToAbsent
+          ? const Value.absent()
+          : Value(hedgedToBaseHlc),
+      thesisHlc: thesisHlc == null && nullToAbsent
+          ? const Value.absent()
+          : Value(thesisHlc),
     );
   }
 
@@ -388,6 +548,11 @@ class InstrumentRow extends DataClass implements Insertable<InstrumentRow> {
       hedgedToBase: serializer.fromJson<bool>(json['hedgedToBase']),
       thesis: serializer.fromJson<String>(json['thesis']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      quoteSymbolHlc: serializer.fromJson<String?>(json['quoteSymbolHlc']),
+      exposureHlc: serializer.fromJson<String?>(json['exposureHlc']),
+      terHlc: serializer.fromJson<String?>(json['terHlc']),
+      hedgedToBaseHlc: serializer.fromJson<String?>(json['hedgedToBaseHlc']),
+      thesisHlc: serializer.fromJson<String?>(json['thesisHlc']),
     );
   }
   @override
@@ -405,6 +570,11 @@ class InstrumentRow extends DataClass implements Insertable<InstrumentRow> {
       'hedgedToBase': serializer.toJson<bool>(hedgedToBase),
       'thesis': serializer.toJson<String>(thesis),
       'createdAt': serializer.toJson<DateTime>(createdAt),
+      'quoteSymbolHlc': serializer.toJson<String?>(quoteSymbolHlc),
+      'exposureHlc': serializer.toJson<String?>(exposureHlc),
+      'terHlc': serializer.toJson<String?>(terHlc),
+      'hedgedToBaseHlc': serializer.toJson<String?>(hedgedToBaseHlc),
+      'thesisHlc': serializer.toJson<String?>(thesisHlc),
     };
   }
 
@@ -420,6 +590,11 @@ class InstrumentRow extends DataClass implements Insertable<InstrumentRow> {
     bool? hedgedToBase,
     String? thesis,
     DateTime? createdAt,
+    Value<String?> quoteSymbolHlc = const Value.absent(),
+    Value<String?> exposureHlc = const Value.absent(),
+    Value<String?> terHlc = const Value.absent(),
+    Value<String?> hedgedToBaseHlc = const Value.absent(),
+    Value<String?> thesisHlc = const Value.absent(),
   }) => InstrumentRow(
     id: id ?? this.id,
     name: name ?? this.name,
@@ -434,6 +609,15 @@ class InstrumentRow extends DataClass implements Insertable<InstrumentRow> {
     hedgedToBase: hedgedToBase ?? this.hedgedToBase,
     thesis: thesis ?? this.thesis,
     createdAt: createdAt ?? this.createdAt,
+    quoteSymbolHlc: quoteSymbolHlc.present
+        ? quoteSymbolHlc.value
+        : this.quoteSymbolHlc,
+    exposureHlc: exposureHlc.present ? exposureHlc.value : this.exposureHlc,
+    terHlc: terHlc.present ? terHlc.value : this.terHlc,
+    hedgedToBaseHlc: hedgedToBaseHlc.present
+        ? hedgedToBaseHlc.value
+        : this.hedgedToBaseHlc,
+    thesisHlc: thesisHlc.present ? thesisHlc.value : this.thesisHlc,
   );
   InstrumentRow copyWithCompanion(InstrumentCompanion data) {
     return InstrumentRow(
@@ -458,6 +642,17 @@ class InstrumentRow extends DataClass implements Insertable<InstrumentRow> {
           : this.hedgedToBase,
       thesis: data.thesis.present ? data.thesis.value : this.thesis,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      quoteSymbolHlc: data.quoteSymbolHlc.present
+          ? data.quoteSymbolHlc.value
+          : this.quoteSymbolHlc,
+      exposureHlc: data.exposureHlc.present
+          ? data.exposureHlc.value
+          : this.exposureHlc,
+      terHlc: data.terHlc.present ? data.terHlc.value : this.terHlc,
+      hedgedToBaseHlc: data.hedgedToBaseHlc.present
+          ? data.hedgedToBaseHlc.value
+          : this.hedgedToBaseHlc,
+      thesisHlc: data.thesisHlc.present ? data.thesisHlc.value : this.thesisHlc,
     );
   }
 
@@ -474,7 +669,12 @@ class InstrumentRow extends DataClass implements Insertable<InstrumentRow> {
           ..write('ter: $ter, ')
           ..write('hedgedToBase: $hedgedToBase, ')
           ..write('thesis: $thesis, ')
-          ..write('createdAt: $createdAt')
+          ..write('createdAt: $createdAt, ')
+          ..write('quoteSymbolHlc: $quoteSymbolHlc, ')
+          ..write('exposureHlc: $exposureHlc, ')
+          ..write('terHlc: $terHlc, ')
+          ..write('hedgedToBaseHlc: $hedgedToBaseHlc, ')
+          ..write('thesisHlc: $thesisHlc')
           ..write(')'))
         .toString();
   }
@@ -492,6 +692,11 @@ class InstrumentRow extends DataClass implements Insertable<InstrumentRow> {
     hedgedToBase,
     thesis,
     createdAt,
+    quoteSymbolHlc,
+    exposureHlc,
+    terHlc,
+    hedgedToBaseHlc,
+    thesisHlc,
   );
   @override
   bool operator ==(Object other) =>
@@ -507,7 +712,12 @@ class InstrumentRow extends DataClass implements Insertable<InstrumentRow> {
           other.ter == this.ter &&
           other.hedgedToBase == this.hedgedToBase &&
           other.thesis == this.thesis &&
-          other.createdAt == this.createdAt);
+          other.createdAt == this.createdAt &&
+          other.quoteSymbolHlc == this.quoteSymbolHlc &&
+          other.exposureHlc == this.exposureHlc &&
+          other.terHlc == this.terHlc &&
+          other.hedgedToBaseHlc == this.hedgedToBaseHlc &&
+          other.thesisHlc == this.thesisHlc);
 }
 
 class InstrumentCompanion extends UpdateCompanion<InstrumentRow> {
@@ -522,6 +732,11 @@ class InstrumentCompanion extends UpdateCompanion<InstrumentRow> {
   final Value<bool> hedgedToBase;
   final Value<String> thesis;
   final Value<DateTime> createdAt;
+  final Value<String?> quoteSymbolHlc;
+  final Value<String?> exposureHlc;
+  final Value<String?> terHlc;
+  final Value<String?> hedgedToBaseHlc;
+  final Value<String?> thesisHlc;
   final Value<int> rowid;
   const InstrumentCompanion({
     this.id = const Value.absent(),
@@ -535,6 +750,11 @@ class InstrumentCompanion extends UpdateCompanion<InstrumentRow> {
     this.hedgedToBase = const Value.absent(),
     this.thesis = const Value.absent(),
     this.createdAt = const Value.absent(),
+    this.quoteSymbolHlc = const Value.absent(),
+    this.exposureHlc = const Value.absent(),
+    this.terHlc = const Value.absent(),
+    this.hedgedToBaseHlc = const Value.absent(),
+    this.thesisHlc = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   InstrumentCompanion.insert({
@@ -549,6 +769,11 @@ class InstrumentCompanion extends UpdateCompanion<InstrumentRow> {
     this.hedgedToBase = const Value.absent(),
     this.thesis = const Value.absent(),
     required DateTime createdAt,
+    this.quoteSymbolHlc = const Value.absent(),
+    this.exposureHlc = const Value.absent(),
+    this.terHlc = const Value.absent(),
+    this.hedgedToBaseHlc = const Value.absent(),
+    this.thesisHlc = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        name = Value(name),
@@ -566,6 +791,11 @@ class InstrumentCompanion extends UpdateCompanion<InstrumentRow> {
     Expression<bool>? hedgedToBase,
     Expression<String>? thesis,
     Expression<DateTime>? createdAt,
+    Expression<String>? quoteSymbolHlc,
+    Expression<String>? exposureHlc,
+    Expression<String>? terHlc,
+    Expression<String>? hedgedToBaseHlc,
+    Expression<String>? thesisHlc,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -580,6 +810,11 @@ class InstrumentCompanion extends UpdateCompanion<InstrumentRow> {
       if (hedgedToBase != null) 'hedgedToBase': hedgedToBase,
       if (thesis != null) 'thesis': thesis,
       if (createdAt != null) 'createdAt': createdAt,
+      if (quoteSymbolHlc != null) 'quoteSymbolHlc': quoteSymbolHlc,
+      if (exposureHlc != null) 'exposureHlc': exposureHlc,
+      if (terHlc != null) 'terHlc': terHlc,
+      if (hedgedToBaseHlc != null) 'hedgedToBaseHlc': hedgedToBaseHlc,
+      if (thesisHlc != null) 'thesisHlc': thesisHlc,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -596,6 +831,11 @@ class InstrumentCompanion extends UpdateCompanion<InstrumentRow> {
     Value<bool>? hedgedToBase,
     Value<String>? thesis,
     Value<DateTime>? createdAt,
+    Value<String?>? quoteSymbolHlc,
+    Value<String?>? exposureHlc,
+    Value<String?>? terHlc,
+    Value<String?>? hedgedToBaseHlc,
+    Value<String?>? thesisHlc,
     Value<int>? rowid,
   }) {
     return InstrumentCompanion(
@@ -610,6 +850,11 @@ class InstrumentCompanion extends UpdateCompanion<InstrumentRow> {
       hedgedToBase: hedgedToBase ?? this.hedgedToBase,
       thesis: thesis ?? this.thesis,
       createdAt: createdAt ?? this.createdAt,
+      quoteSymbolHlc: quoteSymbolHlc ?? this.quoteSymbolHlc,
+      exposureHlc: exposureHlc ?? this.exposureHlc,
+      terHlc: terHlc ?? this.terHlc,
+      hedgedToBaseHlc: hedgedToBaseHlc ?? this.hedgedToBaseHlc,
+      thesisHlc: thesisHlc ?? this.thesisHlc,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -650,6 +895,21 @@ class InstrumentCompanion extends UpdateCompanion<InstrumentRow> {
     if (createdAt.present) {
       map['createdAt'] = Variable<DateTime>(createdAt.value);
     }
+    if (quoteSymbolHlc.present) {
+      map['quoteSymbolHlc'] = Variable<String>(quoteSymbolHlc.value);
+    }
+    if (exposureHlc.present) {
+      map['exposureHlc'] = Variable<String>(exposureHlc.value);
+    }
+    if (terHlc.present) {
+      map['terHlc'] = Variable<String>(terHlc.value);
+    }
+    if (hedgedToBaseHlc.present) {
+      map['hedgedToBaseHlc'] = Variable<String>(hedgedToBaseHlc.value);
+    }
+    if (thesisHlc.present) {
+      map['thesisHlc'] = Variable<String>(thesisHlc.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -670,6 +930,11 @@ class InstrumentCompanion extends UpdateCompanion<InstrumentRow> {
           ..write('hedgedToBase: $hedgedToBase, ')
           ..write('thesis: $thesis, ')
           ..write('createdAt: $createdAt, ')
+          ..write('quoteSymbolHlc: $quoteSymbolHlc, ')
+          ..write('exposureHlc: $exposureHlc, ')
+          ..write('terHlc: $terHlc, ')
+          ..write('hedgedToBaseHlc: $hedgedToBaseHlc, ')
+          ..write('thesisHlc: $thesisHlc, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -2965,8 +3230,19 @@ class Settings extends Table with TableInfo<Settings, SettingsRow> {
     requiredDuringInsert: true,
     $customConstraints: 'NOT NULL',
   );
+  static const VerificationMeta _residenceHlcMeta = const VerificationMeta(
+    'residenceHlc',
+  );
+  late final GeneratedColumn<String> residenceHlc = GeneratedColumn<String>(
+    'residenceHlc',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    $customConstraints: '',
+  );
   @override
-  List<GeneratedColumn> get $columns => [id, residence];
+  List<GeneratedColumn> get $columns => [id, residence, residenceHlc];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -2990,6 +3266,15 @@ class Settings extends Table with TableInfo<Settings, SettingsRow> {
     } else if (isInserting) {
       context.missing(_residenceMeta);
     }
+    if (data.containsKey('residenceHlc')) {
+      context.handle(
+        _residenceHlcMeta,
+        residenceHlc.isAcceptableOrUnknown(
+          data['residenceHlc']!,
+          _residenceHlcMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -3007,6 +3292,10 @@ class Settings extends Table with TableInfo<Settings, SettingsRow> {
         DriftSqlType.string,
         data['${effectivePrefix}residence'],
       )!,
+      residenceHlc: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}residenceHlc'],
+      ),
     );
   }
 
@@ -3022,17 +3311,31 @@ class Settings extends Table with TableInfo<Settings, SettingsRow> {
 class SettingsRow extends DataClass implements Insertable<SettingsRow> {
   final int id;
   final String residence;
-  const SettingsRow({required this.id, required this.residence});
+  final String? residenceHlc;
+  const SettingsRow({
+    required this.id,
+    required this.residence,
+    this.residenceHlc,
+  });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
     map['residence'] = Variable<String>(residence);
+    if (!nullToAbsent || residenceHlc != null) {
+      map['residenceHlc'] = Variable<String>(residenceHlc);
+    }
     return map;
   }
 
   SettingsCompanion toCompanion(bool nullToAbsent) {
-    return SettingsCompanion(id: Value(id), residence: Value(residence));
+    return SettingsCompanion(
+      id: Value(id),
+      residence: Value(residence),
+      residenceHlc: residenceHlc == null && nullToAbsent
+          ? const Value.absent()
+          : Value(residenceHlc),
+    );
   }
 
   factory SettingsRow.fromJson(
@@ -3043,6 +3346,7 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
     return SettingsRow(
       id: serializer.fromJson<int>(json['id']),
       residence: serializer.fromJson<String>(json['residence']),
+      residenceHlc: serializer.fromJson<String?>(json['residenceHlc']),
     );
   }
   @override
@@ -3051,15 +3355,26 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
       'residence': serializer.toJson<String>(residence),
+      'residenceHlc': serializer.toJson<String?>(residenceHlc),
     };
   }
 
-  SettingsRow copyWith({int? id, String? residence}) =>
-      SettingsRow(id: id ?? this.id, residence: residence ?? this.residence);
+  SettingsRow copyWith({
+    int? id,
+    String? residence,
+    Value<String?> residenceHlc = const Value.absent(),
+  }) => SettingsRow(
+    id: id ?? this.id,
+    residence: residence ?? this.residence,
+    residenceHlc: residenceHlc.present ? residenceHlc.value : this.residenceHlc,
+  );
   SettingsRow copyWithCompanion(SettingsCompanion data) {
     return SettingsRow(
       id: data.id.present ? data.id.value : this.id,
       residence: data.residence.present ? data.residence.value : this.residence,
+      residenceHlc: data.residenceHlc.present
+          ? data.residenceHlc.value
+          : this.residenceHlc,
     );
   }
 
@@ -3067,46 +3382,58 @@ class SettingsRow extends DataClass implements Insertable<SettingsRow> {
   String toString() {
     return (StringBuffer('SettingsRow(')
           ..write('id: $id, ')
-          ..write('residence: $residence')
+          ..write('residence: $residence, ')
+          ..write('residenceHlc: $residenceHlc')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, residence);
+  int get hashCode => Object.hash(id, residence, residenceHlc);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is SettingsRow &&
           other.id == this.id &&
-          other.residence == this.residence);
+          other.residence == this.residence &&
+          other.residenceHlc == this.residenceHlc);
 }
 
 class SettingsCompanion extends UpdateCompanion<SettingsRow> {
   final Value<int> id;
   final Value<String> residence;
+  final Value<String?> residenceHlc;
   const SettingsCompanion({
     this.id = const Value.absent(),
     this.residence = const Value.absent(),
+    this.residenceHlc = const Value.absent(),
   });
   SettingsCompanion.insert({
     this.id = const Value.absent(),
     required String residence,
+    this.residenceHlc = const Value.absent(),
   }) : residence = Value(residence);
   static Insertable<SettingsRow> custom({
     Expression<int>? id,
     Expression<String>? residence,
+    Expression<String>? residenceHlc,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (residence != null) 'residence': residence,
+      if (residenceHlc != null) 'residenceHlc': residenceHlc,
     });
   }
 
-  SettingsCompanion copyWith({Value<int>? id, Value<String>? residence}) {
+  SettingsCompanion copyWith({
+    Value<int>? id,
+    Value<String>? residence,
+    Value<String?>? residenceHlc,
+  }) {
     return SettingsCompanion(
       id: id ?? this.id,
       residence: residence ?? this.residence,
+      residenceHlc: residenceHlc ?? this.residenceHlc,
     );
   }
 
@@ -3119,6 +3446,9 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
     if (residence.present) {
       map['residence'] = Variable<String>(residence.value);
     }
+    if (residenceHlc.present) {
+      map['residenceHlc'] = Variable<String>(residenceHlc.value);
+    }
     return map;
   }
 
@@ -3126,7 +3456,2854 @@ class SettingsCompanion extends UpdateCompanion<SettingsRow> {
   String toString() {
     return (StringBuffer('SettingsCompanion(')
           ..write('id: $id, ')
-          ..write('residence: $residence')
+          ..write('residence: $residence, ')
+          ..write('residenceHlc: $residenceHlc')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class EtfHolding extends Table with TableInfo<EtfHolding, EtfHoldingRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  EtfHolding(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL PRIMARY KEY',
+  );
+  static const VerificationMeta _instrumentIdMeta = const VerificationMeta(
+    'instrumentId',
+  );
+  late final GeneratedColumn<String> instrumentId = GeneratedColumn<String>(
+    'instrumentId',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL REFERENCES Instrument(id)ON UPDATE CASCADE ON DELETE RESTRICT',
+  );
+  static const VerificationMeta _identityMeta = const VerificationMeta(
+    'identity',
+  );
+  late final GeneratedColumn<String> identity = GeneratedColumn<String>(
+    'identity',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  static const VerificationMeta _identityKindMeta = const VerificationMeta(
+    'identityKind',
+  );
+  late final GeneratedColumn<String> identityKind = GeneratedColumn<String>(
+    'identityKind',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  static const VerificationMeta _weightMeta = const VerificationMeta('weight');
+  late final GeneratedColumn<String> weight = GeneratedColumn<String>(
+    'weight',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'createdAt',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    instrumentId,
+    identity,
+    identityKind,
+    name,
+    weight,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'EtfHolding';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<EtfHoldingRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('instrumentId')) {
+      context.handle(
+        _instrumentIdMeta,
+        instrumentId.isAcceptableOrUnknown(
+          data['instrumentId']!,
+          _instrumentIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_instrumentIdMeta);
+    }
+    if (data.containsKey('identity')) {
+      context.handle(
+        _identityMeta,
+        identity.isAcceptableOrUnknown(data['identity']!, _identityMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_identityMeta);
+    }
+    if (data.containsKey('identityKind')) {
+      context.handle(
+        _identityKindMeta,
+        identityKind.isAcceptableOrUnknown(
+          data['identityKind']!,
+          _identityKindMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_identityKindMeta);
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('weight')) {
+      context.handle(
+        _weightMeta,
+        weight.isAcceptableOrUnknown(data['weight']!, _weightMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_weightMeta);
+    }
+    if (data.containsKey('createdAt')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['createdAt']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  EtfHoldingRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return EtfHoldingRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      instrumentId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}instrumentId'],
+      )!,
+      identity: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}identity'],
+      )!,
+      identityKind: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}identityKind'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      weight: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}weight'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}createdAt'],
+      )!,
+    );
+  }
+
+  @override
+  EtfHolding createAlias(String alias) {
+    return EtfHolding(attachedDatabase, alias);
+  }
+
+  @override
+  bool get dontWriteConstraints => true;
+}
+
+class EtfHoldingRow extends DataClass implements Insertable<EtfHoldingRow> {
+  final String id;
+  final String instrumentId;
+  final String identity;
+  final String identityKind;
+  final String name;
+  final String weight;
+  final DateTime createdAt;
+  const EtfHoldingRow({
+    required this.id,
+    required this.instrumentId,
+    required this.identity,
+    required this.identityKind,
+    required this.name,
+    required this.weight,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['instrumentId'] = Variable<String>(instrumentId);
+    map['identity'] = Variable<String>(identity);
+    map['identityKind'] = Variable<String>(identityKind);
+    map['name'] = Variable<String>(name);
+    map['weight'] = Variable<String>(weight);
+    map['createdAt'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  EtfHoldingCompanion toCompanion(bool nullToAbsent) {
+    return EtfHoldingCompanion(
+      id: Value(id),
+      instrumentId: Value(instrumentId),
+      identity: Value(identity),
+      identityKind: Value(identityKind),
+      name: Value(name),
+      weight: Value(weight),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory EtfHoldingRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return EtfHoldingRow(
+      id: serializer.fromJson<String>(json['id']),
+      instrumentId: serializer.fromJson<String>(json['instrumentId']),
+      identity: serializer.fromJson<String>(json['identity']),
+      identityKind: serializer.fromJson<String>(json['identityKind']),
+      name: serializer.fromJson<String>(json['name']),
+      weight: serializer.fromJson<String>(json['weight']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'instrumentId': serializer.toJson<String>(instrumentId),
+      'identity': serializer.toJson<String>(identity),
+      'identityKind': serializer.toJson<String>(identityKind),
+      'name': serializer.toJson<String>(name),
+      'weight': serializer.toJson<String>(weight),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  EtfHoldingRow copyWith({
+    String? id,
+    String? instrumentId,
+    String? identity,
+    String? identityKind,
+    String? name,
+    String? weight,
+    DateTime? createdAt,
+  }) => EtfHoldingRow(
+    id: id ?? this.id,
+    instrumentId: instrumentId ?? this.instrumentId,
+    identity: identity ?? this.identity,
+    identityKind: identityKind ?? this.identityKind,
+    name: name ?? this.name,
+    weight: weight ?? this.weight,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  EtfHoldingRow copyWithCompanion(EtfHoldingCompanion data) {
+    return EtfHoldingRow(
+      id: data.id.present ? data.id.value : this.id,
+      instrumentId: data.instrumentId.present
+          ? data.instrumentId.value
+          : this.instrumentId,
+      identity: data.identity.present ? data.identity.value : this.identity,
+      identityKind: data.identityKind.present
+          ? data.identityKind.value
+          : this.identityKind,
+      name: data.name.present ? data.name.value : this.name,
+      weight: data.weight.present ? data.weight.value : this.weight,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('EtfHoldingRow(')
+          ..write('id: $id, ')
+          ..write('instrumentId: $instrumentId, ')
+          ..write('identity: $identity, ')
+          ..write('identityKind: $identityKind, ')
+          ..write('name: $name, ')
+          ..write('weight: $weight, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    instrumentId,
+    identity,
+    identityKind,
+    name,
+    weight,
+    createdAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is EtfHoldingRow &&
+          other.id == this.id &&
+          other.instrumentId == this.instrumentId &&
+          other.identity == this.identity &&
+          other.identityKind == this.identityKind &&
+          other.name == this.name &&
+          other.weight == this.weight &&
+          other.createdAt == this.createdAt);
+}
+
+class EtfHoldingCompanion extends UpdateCompanion<EtfHoldingRow> {
+  final Value<String> id;
+  final Value<String> instrumentId;
+  final Value<String> identity;
+  final Value<String> identityKind;
+  final Value<String> name;
+  final Value<String> weight;
+  final Value<DateTime> createdAt;
+  final Value<int> rowid;
+  const EtfHoldingCompanion({
+    this.id = const Value.absent(),
+    this.instrumentId = const Value.absent(),
+    this.identity = const Value.absent(),
+    this.identityKind = const Value.absent(),
+    this.name = const Value.absent(),
+    this.weight = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  EtfHoldingCompanion.insert({
+    required String id,
+    required String instrumentId,
+    required String identity,
+    required String identityKind,
+    required String name,
+    required String weight,
+    required DateTime createdAt,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       instrumentId = Value(instrumentId),
+       identity = Value(identity),
+       identityKind = Value(identityKind),
+       name = Value(name),
+       weight = Value(weight),
+       createdAt = Value(createdAt);
+  static Insertable<EtfHoldingRow> custom({
+    Expression<String>? id,
+    Expression<String>? instrumentId,
+    Expression<String>? identity,
+    Expression<String>? identityKind,
+    Expression<String>? name,
+    Expression<String>? weight,
+    Expression<DateTime>? createdAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (instrumentId != null) 'instrumentId': instrumentId,
+      if (identity != null) 'identity': identity,
+      if (identityKind != null) 'identityKind': identityKind,
+      if (name != null) 'name': name,
+      if (weight != null) 'weight': weight,
+      if (createdAt != null) 'createdAt': createdAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  EtfHoldingCompanion copyWith({
+    Value<String>? id,
+    Value<String>? instrumentId,
+    Value<String>? identity,
+    Value<String>? identityKind,
+    Value<String>? name,
+    Value<String>? weight,
+    Value<DateTime>? createdAt,
+    Value<int>? rowid,
+  }) {
+    return EtfHoldingCompanion(
+      id: id ?? this.id,
+      instrumentId: instrumentId ?? this.instrumentId,
+      identity: identity ?? this.identity,
+      identityKind: identityKind ?? this.identityKind,
+      name: name ?? this.name,
+      weight: weight ?? this.weight,
+      createdAt: createdAt ?? this.createdAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (instrumentId.present) {
+      map['instrumentId'] = Variable<String>(instrumentId.value);
+    }
+    if (identity.present) {
+      map['identity'] = Variable<String>(identity.value);
+    }
+    if (identityKind.present) {
+      map['identityKind'] = Variable<String>(identityKind.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (weight.present) {
+      map['weight'] = Variable<String>(weight.value);
+    }
+    if (createdAt.present) {
+      map['createdAt'] = Variable<DateTime>(createdAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('EtfHoldingCompanion(')
+          ..write('id: $id, ')
+          ..write('instrumentId: $instrumentId, ')
+          ..write('identity: $identity, ')
+          ..write('identityKind: $identityKind, ')
+          ..write('name: $name, ')
+          ..write('weight: $weight, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class EtfHoldingBlock extends Table
+    with TableInfo<EtfHoldingBlock, EtfHoldingBlockRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  EtfHoldingBlock(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _instrumentIdMeta = const VerificationMeta(
+    'instrumentId',
+  );
+  late final GeneratedColumn<String> instrumentId = GeneratedColumn<String>(
+    'instrumentId',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL PRIMARY KEY REFERENCES Instrument(id)ON UPDATE CASCADE ON DELETE RESTRICT',
+  );
+  static const VerificationMeta _asOfMeta = const VerificationMeta('asOf');
+  late final GeneratedColumn<String> asOf = GeneratedColumn<String>(
+    'asOf',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL CHECK (asOf GLOB \'[0-9][0-9][0-9][0-9]-[0-1][0-9]-[0-3][0-9]\')',
+  );
+  static const VerificationMeta _asOfInferredMeta = const VerificationMeta(
+    'asOfInferred',
+  );
+  late final GeneratedColumn<bool> asOfInferred = GeneratedColumn<bool>(
+    'asOfInferred',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    $customConstraints: 'NOT NULL DEFAULT 0',
+    defaultValue: const CustomExpression('0'),
+  );
+  static const VerificationMeta _hlcMeta = const VerificationMeta('hlc');
+  late final GeneratedColumn<String> hlc = GeneratedColumn<String>(
+    'hlc',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    $customConstraints: '',
+  );
+  @override
+  List<GeneratedColumn> get $columns => [instrumentId, asOf, asOfInferred, hlc];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'EtfHoldingBlock';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<EtfHoldingBlockRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('instrumentId')) {
+      context.handle(
+        _instrumentIdMeta,
+        instrumentId.isAcceptableOrUnknown(
+          data['instrumentId']!,
+          _instrumentIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_instrumentIdMeta);
+    }
+    if (data.containsKey('asOf')) {
+      context.handle(
+        _asOfMeta,
+        asOf.isAcceptableOrUnknown(data['asOf']!, _asOfMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_asOfMeta);
+    }
+    if (data.containsKey('asOfInferred')) {
+      context.handle(
+        _asOfInferredMeta,
+        asOfInferred.isAcceptableOrUnknown(
+          data['asOfInferred']!,
+          _asOfInferredMeta,
+        ),
+      );
+    }
+    if (data.containsKey('hlc')) {
+      context.handle(
+        _hlcMeta,
+        hlc.isAcceptableOrUnknown(data['hlc']!, _hlcMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {instrumentId};
+  @override
+  EtfHoldingBlockRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return EtfHoldingBlockRow(
+      instrumentId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}instrumentId'],
+      )!,
+      asOf: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}asOf'],
+      )!,
+      asOfInferred: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}asOfInferred'],
+      )!,
+      hlc: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}hlc'],
+      ),
+    );
+  }
+
+  @override
+  EtfHoldingBlock createAlias(String alias) {
+    return EtfHoldingBlock(attachedDatabase, alias);
+  }
+
+  @override
+  bool get dontWriteConstraints => true;
+}
+
+class EtfHoldingBlockRow extends DataClass
+    implements Insertable<EtfHoldingBlockRow> {
+  final String instrumentId;
+  final String asOf;
+  final bool asOfInferred;
+  final String? hlc;
+  const EtfHoldingBlockRow({
+    required this.instrumentId,
+    required this.asOf,
+    required this.asOfInferred,
+    this.hlc,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['instrumentId'] = Variable<String>(instrumentId);
+    map['asOf'] = Variable<String>(asOf);
+    map['asOfInferred'] = Variable<bool>(asOfInferred);
+    if (!nullToAbsent || hlc != null) {
+      map['hlc'] = Variable<String>(hlc);
+    }
+    return map;
+  }
+
+  EtfHoldingBlockCompanion toCompanion(bool nullToAbsent) {
+    return EtfHoldingBlockCompanion(
+      instrumentId: Value(instrumentId),
+      asOf: Value(asOf),
+      asOfInferred: Value(asOfInferred),
+      hlc: hlc == null && nullToAbsent ? const Value.absent() : Value(hlc),
+    );
+  }
+
+  factory EtfHoldingBlockRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return EtfHoldingBlockRow(
+      instrumentId: serializer.fromJson<String>(json['instrumentId']),
+      asOf: serializer.fromJson<String>(json['asOf']),
+      asOfInferred: serializer.fromJson<bool>(json['asOfInferred']),
+      hlc: serializer.fromJson<String?>(json['hlc']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'instrumentId': serializer.toJson<String>(instrumentId),
+      'asOf': serializer.toJson<String>(asOf),
+      'asOfInferred': serializer.toJson<bool>(asOfInferred),
+      'hlc': serializer.toJson<String?>(hlc),
+    };
+  }
+
+  EtfHoldingBlockRow copyWith({
+    String? instrumentId,
+    String? asOf,
+    bool? asOfInferred,
+    Value<String?> hlc = const Value.absent(),
+  }) => EtfHoldingBlockRow(
+    instrumentId: instrumentId ?? this.instrumentId,
+    asOf: asOf ?? this.asOf,
+    asOfInferred: asOfInferred ?? this.asOfInferred,
+    hlc: hlc.present ? hlc.value : this.hlc,
+  );
+  EtfHoldingBlockRow copyWithCompanion(EtfHoldingBlockCompanion data) {
+    return EtfHoldingBlockRow(
+      instrumentId: data.instrumentId.present
+          ? data.instrumentId.value
+          : this.instrumentId,
+      asOf: data.asOf.present ? data.asOf.value : this.asOf,
+      asOfInferred: data.asOfInferred.present
+          ? data.asOfInferred.value
+          : this.asOfInferred,
+      hlc: data.hlc.present ? data.hlc.value : this.hlc,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('EtfHoldingBlockRow(')
+          ..write('instrumentId: $instrumentId, ')
+          ..write('asOf: $asOf, ')
+          ..write('asOfInferred: $asOfInferred, ')
+          ..write('hlc: $hlc')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(instrumentId, asOf, asOfInferred, hlc);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is EtfHoldingBlockRow &&
+          other.instrumentId == this.instrumentId &&
+          other.asOf == this.asOf &&
+          other.asOfInferred == this.asOfInferred &&
+          other.hlc == this.hlc);
+}
+
+class EtfHoldingBlockCompanion extends UpdateCompanion<EtfHoldingBlockRow> {
+  final Value<String> instrumentId;
+  final Value<String> asOf;
+  final Value<bool> asOfInferred;
+  final Value<String?> hlc;
+  final Value<int> rowid;
+  const EtfHoldingBlockCompanion({
+    this.instrumentId = const Value.absent(),
+    this.asOf = const Value.absent(),
+    this.asOfInferred = const Value.absent(),
+    this.hlc = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  EtfHoldingBlockCompanion.insert({
+    required String instrumentId,
+    required String asOf,
+    this.asOfInferred = const Value.absent(),
+    this.hlc = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : instrumentId = Value(instrumentId),
+       asOf = Value(asOf);
+  static Insertable<EtfHoldingBlockRow> custom({
+    Expression<String>? instrumentId,
+    Expression<String>? asOf,
+    Expression<bool>? asOfInferred,
+    Expression<String>? hlc,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (instrumentId != null) 'instrumentId': instrumentId,
+      if (asOf != null) 'asOf': asOf,
+      if (asOfInferred != null) 'asOfInferred': asOfInferred,
+      if (hlc != null) 'hlc': hlc,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  EtfHoldingBlockCompanion copyWith({
+    Value<String>? instrumentId,
+    Value<String>? asOf,
+    Value<bool>? asOfInferred,
+    Value<String?>? hlc,
+    Value<int>? rowid,
+  }) {
+    return EtfHoldingBlockCompanion(
+      instrumentId: instrumentId ?? this.instrumentId,
+      asOf: asOf ?? this.asOf,
+      asOfInferred: asOfInferred ?? this.asOfInferred,
+      hlc: hlc ?? this.hlc,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (instrumentId.present) {
+      map['instrumentId'] = Variable<String>(instrumentId.value);
+    }
+    if (asOf.present) {
+      map['asOf'] = Variable<String>(asOf.value);
+    }
+    if (asOfInferred.present) {
+      map['asOfInferred'] = Variable<bool>(asOfInferred.value);
+    }
+    if (hlc.present) {
+      map['hlc'] = Variable<String>(hlc.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('EtfHoldingBlockCompanion(')
+          ..write('instrumentId: $instrumentId, ')
+          ..write('asOf: $asOf, ')
+          ..write('asOfInferred: $asOfInferred, ')
+          ..write('hlc: $hlc, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class PortfolioTarget extends Table
+    with TableInfo<PortfolioTarget, PortfolioTargetRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  PortfolioTarget(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL PRIMARY KEY',
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  static const VerificationMeta _noteMeta = const VerificationMeta('note');
+  late final GeneratedColumn<String> note = GeneratedColumn<String>(
+    'note',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    $customConstraints: '',
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'createdAt',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  static const VerificationMeta _activeFromMeta = const VerificationMeta(
+    'activeFrom',
+  );
+  late final GeneratedColumn<String> activeFrom = GeneratedColumn<String>(
+    'activeFrom',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    $customConstraints: 'CHECK (activeFrom IS NULL OR activeFrom GLOB \'[0-9][0-9][0-9][0-9]-[0-1][0-9]-[0-3][0-9]\')',
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, name, note, createdAt, activeFrom];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'PortfolioTarget';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<PortfolioTargetRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('note')) {
+      context.handle(
+        _noteMeta,
+        note.isAcceptableOrUnknown(data['note']!, _noteMeta),
+      );
+    }
+    if (data.containsKey('createdAt')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['createdAt']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('activeFrom')) {
+      context.handle(
+        _activeFromMeta,
+        activeFrom.isAcceptableOrUnknown(data['activeFrom']!, _activeFromMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  PortfolioTargetRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return PortfolioTargetRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      note: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}note'],
+      ),
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}createdAt'],
+      )!,
+      activeFrom: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}activeFrom'],
+      ),
+    );
+  }
+
+  @override
+  PortfolioTarget createAlias(String alias) {
+    return PortfolioTarget(attachedDatabase, alias);
+  }
+
+  @override
+  bool get dontWriteConstraints => true;
+}
+
+class PortfolioTargetRow extends DataClass
+    implements Insertable<PortfolioTargetRow> {
+  final String id;
+  final String name;
+  final String? note;
+  final DateTime createdAt;
+  final String? activeFrom;
+  const PortfolioTargetRow({
+    required this.id,
+    required this.name,
+    this.note,
+    required this.createdAt,
+    this.activeFrom,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['name'] = Variable<String>(name);
+    if (!nullToAbsent || note != null) {
+      map['note'] = Variable<String>(note);
+    }
+    map['createdAt'] = Variable<DateTime>(createdAt);
+    if (!nullToAbsent || activeFrom != null) {
+      map['activeFrom'] = Variable<String>(activeFrom);
+    }
+    return map;
+  }
+
+  PortfolioTargetCompanion toCompanion(bool nullToAbsent) {
+    return PortfolioTargetCompanion(
+      id: Value(id),
+      name: Value(name),
+      note: note == null && nullToAbsent ? const Value.absent() : Value(note),
+      createdAt: Value(createdAt),
+      activeFrom: activeFrom == null && nullToAbsent
+          ? const Value.absent()
+          : Value(activeFrom),
+    );
+  }
+
+  factory PortfolioTargetRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return PortfolioTargetRow(
+      id: serializer.fromJson<String>(json['id']),
+      name: serializer.fromJson<String>(json['name']),
+      note: serializer.fromJson<String?>(json['note']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      activeFrom: serializer.fromJson<String?>(json['activeFrom']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'name': serializer.toJson<String>(name),
+      'note': serializer.toJson<String?>(note),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'activeFrom': serializer.toJson<String?>(activeFrom),
+    };
+  }
+
+  PortfolioTargetRow copyWith({
+    String? id,
+    String? name,
+    Value<String?> note = const Value.absent(),
+    DateTime? createdAt,
+    Value<String?> activeFrom = const Value.absent(),
+  }) => PortfolioTargetRow(
+    id: id ?? this.id,
+    name: name ?? this.name,
+    note: note.present ? note.value : this.note,
+    createdAt: createdAt ?? this.createdAt,
+    activeFrom: activeFrom.present ? activeFrom.value : this.activeFrom,
+  );
+  PortfolioTargetRow copyWithCompanion(PortfolioTargetCompanion data) {
+    return PortfolioTargetRow(
+      id: data.id.present ? data.id.value : this.id,
+      name: data.name.present ? data.name.value : this.name,
+      note: data.note.present ? data.note.value : this.note,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      activeFrom: data.activeFrom.present
+          ? data.activeFrom.value
+          : this.activeFrom,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PortfolioTargetRow(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('note: $note, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('activeFrom: $activeFrom')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, name, note, createdAt, activeFrom);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is PortfolioTargetRow &&
+          other.id == this.id &&
+          other.name == this.name &&
+          other.note == this.note &&
+          other.createdAt == this.createdAt &&
+          other.activeFrom == this.activeFrom);
+}
+
+class PortfolioTargetCompanion extends UpdateCompanion<PortfolioTargetRow> {
+  final Value<String> id;
+  final Value<String> name;
+  final Value<String?> note;
+  final Value<DateTime> createdAt;
+  final Value<String?> activeFrom;
+  final Value<int> rowid;
+  const PortfolioTargetCompanion({
+    this.id = const Value.absent(),
+    this.name = const Value.absent(),
+    this.note = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.activeFrom = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  PortfolioTargetCompanion.insert({
+    required String id,
+    required String name,
+    this.note = const Value.absent(),
+    required DateTime createdAt,
+    this.activeFrom = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       name = Value(name),
+       createdAt = Value(createdAt);
+  static Insertable<PortfolioTargetRow> custom({
+    Expression<String>? id,
+    Expression<String>? name,
+    Expression<String>? note,
+    Expression<DateTime>? createdAt,
+    Expression<String>? activeFrom,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (name != null) 'name': name,
+      if (note != null) 'note': note,
+      if (createdAt != null) 'createdAt': createdAt,
+      if (activeFrom != null) 'activeFrom': activeFrom,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  PortfolioTargetCompanion copyWith({
+    Value<String>? id,
+    Value<String>? name,
+    Value<String?>? note,
+    Value<DateTime>? createdAt,
+    Value<String?>? activeFrom,
+    Value<int>? rowid,
+  }) {
+    return PortfolioTargetCompanion(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      note: note ?? this.note,
+      createdAt: createdAt ?? this.createdAt,
+      activeFrom: activeFrom ?? this.activeFrom,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (note.present) {
+      map['note'] = Variable<String>(note.value);
+    }
+    if (createdAt.present) {
+      map['createdAt'] = Variable<DateTime>(createdAt.value);
+    }
+    if (activeFrom.present) {
+      map['activeFrom'] = Variable<String>(activeFrom.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PortfolioTargetCompanion(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('note: $note, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('activeFrom: $activeFrom, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class PortfolioTargetLine extends Table
+    with TableInfo<PortfolioTargetLine, PortfolioTargetLineRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  PortfolioTargetLine(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL PRIMARY KEY',
+  );
+  static const VerificationMeta _targetIdMeta = const VerificationMeta(
+    'targetId',
+  );
+  late final GeneratedColumn<String> targetId = GeneratedColumn<String>(
+    'targetId',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL REFERENCES PortfolioTarget(id)ON UPDATE CASCADE ON DELETE CASCADE',
+  );
+  static const VerificationMeta _instrumentIdMeta = const VerificationMeta(
+    'instrumentId',
+  );
+  late final GeneratedColumn<String> instrumentId = GeneratedColumn<String>(
+    'instrumentId',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  static const VerificationMeta _monthlyAmountMeta = const VerificationMeta(
+    'monthlyAmount',
+  );
+  late final GeneratedColumn<String> monthlyAmount = GeneratedColumn<String>(
+    'monthlyAmount',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    targetId,
+    instrumentId,
+    monthlyAmount,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'PortfolioTargetLine';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<PortfolioTargetLineRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('targetId')) {
+      context.handle(
+        _targetIdMeta,
+        targetId.isAcceptableOrUnknown(data['targetId']!, _targetIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_targetIdMeta);
+    }
+    if (data.containsKey('instrumentId')) {
+      context.handle(
+        _instrumentIdMeta,
+        instrumentId.isAcceptableOrUnknown(
+          data['instrumentId']!,
+          _instrumentIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_instrumentIdMeta);
+    }
+    if (data.containsKey('monthlyAmount')) {
+      context.handle(
+        _monthlyAmountMeta,
+        monthlyAmount.isAcceptableOrUnknown(
+          data['monthlyAmount']!,
+          _monthlyAmountMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_monthlyAmountMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  PortfolioTargetLineRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return PortfolioTargetLineRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      targetId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}targetId'],
+      )!,
+      instrumentId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}instrumentId'],
+      )!,
+      monthlyAmount: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}monthlyAmount'],
+      )!,
+    );
+  }
+
+  @override
+  PortfolioTargetLine createAlias(String alias) {
+    return PortfolioTargetLine(attachedDatabase, alias);
+  }
+
+  @override
+  bool get dontWriteConstraints => true;
+}
+
+class PortfolioTargetLineRow extends DataClass
+    implements Insertable<PortfolioTargetLineRow> {
+  final String id;
+  final String targetId;
+  final String instrumentId;
+  final String monthlyAmount;
+  const PortfolioTargetLineRow({
+    required this.id,
+    required this.targetId,
+    required this.instrumentId,
+    required this.monthlyAmount,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['targetId'] = Variable<String>(targetId);
+    map['instrumentId'] = Variable<String>(instrumentId);
+    map['monthlyAmount'] = Variable<String>(monthlyAmount);
+    return map;
+  }
+
+  PortfolioTargetLineCompanion toCompanion(bool nullToAbsent) {
+    return PortfolioTargetLineCompanion(
+      id: Value(id),
+      targetId: Value(targetId),
+      instrumentId: Value(instrumentId),
+      monthlyAmount: Value(monthlyAmount),
+    );
+  }
+
+  factory PortfolioTargetLineRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return PortfolioTargetLineRow(
+      id: serializer.fromJson<String>(json['id']),
+      targetId: serializer.fromJson<String>(json['targetId']),
+      instrumentId: serializer.fromJson<String>(json['instrumentId']),
+      monthlyAmount: serializer.fromJson<String>(json['monthlyAmount']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'targetId': serializer.toJson<String>(targetId),
+      'instrumentId': serializer.toJson<String>(instrumentId),
+      'monthlyAmount': serializer.toJson<String>(monthlyAmount),
+    };
+  }
+
+  PortfolioTargetLineRow copyWith({
+    String? id,
+    String? targetId,
+    String? instrumentId,
+    String? monthlyAmount,
+  }) => PortfolioTargetLineRow(
+    id: id ?? this.id,
+    targetId: targetId ?? this.targetId,
+    instrumentId: instrumentId ?? this.instrumentId,
+    monthlyAmount: monthlyAmount ?? this.monthlyAmount,
+  );
+  PortfolioTargetLineRow copyWithCompanion(PortfolioTargetLineCompanion data) {
+    return PortfolioTargetLineRow(
+      id: data.id.present ? data.id.value : this.id,
+      targetId: data.targetId.present ? data.targetId.value : this.targetId,
+      instrumentId: data.instrumentId.present
+          ? data.instrumentId.value
+          : this.instrumentId,
+      monthlyAmount: data.monthlyAmount.present
+          ? data.monthlyAmount.value
+          : this.monthlyAmount,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PortfolioTargetLineRow(')
+          ..write('id: $id, ')
+          ..write('targetId: $targetId, ')
+          ..write('instrumentId: $instrumentId, ')
+          ..write('monthlyAmount: $monthlyAmount')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, targetId, instrumentId, monthlyAmount);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is PortfolioTargetLineRow &&
+          other.id == this.id &&
+          other.targetId == this.targetId &&
+          other.instrumentId == this.instrumentId &&
+          other.monthlyAmount == this.monthlyAmount);
+}
+
+class PortfolioTargetLineCompanion
+    extends UpdateCompanion<PortfolioTargetLineRow> {
+  final Value<String> id;
+  final Value<String> targetId;
+  final Value<String> instrumentId;
+  final Value<String> monthlyAmount;
+  final Value<int> rowid;
+  const PortfolioTargetLineCompanion({
+    this.id = const Value.absent(),
+    this.targetId = const Value.absent(),
+    this.instrumentId = const Value.absent(),
+    this.monthlyAmount = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  PortfolioTargetLineCompanion.insert({
+    required String id,
+    required String targetId,
+    required String instrumentId,
+    required String monthlyAmount,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       targetId = Value(targetId),
+       instrumentId = Value(instrumentId),
+       monthlyAmount = Value(monthlyAmount);
+  static Insertable<PortfolioTargetLineRow> custom({
+    Expression<String>? id,
+    Expression<String>? targetId,
+    Expression<String>? instrumentId,
+    Expression<String>? monthlyAmount,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (targetId != null) 'targetId': targetId,
+      if (instrumentId != null) 'instrumentId': instrumentId,
+      if (monthlyAmount != null) 'monthlyAmount': monthlyAmount,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  PortfolioTargetLineCompanion copyWith({
+    Value<String>? id,
+    Value<String>? targetId,
+    Value<String>? instrumentId,
+    Value<String>? monthlyAmount,
+    Value<int>? rowid,
+  }) {
+    return PortfolioTargetLineCompanion(
+      id: id ?? this.id,
+      targetId: targetId ?? this.targetId,
+      instrumentId: instrumentId ?? this.instrumentId,
+      monthlyAmount: monthlyAmount ?? this.monthlyAmount,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (targetId.present) {
+      map['targetId'] = Variable<String>(targetId.value);
+    }
+    if (instrumentId.present) {
+      map['instrumentId'] = Variable<String>(instrumentId.value);
+    }
+    if (monthlyAmount.present) {
+      map['monthlyAmount'] = Variable<String>(monthlyAmount.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PortfolioTargetLineCompanion(')
+          ..write('id: $id, ')
+          ..write('targetId: $targetId, ')
+          ..write('instrumentId: $instrumentId, ')
+          ..write('monthlyAmount: $monthlyAmount, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class SecurityIdentity extends Table
+    with TableInfo<SecurityIdentity, SecurityIdentityRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  SecurityIdentity(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _identityMeta = const VerificationMeta(
+    'identity',
+  );
+  late final GeneratedColumn<String> identity = GeneratedColumn<String>(
+    'identity',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL PRIMARY KEY',
+  );
+  static const VerificationMeta _identityKindMeta = const VerificationMeta(
+    'identityKind',
+  );
+  late final GeneratedColumn<String> identityKind = GeneratedColumn<String>(
+    'identityKind',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  static const VerificationMeta _canonicalIdMeta = const VerificationMeta(
+    'canonicalId',
+  );
+  late final GeneratedColumn<String> canonicalId = GeneratedColumn<String>(
+    'canonicalId',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    $customConstraints: '',
+  );
+  static const VerificationMeta _statusMeta = const VerificationMeta('status');
+  late final GeneratedColumn<String> status = GeneratedColumn<String>(
+    'status',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  static const VerificationMeta _sourceMeta = const VerificationMeta('source');
+  late final GeneratedColumn<String> source = GeneratedColumn<String>(
+    'source',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  static const VerificationMeta _resolvedAtMeta = const VerificationMeta(
+    'resolvedAt',
+  );
+  late final GeneratedColumn<DateTime> resolvedAt = GeneratedColumn<DateTime>(
+    'resolvedAt',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  static const VerificationMeta _exchCodeMeta = const VerificationMeta(
+    'exchCode',
+  );
+  late final GeneratedColumn<String> exchCode = GeneratedColumn<String>(
+    'exchCode',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    $customConstraints: '',
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    identity,
+    identityKind,
+    canonicalId,
+    status,
+    source,
+    resolvedAt,
+    exchCode,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'SecurityIdentity';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<SecurityIdentityRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('identity')) {
+      context.handle(
+        _identityMeta,
+        identity.isAcceptableOrUnknown(data['identity']!, _identityMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_identityMeta);
+    }
+    if (data.containsKey('identityKind')) {
+      context.handle(
+        _identityKindMeta,
+        identityKind.isAcceptableOrUnknown(
+          data['identityKind']!,
+          _identityKindMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_identityKindMeta);
+    }
+    if (data.containsKey('canonicalId')) {
+      context.handle(
+        _canonicalIdMeta,
+        canonicalId.isAcceptableOrUnknown(
+          data['canonicalId']!,
+          _canonicalIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('status')) {
+      context.handle(
+        _statusMeta,
+        status.isAcceptableOrUnknown(data['status']!, _statusMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_statusMeta);
+    }
+    if (data.containsKey('source')) {
+      context.handle(
+        _sourceMeta,
+        source.isAcceptableOrUnknown(data['source']!, _sourceMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sourceMeta);
+    }
+    if (data.containsKey('resolvedAt')) {
+      context.handle(
+        _resolvedAtMeta,
+        resolvedAt.isAcceptableOrUnknown(data['resolvedAt']!, _resolvedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_resolvedAtMeta);
+    }
+    if (data.containsKey('exchCode')) {
+      context.handle(
+        _exchCodeMeta,
+        exchCode.isAcceptableOrUnknown(data['exchCode']!, _exchCodeMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {identity};
+  @override
+  SecurityIdentityRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return SecurityIdentityRow(
+      identity: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}identity'],
+      )!,
+      identityKind: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}identityKind'],
+      )!,
+      canonicalId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}canonicalId'],
+      ),
+      status: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}status'],
+      )!,
+      source: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}source'],
+      )!,
+      resolvedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}resolvedAt'],
+      )!,
+      exchCode: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}exchCode'],
+      ),
+    );
+  }
+
+  @override
+  SecurityIdentity createAlias(String alias) {
+    return SecurityIdentity(attachedDatabase, alias);
+  }
+
+  @override
+  bool get dontWriteConstraints => true;
+}
+
+class SecurityIdentityRow extends DataClass
+    implements Insertable<SecurityIdentityRow> {
+  final String identity;
+  final String identityKind;
+  final String? canonicalId;
+  final String status;
+  final String source;
+  final DateTime resolvedAt;
+  final String? exchCode;
+  const SecurityIdentityRow({
+    required this.identity,
+    required this.identityKind,
+    this.canonicalId,
+    required this.status,
+    required this.source,
+    required this.resolvedAt,
+    this.exchCode,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['identity'] = Variable<String>(identity);
+    map['identityKind'] = Variable<String>(identityKind);
+    if (!nullToAbsent || canonicalId != null) {
+      map['canonicalId'] = Variable<String>(canonicalId);
+    }
+    map['status'] = Variable<String>(status);
+    map['source'] = Variable<String>(source);
+    map['resolvedAt'] = Variable<DateTime>(resolvedAt);
+    if (!nullToAbsent || exchCode != null) {
+      map['exchCode'] = Variable<String>(exchCode);
+    }
+    return map;
+  }
+
+  SecurityIdentityCompanion toCompanion(bool nullToAbsent) {
+    return SecurityIdentityCompanion(
+      identity: Value(identity),
+      identityKind: Value(identityKind),
+      canonicalId: canonicalId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(canonicalId),
+      status: Value(status),
+      source: Value(source),
+      resolvedAt: Value(resolvedAt),
+      exchCode: exchCode == null && nullToAbsent
+          ? const Value.absent()
+          : Value(exchCode),
+    );
+  }
+
+  factory SecurityIdentityRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return SecurityIdentityRow(
+      identity: serializer.fromJson<String>(json['identity']),
+      identityKind: serializer.fromJson<String>(json['identityKind']),
+      canonicalId: serializer.fromJson<String?>(json['canonicalId']),
+      status: serializer.fromJson<String>(json['status']),
+      source: serializer.fromJson<String>(json['source']),
+      resolvedAt: serializer.fromJson<DateTime>(json['resolvedAt']),
+      exchCode: serializer.fromJson<String?>(json['exchCode']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'identity': serializer.toJson<String>(identity),
+      'identityKind': serializer.toJson<String>(identityKind),
+      'canonicalId': serializer.toJson<String?>(canonicalId),
+      'status': serializer.toJson<String>(status),
+      'source': serializer.toJson<String>(source),
+      'resolvedAt': serializer.toJson<DateTime>(resolvedAt),
+      'exchCode': serializer.toJson<String?>(exchCode),
+    };
+  }
+
+  SecurityIdentityRow copyWith({
+    String? identity,
+    String? identityKind,
+    Value<String?> canonicalId = const Value.absent(),
+    String? status,
+    String? source,
+    DateTime? resolvedAt,
+    Value<String?> exchCode = const Value.absent(),
+  }) => SecurityIdentityRow(
+    identity: identity ?? this.identity,
+    identityKind: identityKind ?? this.identityKind,
+    canonicalId: canonicalId.present ? canonicalId.value : this.canonicalId,
+    status: status ?? this.status,
+    source: source ?? this.source,
+    resolvedAt: resolvedAt ?? this.resolvedAt,
+    exchCode: exchCode.present ? exchCode.value : this.exchCode,
+  );
+  SecurityIdentityRow copyWithCompanion(SecurityIdentityCompanion data) {
+    return SecurityIdentityRow(
+      identity: data.identity.present ? data.identity.value : this.identity,
+      identityKind: data.identityKind.present
+          ? data.identityKind.value
+          : this.identityKind,
+      canonicalId: data.canonicalId.present
+          ? data.canonicalId.value
+          : this.canonicalId,
+      status: data.status.present ? data.status.value : this.status,
+      source: data.source.present ? data.source.value : this.source,
+      resolvedAt: data.resolvedAt.present
+          ? data.resolvedAt.value
+          : this.resolvedAt,
+      exchCode: data.exchCode.present ? data.exchCode.value : this.exchCode,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SecurityIdentityRow(')
+          ..write('identity: $identity, ')
+          ..write('identityKind: $identityKind, ')
+          ..write('canonicalId: $canonicalId, ')
+          ..write('status: $status, ')
+          ..write('source: $source, ')
+          ..write('resolvedAt: $resolvedAt, ')
+          ..write('exchCode: $exchCode')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    identity,
+    identityKind,
+    canonicalId,
+    status,
+    source,
+    resolvedAt,
+    exchCode,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is SecurityIdentityRow &&
+          other.identity == this.identity &&
+          other.identityKind == this.identityKind &&
+          other.canonicalId == this.canonicalId &&
+          other.status == this.status &&
+          other.source == this.source &&
+          other.resolvedAt == this.resolvedAt &&
+          other.exchCode == this.exchCode);
+}
+
+class SecurityIdentityCompanion extends UpdateCompanion<SecurityIdentityRow> {
+  final Value<String> identity;
+  final Value<String> identityKind;
+  final Value<String?> canonicalId;
+  final Value<String> status;
+  final Value<String> source;
+  final Value<DateTime> resolvedAt;
+  final Value<String?> exchCode;
+  final Value<int> rowid;
+  const SecurityIdentityCompanion({
+    this.identity = const Value.absent(),
+    this.identityKind = const Value.absent(),
+    this.canonicalId = const Value.absent(),
+    this.status = const Value.absent(),
+    this.source = const Value.absent(),
+    this.resolvedAt = const Value.absent(),
+    this.exchCode = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  SecurityIdentityCompanion.insert({
+    required String identity,
+    required String identityKind,
+    this.canonicalId = const Value.absent(),
+    required String status,
+    required String source,
+    required DateTime resolvedAt,
+    this.exchCode = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : identity = Value(identity),
+       identityKind = Value(identityKind),
+       status = Value(status),
+       source = Value(source),
+       resolvedAt = Value(resolvedAt);
+  static Insertable<SecurityIdentityRow> custom({
+    Expression<String>? identity,
+    Expression<String>? identityKind,
+    Expression<String>? canonicalId,
+    Expression<String>? status,
+    Expression<String>? source,
+    Expression<DateTime>? resolvedAt,
+    Expression<String>? exchCode,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (identity != null) 'identity': identity,
+      if (identityKind != null) 'identityKind': identityKind,
+      if (canonicalId != null) 'canonicalId': canonicalId,
+      if (status != null) 'status': status,
+      if (source != null) 'source': source,
+      if (resolvedAt != null) 'resolvedAt': resolvedAt,
+      if (exchCode != null) 'exchCode': exchCode,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  SecurityIdentityCompanion copyWith({
+    Value<String>? identity,
+    Value<String>? identityKind,
+    Value<String?>? canonicalId,
+    Value<String>? status,
+    Value<String>? source,
+    Value<DateTime>? resolvedAt,
+    Value<String?>? exchCode,
+    Value<int>? rowid,
+  }) {
+    return SecurityIdentityCompanion(
+      identity: identity ?? this.identity,
+      identityKind: identityKind ?? this.identityKind,
+      canonicalId: canonicalId ?? this.canonicalId,
+      status: status ?? this.status,
+      source: source ?? this.source,
+      resolvedAt: resolvedAt ?? this.resolvedAt,
+      exchCode: exchCode ?? this.exchCode,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (identity.present) {
+      map['identity'] = Variable<String>(identity.value);
+    }
+    if (identityKind.present) {
+      map['identityKind'] = Variable<String>(identityKind.value);
+    }
+    if (canonicalId.present) {
+      map['canonicalId'] = Variable<String>(canonicalId.value);
+    }
+    if (status.present) {
+      map['status'] = Variable<String>(status.value);
+    }
+    if (source.present) {
+      map['source'] = Variable<String>(source.value);
+    }
+    if (resolvedAt.present) {
+      map['resolvedAt'] = Variable<DateTime>(resolvedAt.value);
+    }
+    if (exchCode.present) {
+      map['exchCode'] = Variable<String>(exchCode.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SecurityIdentityCompanion(')
+          ..write('identity: $identity, ')
+          ..write('identityKind: $identityKind, ')
+          ..write('canonicalId: $canonicalId, ')
+          ..write('status: $status, ')
+          ..write('source: $source, ')
+          ..write('resolvedAt: $resolvedAt, ')
+          ..write('exchCode: $exchCode, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class SyncDevice extends Table with TableInfo<SyncDevice, SyncDeviceRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  SyncDevice(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    $customConstraints: 'NOT NULL PRIMARY KEY DEFAULT 1 CHECK (id = 1)',
+    defaultValue: const CustomExpression('1'),
+  );
+  static const VerificationMeta _deviceIdMeta = const VerificationMeta(
+    'deviceId',
+  );
+  late final GeneratedColumn<String> deviceId = GeneratedColumn<String>(
+    'deviceId',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    $customConstraints: '',
+  );
+  static const VerificationMeta _lastHlcMeta = const VerificationMeta(
+    'lastHlc',
+  );
+  late final GeneratedColumn<String> lastHlc = GeneratedColumn<String>(
+    'lastHlc',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    $customConstraints: '',
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, deviceId, name, lastHlc];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'SyncDevice';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<SyncDeviceRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('deviceId')) {
+      context.handle(
+        _deviceIdMeta,
+        deviceId.isAcceptableOrUnknown(data['deviceId']!, _deviceIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_deviceIdMeta);
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    }
+    if (data.containsKey('lastHlc')) {
+      context.handle(
+        _lastHlcMeta,
+        lastHlc.isAcceptableOrUnknown(data['lastHlc']!, _lastHlcMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  SyncDeviceRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return SyncDeviceRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      deviceId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}deviceId'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      ),
+      lastHlc: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}lastHlc'],
+      ),
+    );
+  }
+
+  @override
+  SyncDevice createAlias(String alias) {
+    return SyncDevice(attachedDatabase, alias);
+  }
+
+  @override
+  bool get dontWriteConstraints => true;
+}
+
+class SyncDeviceRow extends DataClass implements Insertable<SyncDeviceRow> {
+  final int id;
+  final String deviceId;
+  final String? name;
+  final String? lastHlc;
+  const SyncDeviceRow({
+    required this.id,
+    required this.deviceId,
+    this.name,
+    this.lastHlc,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['deviceId'] = Variable<String>(deviceId);
+    if (!nullToAbsent || name != null) {
+      map['name'] = Variable<String>(name);
+    }
+    if (!nullToAbsent || lastHlc != null) {
+      map['lastHlc'] = Variable<String>(lastHlc);
+    }
+    return map;
+  }
+
+  SyncDeviceCompanion toCompanion(bool nullToAbsent) {
+    return SyncDeviceCompanion(
+      id: Value(id),
+      deviceId: Value(deviceId),
+      name: name == null && nullToAbsent ? const Value.absent() : Value(name),
+      lastHlc: lastHlc == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lastHlc),
+    );
+  }
+
+  factory SyncDeviceRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return SyncDeviceRow(
+      id: serializer.fromJson<int>(json['id']),
+      deviceId: serializer.fromJson<String>(json['deviceId']),
+      name: serializer.fromJson<String?>(json['name']),
+      lastHlc: serializer.fromJson<String?>(json['lastHlc']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'deviceId': serializer.toJson<String>(deviceId),
+      'name': serializer.toJson<String?>(name),
+      'lastHlc': serializer.toJson<String?>(lastHlc),
+    };
+  }
+
+  SyncDeviceRow copyWith({
+    int? id,
+    String? deviceId,
+    Value<String?> name = const Value.absent(),
+    Value<String?> lastHlc = const Value.absent(),
+  }) => SyncDeviceRow(
+    id: id ?? this.id,
+    deviceId: deviceId ?? this.deviceId,
+    name: name.present ? name.value : this.name,
+    lastHlc: lastHlc.present ? lastHlc.value : this.lastHlc,
+  );
+  SyncDeviceRow copyWithCompanion(SyncDeviceCompanion data) {
+    return SyncDeviceRow(
+      id: data.id.present ? data.id.value : this.id,
+      deviceId: data.deviceId.present ? data.deviceId.value : this.deviceId,
+      name: data.name.present ? data.name.value : this.name,
+      lastHlc: data.lastHlc.present ? data.lastHlc.value : this.lastHlc,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SyncDeviceRow(')
+          ..write('id: $id, ')
+          ..write('deviceId: $deviceId, ')
+          ..write('name: $name, ')
+          ..write('lastHlc: $lastHlc')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, deviceId, name, lastHlc);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is SyncDeviceRow &&
+          other.id == this.id &&
+          other.deviceId == this.deviceId &&
+          other.name == this.name &&
+          other.lastHlc == this.lastHlc);
+}
+
+class SyncDeviceCompanion extends UpdateCompanion<SyncDeviceRow> {
+  final Value<int> id;
+  final Value<String> deviceId;
+  final Value<String?> name;
+  final Value<String?> lastHlc;
+  const SyncDeviceCompanion({
+    this.id = const Value.absent(),
+    this.deviceId = const Value.absent(),
+    this.name = const Value.absent(),
+    this.lastHlc = const Value.absent(),
+  });
+  SyncDeviceCompanion.insert({
+    this.id = const Value.absent(),
+    required String deviceId,
+    this.name = const Value.absent(),
+    this.lastHlc = const Value.absent(),
+  }) : deviceId = Value(deviceId);
+  static Insertable<SyncDeviceRow> custom({
+    Expression<int>? id,
+    Expression<String>? deviceId,
+    Expression<String>? name,
+    Expression<String>? lastHlc,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (deviceId != null) 'deviceId': deviceId,
+      if (name != null) 'name': name,
+      if (lastHlc != null) 'lastHlc': lastHlc,
+    });
+  }
+
+  SyncDeviceCompanion copyWith({
+    Value<int>? id,
+    Value<String>? deviceId,
+    Value<String?>? name,
+    Value<String?>? lastHlc,
+  }) {
+    return SyncDeviceCompanion(
+      id: id ?? this.id,
+      deviceId: deviceId ?? this.deviceId,
+      name: name ?? this.name,
+      lastHlc: lastHlc ?? this.lastHlc,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (deviceId.present) {
+      map['deviceId'] = Variable<String>(deviceId.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (lastHlc.present) {
+      map['lastHlc'] = Variable<String>(lastHlc.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SyncDeviceCompanion(')
+          ..write('id: $id, ')
+          ..write('deviceId: $deviceId, ')
+          ..write('name: $name, ')
+          ..write('lastHlc: $lastHlc')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class SyncPeer extends Table with TableInfo<SyncPeer, SyncPeerRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  SyncPeer(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _deviceIdMeta = const VerificationMeta(
+    'deviceId',
+  );
+  late final GeneratedColumn<String> deviceId = GeneratedColumn<String>(
+    'deviceId',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL PRIMARY KEY',
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    $customConstraints: '',
+  );
+  static const VerificationMeta _seenMeta = const VerificationMeta('seen');
+  late final GeneratedColumn<String> seen = GeneratedColumn<String>(
+    'seen',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  static const VerificationMeta _lastSyncedAtMeta = const VerificationMeta(
+    'lastSyncedAt',
+  );
+  late final GeneratedColumn<DateTime> lastSyncedAt = GeneratedColumn<DateTime>(
+    'lastSyncedAt',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    $customConstraints: '',
+  );
+  @override
+  List<GeneratedColumn> get $columns => [deviceId, name, seen, lastSyncedAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'SyncPeer';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<SyncPeerRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('deviceId')) {
+      context.handle(
+        _deviceIdMeta,
+        deviceId.isAcceptableOrUnknown(data['deviceId']!, _deviceIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_deviceIdMeta);
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    }
+    if (data.containsKey('seen')) {
+      context.handle(
+        _seenMeta,
+        seen.isAcceptableOrUnknown(data['seen']!, _seenMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_seenMeta);
+    }
+    if (data.containsKey('lastSyncedAt')) {
+      context.handle(
+        _lastSyncedAtMeta,
+        lastSyncedAt.isAcceptableOrUnknown(
+          data['lastSyncedAt']!,
+          _lastSyncedAtMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {deviceId};
+  @override
+  SyncPeerRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return SyncPeerRow(
+      deviceId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}deviceId'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      ),
+      seen: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}seen'],
+      )!,
+      lastSyncedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}lastSyncedAt'],
+      ),
+    );
+  }
+
+  @override
+  SyncPeer createAlias(String alias) {
+    return SyncPeer(attachedDatabase, alias);
+  }
+
+  @override
+  bool get dontWriteConstraints => true;
+}
+
+class SyncPeerRow extends DataClass implements Insertable<SyncPeerRow> {
+  final String deviceId;
+  final String? name;
+  final String seen;
+  final DateTime? lastSyncedAt;
+  const SyncPeerRow({
+    required this.deviceId,
+    this.name,
+    required this.seen,
+    this.lastSyncedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['deviceId'] = Variable<String>(deviceId);
+    if (!nullToAbsent || name != null) {
+      map['name'] = Variable<String>(name);
+    }
+    map['seen'] = Variable<String>(seen);
+    if (!nullToAbsent || lastSyncedAt != null) {
+      map['lastSyncedAt'] = Variable<DateTime>(lastSyncedAt);
+    }
+    return map;
+  }
+
+  SyncPeerCompanion toCompanion(bool nullToAbsent) {
+    return SyncPeerCompanion(
+      deviceId: Value(deviceId),
+      name: name == null && nullToAbsent ? const Value.absent() : Value(name),
+      seen: Value(seen),
+      lastSyncedAt: lastSyncedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lastSyncedAt),
+    );
+  }
+
+  factory SyncPeerRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return SyncPeerRow(
+      deviceId: serializer.fromJson<String>(json['deviceId']),
+      name: serializer.fromJson<String?>(json['name']),
+      seen: serializer.fromJson<String>(json['seen']),
+      lastSyncedAt: serializer.fromJson<DateTime?>(json['lastSyncedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'deviceId': serializer.toJson<String>(deviceId),
+      'name': serializer.toJson<String?>(name),
+      'seen': serializer.toJson<String>(seen),
+      'lastSyncedAt': serializer.toJson<DateTime?>(lastSyncedAt),
+    };
+  }
+
+  SyncPeerRow copyWith({
+    String? deviceId,
+    Value<String?> name = const Value.absent(),
+    String? seen,
+    Value<DateTime?> lastSyncedAt = const Value.absent(),
+  }) => SyncPeerRow(
+    deviceId: deviceId ?? this.deviceId,
+    name: name.present ? name.value : this.name,
+    seen: seen ?? this.seen,
+    lastSyncedAt: lastSyncedAt.present ? lastSyncedAt.value : this.lastSyncedAt,
+  );
+  SyncPeerRow copyWithCompanion(SyncPeerCompanion data) {
+    return SyncPeerRow(
+      deviceId: data.deviceId.present ? data.deviceId.value : this.deviceId,
+      name: data.name.present ? data.name.value : this.name,
+      seen: data.seen.present ? data.seen.value : this.seen,
+      lastSyncedAt: data.lastSyncedAt.present
+          ? data.lastSyncedAt.value
+          : this.lastSyncedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SyncPeerRow(')
+          ..write('deviceId: $deviceId, ')
+          ..write('name: $name, ')
+          ..write('seen: $seen, ')
+          ..write('lastSyncedAt: $lastSyncedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(deviceId, name, seen, lastSyncedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is SyncPeerRow &&
+          other.deviceId == this.deviceId &&
+          other.name == this.name &&
+          other.seen == this.seen &&
+          other.lastSyncedAt == this.lastSyncedAt);
+}
+
+class SyncPeerCompanion extends UpdateCompanion<SyncPeerRow> {
+  final Value<String> deviceId;
+  final Value<String?> name;
+  final Value<String> seen;
+  final Value<DateTime?> lastSyncedAt;
+  final Value<int> rowid;
+  const SyncPeerCompanion({
+    this.deviceId = const Value.absent(),
+    this.name = const Value.absent(),
+    this.seen = const Value.absent(),
+    this.lastSyncedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  SyncPeerCompanion.insert({
+    required String deviceId,
+    this.name = const Value.absent(),
+    required String seen,
+    this.lastSyncedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : deviceId = Value(deviceId),
+       seen = Value(seen);
+  static Insertable<SyncPeerRow> custom({
+    Expression<String>? deviceId,
+    Expression<String>? name,
+    Expression<String>? seen,
+    Expression<DateTime>? lastSyncedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (deviceId != null) 'deviceId': deviceId,
+      if (name != null) 'name': name,
+      if (seen != null) 'seen': seen,
+      if (lastSyncedAt != null) 'lastSyncedAt': lastSyncedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  SyncPeerCompanion copyWith({
+    Value<String>? deviceId,
+    Value<String?>? name,
+    Value<String>? seen,
+    Value<DateTime?>? lastSyncedAt,
+    Value<int>? rowid,
+  }) {
+    return SyncPeerCompanion(
+      deviceId: deviceId ?? this.deviceId,
+      name: name ?? this.name,
+      seen: seen ?? this.seen,
+      lastSyncedAt: lastSyncedAt ?? this.lastSyncedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (deviceId.present) {
+      map['deviceId'] = Variable<String>(deviceId.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (seen.present) {
+      map['seen'] = Variable<String>(seen.value);
+    }
+    if (lastSyncedAt.present) {
+      map['lastSyncedAt'] = Variable<DateTime>(lastSyncedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SyncPeerCompanion(')
+          ..write('deviceId: $deviceId, ')
+          ..write('name: $name, ')
+          ..write('seen: $seen, ')
+          ..write('lastSyncedAt: $lastSyncedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class SyncTombstone extends Table
+    with TableInfo<SyncTombstone, SyncTombstoneRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  SyncTombstone(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _entityMeta = const VerificationMeta('entity');
+  late final GeneratedColumn<String> entity = GeneratedColumn<String>(
+    'entity',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  static const VerificationMeta _keyMeta = const VerificationMeta('key');
+  late final GeneratedColumn<String> key = GeneratedColumn<String>(
+    'key',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  static const VerificationMeta _hlcMeta = const VerificationMeta('hlc');
+  late final GeneratedColumn<String> hlc = GeneratedColumn<String>(
+    'hlc',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  @override
+  List<GeneratedColumn> get $columns => [entity, key, hlc];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'SyncTombstone';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<SyncTombstoneRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('entity')) {
+      context.handle(
+        _entityMeta,
+        entity.isAcceptableOrUnknown(data['entity']!, _entityMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_entityMeta);
+    }
+    if (data.containsKey('key')) {
+      context.handle(
+        _keyMeta,
+        key.isAcceptableOrUnknown(data['key']!, _keyMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_keyMeta);
+    }
+    if (data.containsKey('hlc')) {
+      context.handle(
+        _hlcMeta,
+        hlc.isAcceptableOrUnknown(data['hlc']!, _hlcMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_hlcMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {entity, key};
+  @override
+  SyncTombstoneRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return SyncTombstoneRow(
+      entity: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}entity'],
+      )!,
+      key: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}key'],
+      )!,
+      hlc: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}hlc'],
+      )!,
+    );
+  }
+
+  @override
+  SyncTombstone createAlias(String alias) {
+    return SyncTombstone(attachedDatabase, alias);
+  }
+
+  @override
+  List<String> get customConstraints => const ['PRIMARY KEY(entity, "key")'];
+  @override
+  bool get dontWriteConstraints => true;
+}
+
+class SyncTombstoneRow extends DataClass
+    implements Insertable<SyncTombstoneRow> {
+  final String entity;
+  final String key;
+  final String hlc;
+  const SyncTombstoneRow({
+    required this.entity,
+    required this.key,
+    required this.hlc,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['entity'] = Variable<String>(entity);
+    map['key'] = Variable<String>(key);
+    map['hlc'] = Variable<String>(hlc);
+    return map;
+  }
+
+  SyncTombstoneCompanion toCompanion(bool nullToAbsent) {
+    return SyncTombstoneCompanion(
+      entity: Value(entity),
+      key: Value(key),
+      hlc: Value(hlc),
+    );
+  }
+
+  factory SyncTombstoneRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return SyncTombstoneRow(
+      entity: serializer.fromJson<String>(json['entity']),
+      key: serializer.fromJson<String>(json['key']),
+      hlc: serializer.fromJson<String>(json['hlc']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'entity': serializer.toJson<String>(entity),
+      'key': serializer.toJson<String>(key),
+      'hlc': serializer.toJson<String>(hlc),
+    };
+  }
+
+  SyncTombstoneRow copyWith({String? entity, String? key, String? hlc}) =>
+      SyncTombstoneRow(
+        entity: entity ?? this.entity,
+        key: key ?? this.key,
+        hlc: hlc ?? this.hlc,
+      );
+  SyncTombstoneRow copyWithCompanion(SyncTombstoneCompanion data) {
+    return SyncTombstoneRow(
+      entity: data.entity.present ? data.entity.value : this.entity,
+      key: data.key.present ? data.key.value : this.key,
+      hlc: data.hlc.present ? data.hlc.value : this.hlc,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SyncTombstoneRow(')
+          ..write('entity: $entity, ')
+          ..write('key: $key, ')
+          ..write('hlc: $hlc')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(entity, key, hlc);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is SyncTombstoneRow &&
+          other.entity == this.entity &&
+          other.key == this.key &&
+          other.hlc == this.hlc);
+}
+
+class SyncTombstoneCompanion extends UpdateCompanion<SyncTombstoneRow> {
+  final Value<String> entity;
+  final Value<String> key;
+  final Value<String> hlc;
+  final Value<int> rowid;
+  const SyncTombstoneCompanion({
+    this.entity = const Value.absent(),
+    this.key = const Value.absent(),
+    this.hlc = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  SyncTombstoneCompanion.insert({
+    required String entity,
+    required String key,
+    required String hlc,
+    this.rowid = const Value.absent(),
+  }) : entity = Value(entity),
+       key = Value(key),
+       hlc = Value(hlc);
+  static Insertable<SyncTombstoneRow> custom({
+    Expression<String>? entity,
+    Expression<String>? key,
+    Expression<String>? hlc,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (entity != null) 'entity': entity,
+      if (key != null) 'key': key,
+      if (hlc != null) 'hlc': hlc,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  SyncTombstoneCompanion copyWith({
+    Value<String>? entity,
+    Value<String>? key,
+    Value<String>? hlc,
+    Value<int>? rowid,
+  }) {
+    return SyncTombstoneCompanion(
+      entity: entity ?? this.entity,
+      key: key ?? this.key,
+      hlc: hlc ?? this.hlc,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (entity.present) {
+      map['entity'] = Variable<String>(entity.value);
+    }
+    if (key.present) {
+      map['key'] = Variable<String>(key.value);
+    }
+    if (hlc.present) {
+      map['hlc'] = Variable<String>(hlc.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SyncTombstoneCompanion(')
+          ..write('entity: $entity, ')
+          ..write('key: $key, ')
+          ..write('hlc: $hlc, ')
+          ..write('rowid: $rowid')
           ..write(')'))
         .toString();
   }
@@ -3171,6 +6348,40 @@ abstract class _$QuoinDatabase extends GeneratedDatabase {
     'CREATE UNIQUE INDEX FxRate_source_base_quote_day_key ON FxRate (source, base, quote, day)',
   );
   late final Settings settings = Settings(this);
+  late final EtfHolding etfHolding = EtfHolding(this);
+  late final Index etfHoldingInstrumentIdIdentityKey = Index(
+    'EtfHolding_instrumentId_identity_key',
+    'CREATE UNIQUE INDEX EtfHolding_instrumentId_identity_key ON EtfHolding (instrumentId, identity)',
+  );
+  late final Index etfHoldingInstrumentIdIdx = Index(
+    'EtfHolding_instrumentId_idx',
+    'CREATE INDEX EtfHolding_instrumentId_idx ON EtfHolding (instrumentId)',
+  );
+  late final EtfHoldingBlock etfHoldingBlock = EtfHoldingBlock(this);
+  late final PortfolioTarget portfolioTarget = PortfolioTarget(this);
+  late final Index portfolioTargetActiveFromKey = Index(
+    'PortfolioTarget_activeFrom_key',
+    'CREATE UNIQUE INDEX PortfolioTarget_activeFrom_key ON PortfolioTarget (activeFrom)',
+  );
+  late final PortfolioTargetLine portfolioTargetLine = PortfolioTargetLine(
+    this,
+  );
+  late final Index portfolioTargetLineTargetIdIdx = Index(
+    'PortfolioTargetLine_targetId_idx',
+    'CREATE INDEX PortfolioTargetLine_targetId_idx ON PortfolioTargetLine (targetId)',
+  );
+  late final Index portfolioTargetLineTargetIdInstrumentIdKey = Index(
+    'PortfolioTargetLine_targetId_instrumentId_key',
+    'CREATE UNIQUE INDEX PortfolioTargetLine_targetId_instrumentId_key ON PortfolioTargetLine (targetId, instrumentId)',
+  );
+  late final SecurityIdentity securityIdentity = SecurityIdentity(this);
+  late final Index securityIdentityCanonicalIdIdx = Index(
+    'SecurityIdentity_canonicalId_idx',
+    'CREATE INDEX SecurityIdentity_canonicalId_idx ON SecurityIdentity (canonicalId)',
+  );
+  late final SyncDevice syncDevice = SyncDevice(this);
+  late final SyncPeer syncPeer = SyncPeer(this);
+  late final SyncTombstone syncTombstone = SyncTombstone(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -3189,6 +6400,20 @@ abstract class _$QuoinDatabase extends GeneratedDatabase {
     fxRateQuoteIdx,
     fxRateSourceBaseQuoteDayKey,
     settings,
+    etfHolding,
+    etfHoldingInstrumentIdIdentityKey,
+    etfHoldingInstrumentIdIdx,
+    etfHoldingBlock,
+    portfolioTarget,
+    portfolioTargetActiveFromKey,
+    portfolioTargetLine,
+    portfolioTargetLineTargetIdIdx,
+    portfolioTargetLineTargetIdInstrumentIdKey,
+    securityIdentity,
+    securityIdentityCanonicalIdIdx,
+    syncDevice,
+    syncPeer,
+    syncTombstone,
   ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
@@ -3212,6 +6437,34 @@ abstract class _$QuoinDatabase extends GeneratedDatabase {
         limitUpdateKind: UpdateKind.update,
       ),
       result: [TableUpdate('PriceSnapshot', kind: UpdateKind.update)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'Instrument',
+        limitUpdateKind: UpdateKind.update,
+      ),
+      result: [TableUpdate('EtfHolding', kind: UpdateKind.update)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'Instrument',
+        limitUpdateKind: UpdateKind.update,
+      ),
+      result: [TableUpdate('EtfHoldingBlock', kind: UpdateKind.update)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'PortfolioTarget',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('PortfolioTargetLine', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'PortfolioTarget',
+        limitUpdateKind: UpdateKind.update,
+      ),
+      result: [TableUpdate('PortfolioTargetLine', kind: UpdateKind.update)],
     ),
   ]);
   @override

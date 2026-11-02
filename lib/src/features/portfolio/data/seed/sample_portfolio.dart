@@ -40,8 +40,16 @@ class SamplePortfolio {
     _trade('BUY', _tech, 200, '12', '2170', fees: '1.09', usd: '1.0850'),
     _trade('BUY', _coin, 380, '0.9', '2700'),
     ..._reward(_coin, 150, '0.1', '410'),
-    _trade('SELL', _coin, 60, '0.4', '1600', swap: 'sample-swap'),
-    _trade('BUY', _token, 60, '500', '1580', fees: '30', swap: 'sample-swap'),
+    _trade('SELL', _coin, 60, '0.4', '1600', swap: '$sampleMarker-swap'),
+    _trade(
+      'BUY',
+      _token,
+      60,
+      '500',
+      '1580',
+      fees: '30',
+      swap: '$sampleMarker-swap',
+    ),
     _trade('BUY', _emerging, 180, '18', '720', fees: '1'),
     _trade('BUY', _property, 240, '40', '1000', fees: '1'),
     _trade('BUY', _health, 360, '10', '800', fees: '1'),
@@ -68,8 +76,8 @@ class SamplePortfolio {
   static const _bonds = 'IE00QSAMPLE2';
   static const _gold = 'XS00QSAMPLE3';
   static const _tech = 'US00QSAMPLE4';
-  static const _coin = 'QCOIN';
-  static const _token = 'QTOKEN';
+  static const _coin = 'QSAMPLECOIN';
+  static const _token = 'QSAMPLETOKEN';
   static const _emerging = 'IE00QSAMPLE7';
   static const _property = 'IE00QSAMPLE8';
   static const _health = 'IE00QSAMPLE9';
@@ -99,7 +107,7 @@ class SamplePortfolio {
     String? swap,
     String funding = 'CASH',
   }) {
-    final id = 'sample-${++_seq}';
+    final id = '$sampleMarker-${++_seq}';
     final ts = DateTime.utc(_now.year, _now.month, _now.day - daysAgo, 9);
     final price = Dec.parse(grossAmount).dividedBy(Dec.parse(quantity));
     return LedgerEntryCompanion.insert(
@@ -167,7 +175,7 @@ class SamplePortfolio {
     String price, {
     String currency = baseCurrency,
   }) => PriceSnapshotCompanion.insert(
-    id: 'sample-price-$instrumentId',
+    id: '$sampleMarker-price-$instrumentId',
     instrumentId: instrumentId,
     price: price,
     currency: currency,

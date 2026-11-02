@@ -7,7 +7,6 @@ import 'package:quoin/src/features/import/data/models/ledger_companions.dart';
 import 'package:quoin/src/features/portfolio/data/database/quoin_database.dart'
     show LedgerEntryCompanion, QuoinDatabase;
 import 'package:quoin/src/features/portfolio/data/datasources/portfolio_local_datasource.dart';
-import 'package:quoin/src/features/portfolio/data/models/portfolio_rows.dart';
 
 final importLocalDataSourceProvider = Provider(
   (ref) => ImportLocalDataSource(ref.watch(quoinDatabaseProvider)),
@@ -43,15 +42,6 @@ class ImportLocalDataSource {
               ))
             .get();
     return {for (final row in rows) row.read(e.externalId)!};
-  });
-
-  Future<List<PriceSnapshot>> cryptoPrices() => _guard(() async {
-    final p = _db.priceSnapshot;
-    final i = _db.instrument;
-    final rows = await (_db.select(p).join([
-      innerJoin(i, i.id.equalsExp(p.instrumentId)),
-    ])..where(i.type.equals('CRYPTO'))).get();
-    return [for (final row in rows) row.readTable(p).toEntity()];
   });
 
   /// The (source, externalId) keys of [events] already stored.

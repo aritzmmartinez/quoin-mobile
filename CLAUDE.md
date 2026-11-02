@@ -25,7 +25,7 @@ flows: `docs/ARCHITECTURE.md`.
 - Presentation handles a `Result` with an exhaustive `switch`.
 - Models convert with `toEntity()` and never extend the entity.
 - State and injection: Riverpod only (no get_it, bloc, provider), no code generation for them.
-- Local store: drift, only in `data/`. Tables in `features/portfolio/data/database/schema.drift`, same names, CHECKs and unique keys as `../quoin/prisma/schema.prisma`; instants as ISO-8601 UTC text (`build.yaml`). Migrations by hand in `QuoinDatabase.migration`.
+- Local store: drift, only in `data/`. Tables in `features/portfolio/data/database/schema.drift`, same names, CHECKs and unique keys as `../quoin/prisma/schema.prisma`; instants as ISO-8601 UTC text (`build.yaml`). Migrations by hand in `QuoinDatabase.migration`, one step per version against that version's frozen schema in `quoin_database.steps.dart`, never the live tables. To add a version: raise `schemaVersion`, run `dart run drift_dev make-migrations` (saves the schema in `drift_schemas/`, regenerates the steps and `test/drift/`), write the step, never edit a saved schema.
 - drift's `*.g.dart` is committed; CI regenerates it and fails on any diff.
 - One provider per link: data source → repository → use case → screen state.
 - A repository's provider is typed abstract in presentation and bound in `app/dependencies.dart`.

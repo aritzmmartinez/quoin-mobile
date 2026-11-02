@@ -1,7 +1,8 @@
--- The tables of ../quoin/prisma/schema.prisma this phase reads, with the same
--- names, CHECKs and unique keys, so sync can map rows one to one. Amounts are
--- TEXT decimals; DATETIME columns hold ISO-8601 UTC text. The sync marks
--- (*Hlc) are added with sync, by ADD COLUMN, as Quoin did.
+-- The tables of ../quoin/prisma/schema.prisma, with the same names, CHECKs
+-- and unique keys, so sync can map rows one to one. Amounts are TEXT
+-- decimals; DATETIME columns hold ISO-8601 UTC text. Columns added after a
+-- table's first version go last, in the order their ADD COLUMN runs, so a
+-- migrated database and a new one have the same columns.
 
 CREATE TABLE "Instrument" (
     "id" TEXT NOT NULL PRIMARY KEY,
@@ -15,7 +16,14 @@ CREATE TABLE "Instrument" (
     "hedgedToBase" BOOLEAN NOT NULL DEFAULT 0,
     "thesis" TEXT NOT NULL DEFAULT 'CORE'
         CHECK ("thesis" IN ('CORE', 'CONVICTION', 'TACTICAL')),
-    "createdAt" DATETIME NOT NULL
+    "createdAt" DATETIME NOT NULL,
+    -- The sync mark of each hand-set field (the exposure pair shares one).
+    -- Null: not changed since the column was added.
+    "quoteSymbolHlc" TEXT,
+    "exposureHlc" TEXT,
+    "terHlc" TEXT,
+    "hedgedToBaseHlc" TEXT,
+    "thesisHlc" TEXT
 ) AS InstrumentRow;
 
 CREATE TABLE "LedgerEntry" (
@@ -88,6 +96,95 @@ CREATE UNIQUE INDEX "FxRate_source_base_quote_day_key" ON "FxRate" ("source", "b
 
 CREATE TABLE "Settings" (
     "id" INTEGER NOT NULL PRIMARY KEY DEFAULT 1 CHECK ("id" = 1),
-    "residence" TEXT NOT NULL
+    "residence" TEXT NOT NULL,
+    "residenceHlc" TEXT
 ) AS SettingsRow;
+
+-- A fund's published composition, replaced wholesale by an import.
+CREATE TABLE "EtfHolding" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "instrumentId" TEXT NOT NULL
+        REFERENCES "Instrument" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
+    "identity" TEXT NOT NULL,
+    "identityKind" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "weight" TEXT NOT NULL,
+    "createdAt" DATETIME NOT NULL
+) AS EtfHoldingRow;
+
+CREATE UNIQUE INDEX "EtfHolding_instrumentId_identity_key" ON "EtfHolding" ("instrumentId", "identity");
+CREATE INDEX "EtfHolding_instrumentId_idx" ON "EtfHolding" ("instrumentId");
+
+-- A fund's composition as one block, the unit sync merges: the day it
+-- describes, whether that day was inferred, and its mark.
+CREATE TABLE "EtfHoldingBlock" (
+    "instrumentId" TEXT NOT NULL PRIMARY KEY
+        REFERENCES "Instrument" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
+    "asOf" TEXT NOT NULL
+        CHECK ("asOf" GLOB '[0-9][0-9][0-9][0-9]-[0-1][0-9]-[0-3][0-9]'),
+    "asOfInferred" BOOLEAN NOT NULL DEFAULT 0,
+    "hlc" TEXT
+) AS EtfHoldingBlockRow;
+
+-- The savings plan, versioned by the day each version takes over.
+CREATE TABLE "PortfolioTarget" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "name" TEXT NOT NULL,
+    "note" TEXT,
+    "createdAt" DATETIME NOT NULL,
+    "activeFrom" TEXT
+        CHECK ("activeFrom" IS NULL OR "activeFrom" GLOB '[0-9][0-9][0-9][0-9]-[0-1][0-9]-[0-3][0-9]')
+) AS PortfolioTargetRow;
+
+CREATE UNIQUE INDEX "PortfolioTarget_activeFrom_key" ON "PortfolioTarget" ("activeFrom");
+
+-- One instrument's slice of a version; no relation to Instrument, as in Quoin:
+-- a plan may name something never bought.
+CREATE TABLE "PortfolioTargetLine" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "targetId" TEXT NOT NULL
+        REFERENCES "PortfolioTarget" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+    "instrumentId" TEXT NOT NULL,
+    "monthlyAmount" TEXT NOT NULL
+) AS PortfolioTargetLineRow;
+
+CREATE INDEX "PortfolioTargetLine_targetId_idx" ON "PortfolioTargetLine" ("targetId");
+CREATE UNIQUE INDEX "PortfolioTargetLine_targetId_instrumentId_key" ON "PortfolioTargetLine" ("targetId", "instrumentId");
+
+-- A published identity resolved to a canonical id, misses included.
+CREATE TABLE "SecurityIdentity" (
+    "identity" TEXT NOT NULL PRIMARY KEY,
+    "identityKind" TEXT NOT NULL,
+    "canonicalId" TEXT,
+    "status" TEXT NOT NULL,
+    "source" TEXT NOT NULL,
+    "resolvedAt" DATETIME NOT NULL,
+    "exchCode" TEXT
+) AS SecurityIdentityRow;
+
+CREATE INDEX "SecurityIdentity_canonicalId_idx" ON "SecurityIdentity" ("canonicalId");
+
+-- This database's sync identity, created with it, and the last mark it issued.
+CREATE TABLE "SyncDevice" (
+    "id" INTEGER NOT NULL PRIMARY KEY DEFAULT 1 CHECK ("id" = 1),
+    "deviceId" TEXT NOT NULL,
+    "name" TEXT,
+    "lastHlc" TEXT
+) AS SyncDeviceRow;
+
+-- Every device merged from, and the newest mark of it whose effect was seen.
+CREATE TABLE "SyncPeer" (
+    "deviceId" TEXT NOT NULL PRIMARY KEY,
+    "name" TEXT,
+    "seen" TEXT NOT NULL,
+    "lastSyncedAt" DATETIME
+) AS SyncPeerRow;
+
+-- What was deleted, so a merge does not bring it back. Never purged.
+CREATE TABLE "SyncTombstone" (
+    "entity" TEXT NOT NULL,
+    "key" TEXT NOT NULL,
+    "hlc" TEXT NOT NULL,
+    PRIMARY KEY ("entity", "key")
+) AS SyncTombstoneRow;
 
