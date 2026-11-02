@@ -39,10 +39,12 @@ class ImportRepositoryImpl implements ImportRepository {
     final residence = await _store.residence();
     final known = Residence.values.asNameMap()[residence];
     if (known == null) throw StorageException('residence $residence');
+    // No prices: a reward or swap Kraken does not value is valued on the PC
+    // only and arrives by sync, so each such row has one author and the two
+    // sides never book it at different prices.
     return IngestContext(
       zone: jurisdictionOf(known).zone,
       rates: rateBookFrom(await _rates.all()),
-      prices: await _store.cryptoPrices(),
       names: await _store.names(),
       rewardRefids: await _store.rewardRefids(),
     );
