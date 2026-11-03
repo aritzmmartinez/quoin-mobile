@@ -134,6 +134,7 @@
     }
   },
   "portfolioLoadFailed": "No se ha podido leer la cartera",
+  "residenceUnsupported": "Tu PC usa un territorio fiscal que esta versión de la app no conoce. Actualiza la app.",
   "categoryCompany": "Acción",
   "categoryEquityFund": "Fondo de renta variable",
   "categoryBondFund": "Fondo de bonos",

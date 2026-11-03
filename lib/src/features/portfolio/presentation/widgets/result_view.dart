@@ -22,13 +22,14 @@ class ResultView<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    Widget failed() => QuoinPage(
+    Widget failed([String? message]) => QuoinPage(
       title: title,
-      body: EmptyState(message: l10n.portfolioLoadFailed),
+      body: EmptyState(message: message ?? l10n.portfolioLoadFailed),
     );
     return switch (value.value) {
       Ok(:final value) => builder(value),
       Err(:final failure) => switch (failure) {
+        UnsupportedResidenceFailure() => failed(l10n.residenceUnsupported),
         StorageFailure() || NetworkFailure() || ImportFailure() => failed(),
       },
       null when value.hasError => failed(),

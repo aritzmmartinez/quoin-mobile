@@ -38,7 +38,7 @@ class ImportRepositoryImpl implements ImportRepository {
   Future<Result<IngestContext>> context() => _stored(() async {
     final residence = await _store.residence();
     final known = Residence.values.asNameMap()[residence];
-    if (known == null) throw StorageException('residence $residence');
+    if (known == null) throw UnsupportedResidenceException(residence);
     // No prices: a reward or swap Kraken does not value is valued on the PC
     // only and arrives by sync, so each such row has one author and the two
     // sides never book it at different prices.
@@ -67,6 +67,8 @@ class ImportRepositoryImpl implements ImportRepository {
   Future<Result<T>> _stored<T>(Future<T> Function() body) async {
     try {
       return Ok(await body());
+    } on UnsupportedResidenceException catch (e) {
+      return Err(UnsupportedResidenceFailure(e.residence));
     } on StorageException {
       return const Err(StorageFailure());
     }

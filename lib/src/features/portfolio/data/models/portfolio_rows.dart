@@ -1,12 +1,11 @@
 import 'package:quoin_core/quoin_core.dart';
 
+import 'package:quoin/src/core/error/exceptions.dart';
 import 'package:quoin/src/features/portfolio/data/database/quoin_database.dart'
     show FxRateRow, InstrumentRow, LedgerEntryRow, PriceSnapshotRow;
 import 'package:quoin/src/features/portfolio/data/datasources/portfolio_local_datasource.dart';
 import 'package:quoin/src/features/portfolio/domain/entities/portfolio_ledger.dart';
 
-/// A stored value the domain cannot read: a bad decimal, an unknown code or a
-/// row of one type missing the fields that type needs.
 class UnreadableRow implements Exception {
   const UnreadableRow(this.message);
 
@@ -25,7 +24,7 @@ extension PortfolioRowsModel on PortfolioRows {
     return PortfolioLedger(
       residence:
           Residence.values.asNameMap()[settings.residence] ??
-          (throw UnreadableRow('residence ${settings.residence}')),
+          (throw UnsupportedResidenceException(settings.residence)),
       instruments: [for (final row in instruments) row.toEntity()],
       events: [for (final row in entries) row.toEntity()],
       latestPrices: latest,

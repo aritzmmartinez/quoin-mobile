@@ -539,6 +539,7 @@ String failureText(BuildContext context, Failure failure) {
   final l10n = AppLocalizations.of(context);
   return switch (failure) {
     StorageFailure() => l10n.importStorageFailed,
+    UnsupportedResidenceFailure() => l10n.residenceUnsupported,
     NetworkFailure() => l10n.importNetworkFailed,
     UnreadableFileFailure() => l10n.importUnreadable,
     InvalidEncodingFailure() => l10n.importInvalidEncoding,

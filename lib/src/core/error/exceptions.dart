@@ -46,3 +46,14 @@ class SampleDataException implements Exception {
   @override
   String toString() => 'SampleDataException';
 }
+
+/// A stored residence this version does not know, such as a territory a newer
+/// Quoin added and sync brought over. Kept as it came, so it still syncs.
+class UnsupportedResidenceException implements Exception {
+  const UnsupportedResidenceException(this.residence);
+
+  final String residence;
+
+  @override
+  String toString() => 'UnsupportedResidenceException: $residence';
+}
