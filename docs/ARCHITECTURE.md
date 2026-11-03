@@ -60,12 +60,19 @@ different.
 ## Local store
 
 `features/portfolio/data/database` holds the drift database. `schema.drift`
-declares the tables of `../quoin/prisma/schema.prisma` that are read so far
-(`Instrument`, `LedgerEntry`, `PriceSnapshot`, `FxRate`, `Settings`) with the
-same names, CHECKs and unique keys, so sync can map rows one to one. Amounts
-are decimal text, days `YYYY-MM-DD`, instants ISO-8601 UTC text. Migrations are
-hand-written steps in `QuoinDatabase.migration`; the generated `.g.dart` is
-committed and CI fails if regenerating it changes anything.
+declares the tables of `../quoin/prisma/schema.prisma` that the app reads or
+syncs (the ledger and its instruments, prices and rates, the residence, plan
+versions, fund compositions, identities and the sync tables) with the same
+names, CHECKs and unique keys, so sync can map rows one to one. Amounts are
+decimal text, days `YYYY-MM-DD`, instants ISO-8601 UTC text.
+
+Migrations are hand-written steps in `QuoinDatabase.migration`, one per
+version, each against that version's frozen schema (`quoin_database.steps.dart`),
+never the live tables. To add a version, raise `schemaVersion` and run
+`dart run drift_dev make-migrations`: it saves the schema in `drift_schemas/`
+(never edited afterwards), regenerates the steps and `test/drift/`, and the
+step is then written by hand. The generated `.g.dart` is committed and CI
+fails if regenerating it changes anything.
 
 Every screen computed from the store reads it once: `LoadLedger` fills
 `ledgerProvider` with the ledger, the latest price of each instrument and the
@@ -123,6 +130,84 @@ Quoin. Tests answer for the ECB with
 nothing out but the currency code. Kraken rewards and swaps without Kraken's
 own USD figure are valued from stored prices only; the app does not download
 price histories yet.
+
+## Sync
+
+Two devices, the phone and the PC (`../quoin`), keep one portfolio without a
+server. Each is a complete node: it holds the whole user state (ledger,
+instruments with the mark of each hand-set field, plan versions and their
+tombstones, fund compositions, identities, residence) and the marks of what it
+has seen from the others. A file carries that state; moving it is the
+transport, not part of this layer. Merge, its plan and the model of applying it
+are pure Dart in `quoin_core` (`merge`, `applyPlan`, `planCounts`), ported
+from Quoin's `core/sync` and checked case by case against `sync.json` (merges,
+refusals and two-device scenarios) in `sync_contract_test.dart`.
+
+**Marks and `seen`.** A mark is `<ms>-<counter>-<deviceId>`, fixed-width, so
+string order is time order. A device issues them with `tick`, which never goes
+back whatever the clock says, and only compares a mark with others of its own
+origin. `seen` is, per other device, the newest mark whose effect this side has
+taken in. A mark is news for a side when it is another device's and newer than
+what that side has seen of it; a field changed on both sides, each news to the
+other, is a conflict. Otherwise the side that has news wins, with no human step.
+
+**Resolutions.** A conflict is settled with `keep` or `take`, keyed by
+`conflictKey` (instrument field, residence, composition, target version, two
+versions on one day). `take` adopts the other value and its mark. `keep` leaves
+the value and marks it afresh (`restamp`), so the next exchange carries it
+across; plan versions have no mark and are never edited, so a resolution there
+travels as a tombstone (a kept version with another content is reissued under
+the tombstone's mark). A resolution that fits no conflict throws
+`UnknownResolution`, and while any conflict is open nothing is applied.
+
+**Ledger set aside.** A ledger row has no mark. When both sides hold a
+`source::externalId` with another content (compared as the exact text of each
+field, `ts` as an instant), the row is set aside, not conflicted: each side
+keeps its own, the rest applies, and the row is listed. A linked operation
+(a swap's legs) is set aside whole, by the link on either side; a Kraken reward
+(two unlinked rows) is set aside in both rows. Amounts are never re-serialised
+through `Dec`.
+
+**Applying.** `SyncLocalDataSource.importExchange` reads, merges and writes in
+one drift transaction, so a write from elsewhere waits for it and the plan is
+made against the very state it is written to (tested with a write launched from
+outside while the transaction is open). `apply` does what `applyPlan` models,
+no more: the whole plan or nothing, with the fresh marks of `restamp` issued by
+`stamp` in that transaction. A new `quoteSymbol` drops the instrument's price
+series inside it, as Quoin does. `refuseOwnExport` runs before the merge.
+The effects are not run there: the result carries them, and the caller runs
+them after the commit with `RunEffects`. `rates` go to `EnsureRates` through
+a port (`EnsureRatesFrom`) that `app/dependencies.dart` binds (`ratesForSync`),
+so `sync` does not import `import`; a failure is reported for that effect and
+never undoes the import. `prices` stay pending: the phone does not download
+histories, they come from the PC (phase 4b).
+
+**A residence this version does not know.** Sync carries the residence as the
+text it came as, so a territory a newer Quoin adds is stored and sent on
+unchanged, and the node stays complete. `Residence` stays what Quoin defines
+and no calendar zone is invented for the rest. Reading the ledger or planning an
+import with such a residence gives `UnsupportedResidenceFailure`, never
+Bizkaia: every ledger screen and the import say that the PC uses a tax
+territory this version does not know and that the app must be updated.
+
+**Guards.**
+
+- *Sample data.* Every sync reads the state through one gate that refuses a
+  state holding the invented debug data (`QSAMPLE`), whole: filtering it would
+  leave references to what was filtered.
+- *Device id.* A copied database keeps its device id, and two phones would sign
+  as one. `DeviceIdentityDataSource.claim` compares the id with the one this
+  install took (a file left out of every Android backup), gives the database a
+  new id when they differ, and keeps the old id as a peer seen up to its last
+  mark. A sync calls it first and stops if it fails.
+- *Kraken.* A reward or swap without Kraken's own USD figure is valued on the
+  PC only and arrives by sync, so each such row has one author and the two
+  sides never book it at different prices.
+
+**Pending for 4b.** Where the price histories live: in `PriceSnapshot` of
+this database, or in a database of their own. They are derived, re-fetchable
+and not synced, and a quote symbol change deletes them. It is decided with the
+transport, not here.
 
 ## Errors
 

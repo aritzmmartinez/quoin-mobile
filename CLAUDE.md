@@ -27,6 +27,13 @@ flows: `docs/ARCHITECTURE.md`.
 - State and injection: Riverpod only (no get_it, bloc, provider), no code generation for them.
 - Local store: drift, only in `data/`. Tables in `features/portfolio/data/database/schema.drift`, same names, CHECKs and unique keys as `../quoin/prisma/schema.prisma`; instants as ISO-8601 UTC text (`build.yaml`). Migrations by hand in `QuoinDatabase.migration`, one step per version against that version's frozen schema in `quoin_database.steps.dart`, never the live tables. To add a version: raise `schemaVersion`, run `dart run drift_dev make-migrations` (saves the schema in `drift_schemas/`, regenerates the steps and `test/drift/`), write the step, never edit a saved schema.
 - drift's `*.g.dart` is committed; CI regenerates it and fails on any diff.
+- Sync: each device is a complete node; merge, `applyPlan` and `planCounts` are pure in `quoin_core`, checked against `sync.json`. Details: `docs/ARCHITECTURE.md`.
+- Marks (HLC) are issued by `tick`/`stamp` only; a field is marked when its value changes, never when it is saved unchanged. `seen` per peer decides what is news.
+- A conflict is settled by `keep`/`take` keyed by `conflictKey`; any open conflict or unknown resolution writes nothing.
+- A ledger row with another content on both sides is set aside, never conflicted; compare exact text, `ts` by instant, never re-serialise `Dec`.
+- `SyncLocalDataSource.importExchange` reads, merges and writes in one transaction; `apply` writes exactly what `applyPlan` says. Effects run after the commit (`RunEffects`), never in a data source; sync does not import the import feature.
+- A residence the app does not know is stored and synced as it came; reading the ledger or planning an import returns `UnsupportedResidenceFailure`, never Bizkaia, and no zone is invented for it.
+- The sample data never syncs; a copied database claims a new device id before any sync; Kraken rows without USD are valued on the PC only.
 - One provider per link: data source → repository → use case → screen state.
 - A repository's provider is typed abstract in presentation and bound in `app/dependencies.dart`.
 - `ui/` widgets take data and callbacks: no features, providers or router.

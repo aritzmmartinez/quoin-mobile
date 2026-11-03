@@ -10,6 +10,12 @@ final class NetworkFailure extends Failure {
   const NetworkFailure();
 }
 
+final class UnsupportedResidenceFailure extends Failure {
+  const UnsupportedResidenceFailure(this.residence);
+
+  final String residence;
+}
+
 sealed class ImportFailure extends Failure {
   const ImportFailure();
 }

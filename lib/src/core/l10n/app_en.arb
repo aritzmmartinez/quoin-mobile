@@ -54,6 +54,7 @@
   "positionUnpriced": "No price",
   "positionCost": "{cost} cost",
   "portfolioLoadFailed": "The portfolio could not be read",
+  "residenceUnsupported": "Your PC uses a tax territory this version of the app does not know. Update the app.",
   "categoryCompany": "Stock",
   "categoryEquityFund": "Equity fund",
   "categoryBondFund": "Bond fund",

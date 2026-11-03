@@ -17,6 +17,8 @@ class PortfolioRepositoryImpl implements PortfolioRepository {
   Future<Result<PortfolioLedger>> load() async {
     try {
       return Ok((await _source.read()).toEntity());
+    } on UnsupportedResidenceException catch (e) {
+      return Err(UnsupportedResidenceFailure(e.residence));
     } on StorageException {
       return const Err(StorageFailure());
     } on UnreadableRow {
