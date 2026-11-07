@@ -178,11 +178,6 @@ class SyncLocalDataSource {
         await (_db.update(
           _db.instrument,
         )..where((i) => i.id.equals(id))).write(_instrumentPatch(patch));
-        if (patch.containsKey('quoteSymbol')) {
-          await (_db.delete(
-            _db.priceSnapshot,
-          )..where((p) => p.instrumentId.equals(id))).go();
-        }
       }
 
       for (final row in plan.ledgerInsert) {

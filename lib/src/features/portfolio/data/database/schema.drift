@@ -66,21 +66,6 @@ CREATE UNIQUE INDEX "LedgerEntry_source_externalId_key" ON "LedgerEntry" ("sourc
 CREATE INDEX "LedgerEntry_ts_idx" ON "LedgerEntry" ("ts");
 CREATE INDEX "LedgerEntry_instrumentId_idx" ON "LedgerEntry" ("instrumentId");
 
-CREATE TABLE "PriceSnapshot" (
-    "id" TEXT NOT NULL PRIMARY KEY,
-    "instrumentId" TEXT NOT NULL
-        REFERENCES "Instrument" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
-    "price" TEXT NOT NULL,
-    "currency" TEXT NOT NULL,
-    "asOf" DATETIME NOT NULL,
-    "source" TEXT NOT NULL DEFAULT 'YAHOO',
-    "createdAt" DATETIME NOT NULL
-) AS PriceSnapshotRow;
-
-CREATE INDEX "PriceSnapshot_instrumentId_idx" ON "PriceSnapshot" ("instrumentId");
-CREATE INDEX "PriceSnapshot_asOf_idx" ON "PriceSnapshot" ("asOf");
-CREATE UNIQUE INDEX "PriceSnapshot_instrumentId_asOf_key" ON "PriceSnapshot" ("instrumentId", "asOf");
-
 CREATE TABLE "FxRate" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "base" TEXT NOT NULL,

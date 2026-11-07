@@ -7,11 +7,7 @@ import 'package:quoin/src/ui/organisms/quoin_bottom_bar.dart';
 import '../../helpers.dart';
 
 Future<void> openRealized(WidgetTester tester) async {
-  await pumpApp(
-    tester,
-    prefs: {'locale': 'es'},
-    database: await sampleDatabase(),
-  );
+  await pumpApp(tester, prefs: {'locale': 'es'}, sample: true);
   await tester.tap(
     find.descendant(
       of: find.byType(QuoinBottomBar),
@@ -25,11 +21,7 @@ Future<void> openRealized(WidgetTester tester) async {
 
 void main() {
   testWidgets('home leads to the year realised so far', (tester) async {
-    await pumpApp(
-      tester,
-      prefs: {'locale': 'es'},
-      database: await sampleDatabase(),
-    );
+    await pumpApp(tester, prefs: {'locale': 'es'}, sample: true);
     await tester.scrollUntilVisible(
       find.text('Realizado en 2026'),
       200,

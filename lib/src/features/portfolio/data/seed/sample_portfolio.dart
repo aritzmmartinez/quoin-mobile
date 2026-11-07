@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 import 'package:quoin_core/quoin_core.dart' hide Instrument, PriceSnapshot;
 
+import 'package:quoin/src/features/portfolio/data/database/prices_database.dart';
 import 'package:quoin/src/features/portfolio/data/database/quoin_database.dart';
 
 /// An invented portfolio for debug builds, dated around [now] so its prices

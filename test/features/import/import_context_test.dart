@@ -10,9 +10,8 @@ import '../../helpers.dart';
 
 void main() {
   test('an import never values a row with prices stored here', () async {
-    final db = await sampleDatabase();
+    final db = (await sampleStores()).database;
     addTearDown(db.close);
-    expect(await db.select(db.priceSnapshot).get(), isNotEmpty);
 
     final context = await ImportRepositoryImpl(
       const ImportFileDataSource(),

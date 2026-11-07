@@ -1,0 +1,35 @@
+-- The price histories the PC sends (POST /v1/prices). A cache: derived,
+-- fetched again when missing, never synced and left out of every Android
+-- backup, so it lives apart from the portfolio. PriceSnapshot has the
+-- columns and unique key of ../quoin/prisma/schema.prisma, without the
+-- foreign key to Instrument, which is in the other database.
+
+CREATE TABLE "PriceSnapshot" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "instrumentId" TEXT NOT NULL,
+    "price" TEXT NOT NULL,
+    "currency" TEXT NOT NULL,
+    "asOf" DATETIME NOT NULL,
+    "source" TEXT NOT NULL DEFAULT 'YAHOO',
+    "createdAt" DATETIME NOT NULL
+) AS PriceSnapshotRow;
+
+CREATE INDEX "PriceSnapshot_instrumentId_idx" ON "PriceSnapshot" ("instrumentId");
+CREATE INDEX "PriceSnapshot_asOf_idx" ON "PriceSnapshot" ("asOf");
+CREATE UNIQUE INDEX "PriceSnapshot_instrumentId_asOf_key" ON "PriceSnapshot" ("instrumentId", "asOf");
+
+-- The version of each instrument's series, as the PC named it; sent back
+-- with the newest row so the PC answers with what is missing. Quoin keeps it
+-- in Instrument.priceSeriesVersion.
+CREATE TABLE "PriceSeries" (
+    "instrumentId" TEXT NOT NULL PRIMARY KEY,
+    "seriesVersion" TEXT NOT NULL
+) AS PriceSeriesRow;
+
+-- The newest price of each instrument. asOf is ISO-8601 UTC text of one
+-- width, so the greatest text is the latest instant.
+latestPrices:
+SELECT p.* FROM "PriceSnapshot" p
+WHERE p."asOf" = (
+    SELECT MAX("asOf") FROM "PriceSnapshot" WHERE "instrumentId" = p."instrumentId"
+);

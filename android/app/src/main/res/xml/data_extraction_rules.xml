@@ -1,13 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Android 12 and later. The portfolio travels to a new phone with the rest
      of the app's data; install_id does not, so the copy knows it is a copy and
-     takes a device id of its own (DeviceIdentityDataSource). Cloud backup only
-     runs when it is end-to-end encrypted. -->
+     takes a device id of its own (DeviceIdentityDataSource). Neither does
+     prices/, the price histories (PricesDatabase): a cache the restored phone
+     fetches again from the PC. Cloud backup only runs when it is end-to-end
+     encrypted. -->
 <data-extraction-rules>
     <cloud-backup disableIfNoEncryptionCapabilities="true">
         <exclude domain="file" path="install_id" />
+        <exclude domain="file" path="prices" />
     </cloud-backup>
     <device-transfer>
         <exclude domain="file" path="install_id" />
+        <exclude domain="file" path="prices" />
     </device-transfer>
 </data-extraction-rules>

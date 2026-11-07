@@ -10,6 +10,7 @@ import 'package:quoin/src/features/import/data/repositories/fx_repository_impl.d
 import 'package:quoin/src/features/import/data/repositories/import_repository_impl.dart';
 import 'package:quoin/src/features/import/domain/usecases/ensure_rates.dart';
 import 'package:quoin/src/features/import/presentation/providers/import_providers.dart';
+import 'package:quoin/src/features/portfolio/data/database/prices_database.dart';
 import 'package:quoin/src/features/portfolio/data/database/quoin_database.dart';
 import 'package:quoin/src/features/portfolio/data/datasources/portfolio_local_datasource.dart';
 import 'package:quoin/src/features/portfolio/data/repositories/portfolio_repository_impl.dart';
@@ -22,12 +23,14 @@ import 'package:quoin/src/features/sync/domain/usecases/run_effects.dart';
 List<Override> dependencies(
   SharedPreferencesWithCache prefs,
   QuoinDatabase database,
+  PricesDatabase prices,
 ) => [
   sharedPreferencesProvider.overrideWithValue(prefs),
   settingsRepositoryProvider.overrideWith(
     (ref) => SettingsRepositoryImpl(ref.watch(settingsLocalDataSourceProvider)),
   ),
   quoinDatabaseProvider.overrideWithValue(database),
+  pricesDatabaseProvider.overrideWithValue(prices),
   portfolioRepositoryProvider.overrideWith(
     (ref) =>
         PortfolioRepositoryImpl(ref.watch(portfolioLocalDataSourceProvider)),

@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:quoin/src/app/app.dart';
 import 'package:quoin/src/app/dependencies.dart';
+import 'package:quoin/src/features/portfolio/data/database/prices_database.dart';
 import 'package:quoin/src/features/portfolio/data/database/quoin_database.dart';
 import 'package:quoin/src/features/settings/data/datasources/settings_local_datasource.dart';
 import 'package:quoin/src/features/sync/data/datasources/device_identity_datasource.dart';
@@ -37,7 +38,7 @@ Future<void> main() async {
   await LiquidGlassWidgets.initialize();
   runApp(
     ProviderScope(
-      overrides: dependencies(prefs, database),
+      overrides: dependencies(prefs, database, PricesDatabase.open()),
       child: LiquidGlassWidgets.wrap(
         brightnessResolver: Theme.maybeBrightnessOf,
         child: const QuoinApp(),

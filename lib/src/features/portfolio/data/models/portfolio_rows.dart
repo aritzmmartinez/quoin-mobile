@@ -1,8 +1,10 @@
 import 'package:quoin_core/quoin_core.dart';
 
 import 'package:quoin/src/core/error/exceptions.dart';
+import 'package:quoin/src/features/portfolio/data/database/prices_database.dart'
+    show PriceSnapshotRow;
 import 'package:quoin/src/features/portfolio/data/database/quoin_database.dart'
-    show FxRateRow, InstrumentRow, LedgerEntryRow, PriceSnapshotRow;
+    show FxRateRow, InstrumentRow, LedgerEntryRow;
 import 'package:quoin/src/features/portfolio/data/datasources/portfolio_local_datasource.dart';
 import 'package:quoin/src/features/portfolio/domain/entities/portfolio_ledger.dart';
 

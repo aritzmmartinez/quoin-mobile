@@ -35,11 +35,7 @@ TradeEvent trade(
 );
 
 Future<void> openPortfolio(WidgetTester tester) async {
-  await pumpApp(
-    tester,
-    prefs: {'locale': 'es'},
-    database: await sampleDatabase(),
-  );
+  await pumpApp(tester, prefs: {'locale': 'es'}, sample: true);
   await tester.tap(
     find.descendant(
       of: find.byType(QuoinBottomBar),

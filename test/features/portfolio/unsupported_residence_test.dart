@@ -28,8 +28,9 @@ void main() {
     final db = await unknownResidence();
     addTearDown(db.close);
 
-    final loaded = await PortfolioRepositoryImpl(PortfolioLocalDataSource(db))
-        .load();
+    final loaded = await PortfolioRepositoryImpl(
+      PortfolioLocalDataSource(db, memoryPrices()),
+    ).load();
 
     expect(
       loaded,
