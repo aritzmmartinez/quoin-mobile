@@ -22,8 +22,8 @@ packages/quoin_core/     Dec, Money and the domain rules shared with ../quoin
 ```
 
 A folder exists only when it holds something: a feature has only the layers
-it uses. Today `settings`, `portfolio` and `import` have all three;
-`analysis` has only `presentation/pages`.
+it uses. Today `settings`, `portfolio`, `import` and `sync` have all three;
+`tax` has `domain` and `presentation`; `analysis` has only `presentation/pages`.
 
 ## Layers
 
@@ -65,6 +65,13 @@ syncs (the ledger and its instruments, prices and rates, the residence, plan
 versions, fund compositions, identities and the sync tables) with the same
 names, CHECKs and unique keys, so sync can map rows one to one. Amounts are
 decimal text, days `YYYY-MM-DD`, instants ISO-8601 UTC text.
+
+The price histories live apart, in `PricesDatabase` (`prices.drift`, under
+`files/prices/`): `PriceSnapshot` with Quoin's columns and unique key but no
+foreign key to `Instrument`, and `PriceSeries`, the version of each series as
+the PC named it. They are a cache: derived, fetched again from the PC, never
+synced, and left out of every Android backup, which a separate file makes a
+single rule. Version 3 of the main database drops its `PriceSnapshot`.
 
 Migrations are hand-written steps in `QuoinDatabase.migration`, one per
 version, each against that version's frozen schema (`quoin_database.steps.dart`),
@@ -126,10 +133,10 @@ currency the service cannot give is listed, not an error: its rows stay
 contradicts a stored rate, which is then not updated. Both rate books, for
 booking and for valuation, read only the ECB's series (`ecbSource`), as in
 Quoin. Tests answer for the ECB with
-`MockClient`. This is the app's only network traffic: public data in, and
-nothing out but the currency code. Kraken rewards and swaps without Kraken's
-own USD figure are valued from stored prices only; the app does not download
-price histories yet.
+`MockClient`. Public data in, nothing out but the currency code and the days;
+the only other traffic is the sync with the user's PC (`docs/privacy.md`).
+Kraken rewards and swaps without Kraken's own USD figure are valued from
+stored prices only; the price histories come from the PC.
 
 ## Sync
 
@@ -138,7 +145,7 @@ server. Each is a complete node: it holds the whole user state (ledger,
 instruments with the mark of each hand-set field, plan versions and their
 tombstones, fund compositions, identities, residence) and the marks of what it
 has seen from the others. A file carries that state; moving it is the
-transport, not part of this layer. Merge, its plan and the model of applying it
+transport, described below. Merge, its plan and the model of applying it
 are pure Dart in `quoin_core` (`merge`, `applyPlan`, `planCounts`), ported
 from Quoin's `core/sync` and checked case by case against `sync.json` (merges,
 refusals and two-device scenarios) in `sync_contract_test.dart`.
@@ -179,8 +186,8 @@ The effects are not run there: the result carries them, and the caller runs
 them after the commit with `RunEffects`. `rates` go to `EnsureRates` through
 a port (`EnsureRatesFrom`) that `app/dependencies.dart` binds (`ratesForSync`),
 so `sync` does not import `import`; a failure is reported for that effect and
-never undoes the import. `prices` stay pending: the phone does not download
-histories, they come from the PC (phase 4b).
+never undoes the import. Price histories are not an effect the phone runs:
+it asks the PC for them after each sync (below).
 
 **A residence this version does not know.** Sync carries the residence as the
 text it came as, so a territory a newer Quoin adds is stored and sent on
@@ -204,10 +211,50 @@ territory this version does not know and that the app must be updated.
   PC only and arrives by sync, so each such row has one author and the two
   sides never book it at different prices.
 
-**Pending for 4b.** Where the price histories live: in `PriceSnapshot` of
-this database, or in a database of their own. They are derived, re-fetchable
-and not synced, and a quote symbol change deletes them. It is decided with the
-transport, not here.
+**Transport.** The PC serves `../quoin/docs/sync-api.md` on the local
+network; `SyncRemoteDataSource` is its client. Every request goes through
+`PinnedClient`: `dart:io`'s `HttpClient` with no trusted roots, whose
+`badCertificateCallback` accepts only a certificate whose DER hashes to the
+pin from the QR. A mismatch is `PinMismatchException`, then
+`CertificateMismatchFailure`, and nothing is sent. Bodies are gzipped JSON;
+answers are parsed off the main isolate (`Isolate.run`). A 503 or 429 with a
+`Retry-After` of five seconds or less is retried once; longer is a failure.
+
+**Pairing** (`PairWithPc`). The PC's QR carries host, port, certificate pin,
+a one-time token and the PC's name (`parsePairingQr`). The phone checks the
+PC answers (`hello`), shows the six-digit `pairingCode` of the token and its
+device id for the user to compare with the PC's, and posts both with its
+name; the PC answers with a device token once the user accepts there. The
+pairing is kept in `flutter_secure_storage` (left out of backups: a restored
+phone pairs again). The camera is used only here: `qrscan` (ZXing in Java,
+its own camera screen) behind `scanQr` in `qr_scanner_view.dart`, the only file that
+imports it, swapped for a fake in tests (`qrScannerProvider`).
+
+**A sync** (`SyncNow`): claim the device id; `hello` for a common exchange
+version; `GET /v1/sync` for the PC's state and ETag; `importExchange` here;
+`POST /v1/sync` with the merged state and `If-Match`, starting again once
+from the GET on 409; then the effects and the prices. The first sync with a
+pairing is a dry run that previews both directions (`SyncPreview`) until the
+user confirms. Open conflicts return `SyncConflicts` and write nothing; the
+screen resolves them with keep or take and runs again.
+
+**Prices** (`PullPrices`). After the sync the phone posts, per instrument it
+holds, the series version and last day it has (`holdingOf`); the PC answers
+with a full series, the rows after that day, or `pending` while it is still
+downloading. `PricesLocalDataSource` applies them (`applyPriceAnswer`), and
+`EnsureRates` brings any new currency's rates. Pending instruments are asked
+again a few times, three seconds apart; what is still pending is shown.
+
+**When.** The Sync section in Settings pairs, shows the PC and the last sync,
+syncs, unpairs, and names what stopped the last sync with its way out. Inicio
+and Cartera sync on pull to refresh; the app syncs silently when it opens,
+once the first sync was confirmed.
+
+**Failures.** Each refusal of the API is its own `Failure`: unreachable,
+certificate mismatch, revoked, invalid or used or expired QR, rejected
+pairing, update required (app or Quoin), PC busy, conflicts changed, refused
+with a code. Unreachable, certificate and revoked offer to pair again, since
+only a new QR carries a new address or certificate.
 
 ## Errors
 
