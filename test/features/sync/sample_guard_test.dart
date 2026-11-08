@@ -46,7 +46,7 @@ void main() {
   });
 
   test('a database holding the sample portfolio never syncs', () async {
-    final db = await sampleDatabase();
+    final db = (await sampleStores()).database;
     addTearDown(db.close);
     final store = SyncLocalDataSource(db);
 

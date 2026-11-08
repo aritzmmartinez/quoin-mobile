@@ -36,23 +36,24 @@ class QuoinSegmented<T> extends StatelessWidget {
       ),
       child: Stack(
         children: [
-          Positioned.fill(
-            child: AnimatedAlign(
-              duration: duration,
-              curve: Curves.easeOutCubic,
-              alignment: Alignment(-1 + 2 * index / (segments.length - 1), 0),
-              child: FractionallySizedBox(
-                widthFactor: 1 / segments.length,
-                heightFactor: 1,
-                child: DecoratedBox(
-                  decoration: ShapeDecoration(
-                    color: c.accent,
-                    shape: const StadiumBorder(),
+          if (index >= 0)
+            Positioned.fill(
+              child: AnimatedAlign(
+                duration: duration,
+                curve: Curves.easeOutCubic,
+                alignment: Alignment(-1 + 2 * index / (segments.length - 1), 0),
+                child: FractionallySizedBox(
+                  widthFactor: 1 / segments.length,
+                  heightFactor: 1,
+                  child: DecoratedBox(
+                    decoration: ShapeDecoration(
+                      color: c.accent,
+                      shape: const StadiumBorder(),
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
           IntrinsicHeight(
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.stretch,

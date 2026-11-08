@@ -1,18 +1,24 @@
 import 'dart:io';
 
 import 'package:drift/drift.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:quoin_core/quoin_core.dart' show uuidV4;
 
 import 'package:quoin/src/core/error/exceptions.dart';
 import 'package:quoin/src/features/portfolio/data/database/quoin_database.dart';
+import 'package:quoin/src/features/portfolio/data/datasources/portfolio_local_datasource.dart';
 
-/// Keeps the database's device id this install's own.
-///
-/// Android copies the database to a new phone (cloud backup, device-to-device
-/// transfer), and a copy keeps the device id: two phones would then sign
-/// their changes as one. The file [fileName] names the device id this install
-/// took, and is left out of every copy (`res/xml/data_extraction_rules.xml`,
-/// `res/xml/backup_rules.xml`), so on a restored copy it is missing.
+final supportDirectoryProvider = Provider<Directory>(
+  (ref) => throw UnimplementedError('supportDirectoryProvider not overridden'),
+);
+
+final deviceIdentityDataSourceProvider = Provider(
+  (ref) => DeviceIdentityDataSource(
+    ref.watch(quoinDatabaseProvider),
+    ref.watch(supportDirectoryProvider),
+  ),
+);
+
 class DeviceIdentityDataSource {
   const DeviceIdentityDataSource(this._db, this._directory);
 
@@ -24,20 +30,11 @@ class DeviceIdentityDataSource {
   File get _file =>
       File('${_directory.path}${Platform.pathSeparator}$fileName');
 
-  /// Gives the database a new device id when it is not the one this install
-  /// took (a copy, or the first start), keeping the data. The old id becomes
-  /// a peer seen up to the last mark it issued: this database holds all of
-  /// it, so a merge never takes that device's marks for news.
-  ///
-  /// Start-up ignores a failure here and tries again on the next start. A
-  /// sync must not: it calls this first and, if it throws, returns a failure
-  /// and stops, because a database that could not claim its id may be a copy
-  /// signing its changes as the original.
-  Future<void> claim() async {
+  Future<String> claim() async {
     try {
       final taken = await _read();
       final device = await _db.select(_db.syncDevice).getSingle();
-      if (taken == device.deviceId) return;
+      if (taken == device.deviceId) return device.deviceId;
       final id = await _db.transaction(() async {
         final id = uuidV4();
         await _db
@@ -53,6 +50,7 @@ class DeviceIdentityDataSource {
         return id;
       });
       await _file.writeAsString(id, flush: true);
+      return id;
     } on Exception catch (e) {
       throw StorageException(e);
     }

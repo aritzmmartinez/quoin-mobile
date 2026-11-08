@@ -12,11 +12,7 @@ void main() {
   testWidgets('home shows the total, the allocation and the top five', (
     tester,
   ) async {
-    await pumpApp(
-      tester,
-      prefs: {'locale': 'es'},
-      database: await sampleDatabase(),
-    );
+    await pumpApp(tester, prefs: {'locale': 'es'}, sample: true);
 
     expect(find.text('Patrimonio total'), findsOneWidget);
     expect(find.textContaining('2 sin valorar'), findsOneWidget);
@@ -40,11 +36,7 @@ void main() {
   testWidgets('portfolio filters by category and names the unpriced', (
     tester,
   ) async {
-    await pumpApp(
-      tester,
-      prefs: {'locale': 'es'},
-      database: await sampleDatabase(),
-    );
+    await pumpApp(tester, prefs: {'locale': 'es'}, sample: true);
     await tester.tap(
       find.descendant(
         of: find.byType(QuoinBottomBar),

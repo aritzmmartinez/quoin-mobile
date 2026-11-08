@@ -37,6 +37,8 @@ export 'src/sync/apply_plan.dart';
 export 'src/sync/exchange.dart';
 export 'src/sync/hlc.dart';
 export 'src/sync/merge.dart';
+export 'src/sync/pairing.dart';
+export 'src/sync/prices.dart';
 export 'src/sync/sample.dart';
 export 'src/tax/config.dart';
 export 'src/tax/deferred_loss.dart';

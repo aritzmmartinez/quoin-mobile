@@ -9,25 +9,30 @@ typedef EnsureRatesFrom = Future<Result<List<String>>> Function(
   required String zone,
 });
 
+typedef DropPricesOf = Future<Result<void>> Function(String instrumentId);
+
 class RunEffects {
-  const RunEffects(this._ensureRates);
+  const RunEffects(this._ensureRates, this._dropPrices);
 
   final EnsureRatesFrom _ensureRates;
+  final DropPricesOf _dropPrices;
 
   Future<List<EffectOutcome>> call(
     List<Effect> effects, {
-    required String zone,
+    required Result<String> zone,
   }) async {
     final outcomes = <EffectOutcome>[];
     for (final effect in effects) {
-      outcomes.add(switch (effect) {
-        RatesEffect(:final currency, :final since) => await _rates(
-          effect,
-          currency,
-          dayOf(DateTime.parse(since), zone),
-          zone,
-        ),
-        PricesEffect() => EffectPending(effect),
+      outcomes.add(switch ((effect, zone)) {
+        (RatesEffect(:final currency, :final since), Ok(value: final tz)) =>
+          await _rates(effect, currency, dayOf(DateTime.parse(since), tz), tz),
+        (RatesEffect(), Err(:final failure)) => EffectFailed(effect, failure),
+        (PricesEffect(:final instrumentId), _) => switch (await _dropPrices(
+          instrumentId,
+        )) {
+          Ok() => EffectDone(effect),
+          Err(:final failure) => EffectFailed(effect, failure),
+        },
       });
     }
     return outcomes;

@@ -8,6 +8,7 @@ targets:
           generate_manager: false
           databases:
             quoin: lib/src/features/portfolio/data/database/quoin_database.dart
+            prices: lib/src/features/portfolio/data/database/prices_database.dart
           schema_dir: drift_schemas/
           test_dir: test/drift/
           sql:

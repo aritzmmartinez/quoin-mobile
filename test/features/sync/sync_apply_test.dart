@@ -7,7 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:quoin/src/core/error/exceptions.dart';
 import 'package:quoin/src/features/portfolio/data/database/quoin_database.dart';
 import 'package:quoin/src/features/sync/data/datasources/sync_local_datasource.dart';
-import 'package:quoin/src/features/sync/data/models/exchange_import.dart';
+import 'package:quoin/src/features/sync/domain/entities/exchange_import.dart';
 import 'package:quoin_core/quoin_core.dart';
 
 import '../../helpers.dart';
@@ -230,19 +230,6 @@ Future<void> seed(QuoinDatabase db, SyncState s, String? lastHlc) =>
       }
     });
 
-Future<void> addSeries(QuoinDatabase db, String instrumentId) => db
-    .into(db.priceSnapshot)
-    .insert(
-      PriceSnapshotCompanion.insert(
-        id: 'price-$instrumentId',
-        instrumentId: instrumentId,
-        price: '100',
-        currency: 'EUR',
-        asOf: DateTime.utc(2026, 1, 5),
-        createdAt: DateTime.utc(2026, 1, 5),
-      ),
-    );
-
 /// What the phone holds, as the exchange reads it, with every instant by its
 /// moment (the database writes UTC) and the last mark issued.
 Future<Object?> held(QuoinDatabase db, SyncLocalDataSource store) async {
@@ -289,7 +276,6 @@ Future<Map<String, List<Json>>> dump(QuoinDatabase db) async => {
   for (final table in [
     'Instrument',
     'LedgerEntry',
-    'PriceSnapshot',
     'FxRate',
     'Settings',
     'EtfHolding',
@@ -582,7 +568,6 @@ void main() {
         ),
         '001761600000000-0000-dev-a',
       );
-      await addSeries(db, 'IE00TEST0001');
       final before = await dump(db);
 
       final result = await store.importExchange(
@@ -766,7 +751,7 @@ void main() {
 
   group('apply', () {
     test(
-      'a new quote symbol drops the series of that instrument only',
+      'a new quote symbol is written, its series left to the effect',
       () async {
         await seed(
           db,
@@ -784,9 +769,6 @@ void main() {
           ),
           null,
         );
-        await addSeries(db, 'IE00TEST0001');
-        await addSeries(db, 'XX00TEST0002');
-
         await store.apply(
           const ApplyPlan(
             instrumentUpdate: [
@@ -800,8 +782,6 @@ void main() {
           nowMs,
         );
 
-        final left = await db.select(db.priceSnapshot).get();
-        expect([for (final p in left) p.instrumentId], ['XX00TEST0002']);
         final changed = await (db.select(
           db.instrument,
         )..where((i) => i.id.equals('IE00TEST0001'))).getSingle();
@@ -819,7 +799,6 @@ void main() {
         ),
         '001761599000000-0000-dev-a',
       );
-      await addSeries(db, 'IE00TEST0001');
       final before = await dump(db);
 
       await expectLater(

@@ -17,11 +17,7 @@ void main() {
     tester.platformDispatcher.textScaleFactorTestValue = 2;
     addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
 
-    await pumpApp(
-      tester,
-      prefs: {'locale': 'es'},
-      database: await sampleDatabase(),
-    );
+    await pumpApp(tester, prefs: {'locale': 'es'}, sample: true);
 
     Future<void> scrollToEnd() async {
       final list = find.descendant(
@@ -65,6 +61,8 @@ void main() {
       Routes.instrument('IE00QSAMPLE1'),
       Routes.instrument('IE00QSAMPLE7'),
       Routes.realized,
+      Routes.pair,
+      Routes.sync,
     ]) {
       await visit(location);
       await scrollToEnd();

@@ -11,6 +11,7 @@ import 'package:quoin/src/core/theme/quoin_tokens.dart';
 import 'package:quoin/src/core/theme/quoin_type.dart';
 import 'package:quoin/src/features/portfolio/presentation/providers/portfolio_providers.dart';
 import 'package:quoin/src/features/settings/presentation/providers/settings_providers.dart';
+import 'package:quoin/src/features/sync/presentation/widgets/sync_settings_section.dart';
 import 'package:quoin/src/ui/atoms/quoin_icon.dart';
 import 'package:quoin/src/ui/molecules/settings_row.dart';
 import 'package:quoin/src/ui/organisms/settings_section.dart';
@@ -96,6 +97,8 @@ class SettingsPage extends ConsumerWidget {
             ),
           ],
         ),
+        const SizedBox(height: QuoinSpace.gutter),
+        const SyncSettingsSection(),
         const SizedBox(height: QuoinSpace.gutter),
         SettingsSection(
           title: l10n.settingsAbout,

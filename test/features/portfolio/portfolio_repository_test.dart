@@ -1,5 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:quoin/src/core/error/result.dart';
+import 'package:drift/drift.dart' show Value;
+import 'package:quoin/src/features/portfolio/data/database/prices_database.dart';
 import 'package:quoin/src/features/portfolio/data/database/quoin_database.dart';
 import 'package:quoin/src/features/portfolio/data/datasources/portfolio_local_datasource.dart';
 import 'package:quoin/src/features/portfolio/data/repositories/portfolio_repository_impl.dart';
@@ -13,13 +15,18 @@ import '../../helpers.dart';
 
 void main() {
   late QuoinDatabase db;
+  late PricesDatabase prices;
   late PortfolioRepositoryImpl repository;
 
   setUp(() {
     db = memoryDatabase();
-    repository = PortfolioRepositoryImpl(PortfolioLocalDataSource(db));
+    prices = memoryPrices();
+    repository = PortfolioRepositoryImpl(PortfolioLocalDataSource(db, prices));
   });
-  tearDown(() => db.close());
+  tearDown(() async {
+    await db.close();
+    await prices.close();
+  });
 
   Future<PortfolioLedger> load() async => switch (await repository.load()) {
     Ok(:final value) => value,
@@ -135,5 +142,36 @@ void main() {
     await repository.loadSample(testNow);
     await repository.clear();
     expect(overviewOf(await load(), testNow).hasLedger, isFalse);
+    expect(await prices.select(prices.priceSnapshot).get(), isEmpty);
+  });
+
+  test('the ledger takes the newest price of each instrument', () async {
+    PriceSnapshotCompanion price(String id, DateTime asOf, String value) =>
+        PriceSnapshotCompanion.insert(
+          id: '$id-${asOf.toIso8601String()}',
+          instrumentId: id,
+          price: value,
+          currency: 'EUR',
+          asOf: asOf,
+          source: const Value('TEST'),
+          createdAt: asOf,
+        );
+    await prices.batch(
+      (batch) => batch.insertAll(prices.priceSnapshot, [
+        price('XX00TEST0001', DateTime.utc(2026, 10, 2), '11'),
+        price('XX00TEST0001', DateTime.utc(2026, 10, 1), '10'),
+        price('XX00TEST0001', DateTime.utc(2026, 9, 30, 23), '9'),
+        price('XX00TEST0002', DateTime.utc(2026, 9, 1), '5'),
+      ]),
+    );
+
+    final latest = (await load()).latestPrices;
+    expect(
+      {
+        for (final MapEntry(:key, :value) in latest.entries)
+          key: value.price.toString(),
+      },
+      {'XX00TEST0001': '11', 'XX00TEST0002': '5'},
+    );
   });
 }

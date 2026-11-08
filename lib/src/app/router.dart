@@ -12,6 +12,8 @@ import 'package:quoin/src/features/portfolio/presentation/pages/movements_page.d
 import 'package:quoin/src/features/portfolio/presentation/pages/portfolio_page.dart';
 import 'package:quoin/src/features/settings/presentation/pages/component_gallery_page.dart';
 import 'package:quoin/src/features/settings/presentation/pages/settings_page.dart';
+import 'package:quoin/src/features/sync/presentation/pages/pair_page.dart';
+import 'package:quoin/src/features/sync/presentation/pages/sync_page.dart';
 import 'package:quoin/src/features/tax/presentation/pages/realized_page.dart';
 
 abstract final class Routes {
@@ -22,6 +24,8 @@ abstract final class Routes {
   static const import = '/import';
   static const realized = '/realized';
   static const movements = '/movements';
+  static const pair = '/pair';
+  static const sync = '/sync';
 
   static String instrument(String id) =>
       '/instrument/${Uri.encodeComponent(id)}';
@@ -78,6 +82,17 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: Routes.realized,
         builder: (context, state) => const Scaffold(body: RealizedPage()),
+      ),
+      GoRoute(
+        path: Routes.pair,
+        pageBuilder: (context, state) => const MaterialPage(
+          fullscreenDialog: true,
+          child: Scaffold(body: PairPage()),
+        ),
+      ),
+      GoRoute(
+        path: Routes.sync,
+        builder: (context, state) => const Scaffold(body: SyncPage()),
       ),
       GoRoute(
         path: Routes.import,

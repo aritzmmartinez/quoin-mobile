@@ -11,6 +11,7 @@ class QuoinPage extends StatelessWidget {
     required this.title,
     required Widget this.body,
     this.trailing,
+    this.onRefresh,
   }) : children = null,
        itemCount = 0,
        itemBuilder = null;
@@ -20,6 +21,7 @@ class QuoinPage extends StatelessWidget {
     required this.title,
     required List<Widget> this.children,
     this.trailing,
+    this.onRefresh,
   }) : body = null,
        itemCount = 0,
        itemBuilder = null;
@@ -31,6 +33,7 @@ class QuoinPage extends StatelessWidget {
     required this.itemCount,
     required IndexedWidgetBuilder this.itemBuilder,
     this.trailing,
+    this.onRefresh,
   }) : body = null,
        children = header;
 
@@ -40,17 +43,11 @@ class QuoinPage extends StatelessWidget {
   final int itemCount;
   final IndexedWidgetBuilder? itemBuilder;
   final Widget? trailing;
+  final Future<void> Function()? onRefresh;
 
   @override
   Widget build(BuildContext context) {
     final bottom = MediaQuery.paddingOf(context).bottom;
-    final children = this.children;
-    final padding = EdgeInsets.fromLTRB(
-      QuoinSpace.gutter,
-      0,
-      QuoinSpace.gutter,
-      QuoinSpace.gutter + bottom,
-    );
     final canPop = ModalRoute.of(context)?.impliesAppBarDismissal ?? false;
     return SafeArea(
       bottom: false,
@@ -83,27 +80,58 @@ class QuoinPage extends StatelessWidget {
               ],
             ),
           ),
-          Expanded(
-            child: switch ((children, itemBuilder)) {
-              (null, _) => Padding(
-                padding: EdgeInsets.only(bottom: bottom),
-                child: body,
-              ),
-              (final children?, null) => ListView(
-                padding: padding,
-                children: children,
-              ),
-              (final children?, final build?) => ListView.builder(
-                padding: padding,
-                itemCount: children.length + itemCount,
-                itemBuilder: (context, i) => i < children.length
-                    ? children[i]
-                    : build(context, i - children.length),
-              ),
-            },
-          ),
+          Expanded(child: _refreshable(_content(bottom))),
         ],
       ),
     );
   }
+
+  Widget _content(double bottom) {
+    final children = this.children;
+    final physics = onRefresh == null
+        ? null
+        : const AlwaysScrollableScrollPhysics();
+    final padding = EdgeInsets.fromLTRB(
+      QuoinSpace.gutter,
+      0,
+      QuoinSpace.gutter,
+      QuoinSpace.gutter + bottom,
+    );
+    return switch ((children, itemBuilder)) {
+      (null, _) when onRefresh != null => LayoutBuilder(
+        builder: (context, box) => SingleChildScrollView(
+          physics: physics,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: box.maxHeight),
+            child: Padding(
+              padding: EdgeInsets.only(bottom: bottom),
+              child: body,
+            ),
+          ),
+        ),
+      ),
+      (null, _) => Padding(
+        padding: EdgeInsets.only(bottom: bottom),
+        child: body,
+      ),
+      (final children?, null) => ListView(
+        physics: physics,
+        padding: padding,
+        children: children,
+      ),
+      (final children?, final build?) => ListView.builder(
+        physics: physics,
+        padding: padding,
+        itemCount: children.length + itemCount,
+        itemBuilder: (context, i) => i < children.length
+            ? children[i]
+            : build(context, i - children.length),
+      ),
+    };
+  }
+
+  Widget _refreshable(Widget content) => switch (onRefresh) {
+    final refresh? => RefreshIndicator(onRefresh: refresh, child: content),
+    null => content,
+  };
 }

@@ -1,12 +1,18 @@
 import 'dart:convert';
 
 import 'package:drift/drift.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:quoin_core/quoin_core.dart';
 
 import 'package:quoin/src/core/error/exceptions.dart';
 import 'package:quoin/src/features/portfolio/data/database/quoin_database.dart';
-import 'package:quoin/src/features/sync/data/models/exchange_import.dart';
+import 'package:quoin/src/features/portfolio/data/datasources/portfolio_local_datasource.dart';
+import 'package:quoin/src/features/sync/domain/entities/exchange_import.dart';
 import 'package:quoin/src/features/sync/data/models/sync_rows.dart';
+
+final syncLocalDataSourceProvider = Provider(
+  (ref) => SyncLocalDataSource(ref.watch(quoinDatabaseProvider)),
+);
 
 class SyncLocalDataSource {
   SyncLocalDataSource(this._db, {DateTime Function()? now})
@@ -82,6 +88,10 @@ class SyncLocalDataSource {
       if (containsSample(state)) throw const SampleDataException();
       return state;
     }),
+  );
+
+  Future<String> residence() => _guard(
+    () async => (await _db.select(_db.settings).getSingle()).residence,
   );
 
   Future<Exchange> export() => _guard(
@@ -178,11 +188,6 @@ class SyncLocalDataSource {
         await (_db.update(
           _db.instrument,
         )..where((i) => i.id.equals(id))).write(_instrumentPatch(patch));
-        if (patch.containsKey('quoteSymbol')) {
-          await (_db.delete(
-            _db.priceSnapshot,
-          )..where((p) => p.instrumentId.equals(id))).go();
-        }
       }
 
       for (final row in plan.ledgerInsert) {

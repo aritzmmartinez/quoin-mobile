@@ -25,12 +25,14 @@ class PortfolioView extends StatelessWidget {
     required this.overview,
     required this.empty,
     required this.builder,
+    this.onRefresh,
   });
 
   final String title;
   final AsyncValue<Result<PortfolioOverview>> overview;
   final Widget empty;
   final Widget Function(PortfolioOverview overview) builder;
+  final Future<void> Function()? onRefresh;
 
   @override
   Widget build(BuildContext context) {
@@ -39,17 +41,20 @@ class PortfolioView extends StatelessWidget {
       null => QuoinPage(title: title, body: const SizedBox.shrink()),
       Ok(value: PortfolioOverview(hasLedger: false)) => QuoinPage(
         title: title,
+        onRefresh: onRefresh,
         body: empty,
       ),
       Ok(:final value) => builder(value),
       Err(:final failure) => QuoinPage(
         title: title,
+        onRefresh: onRefresh,
         body: EmptyState(
           message: switch (failure) {
             UnsupportedResidenceFailure() => l10n.residenceUnsupported,
             StorageFailure() ||
             NetworkFailure() ||
-            ImportFailure() => l10n.portfolioLoadFailed,
+            ImportFailure() ||
+            SyncFailure() => l10n.portfolioLoadFailed,
           },
         ),
       ),

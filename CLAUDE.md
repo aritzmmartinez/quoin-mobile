@@ -34,6 +34,10 @@ flows: `docs/ARCHITECTURE.md`.
 - `SyncLocalDataSource.importExchange` reads, merges and writes in one transaction; `apply` writes exactly what `applyPlan` says. Effects run after the commit (`RunEffects`), never in a data source; sync does not import the import feature.
 - A residence the app does not know is stored and synced as it came; reading the ledger or planning an import returns `UnsupportedResidenceFailure`, never Bizkaia, and no zone is invented for it.
 - The sample data never syncs; a copied database claims a new device id before any sync; Kraken rows without USD are valued on the PC only.
+- Every request to the PC goes through `PinnedClient` (the QR's SHA-256 pin, no trusted roots); never a plain client.
+- The pairing and its device token live only in `flutter_secure_storage`; price histories only in `PricesDatabase` (`files/prices/`). Both, and `install_id`, are left out of Android backup in `backup_rules.xml` and `data_extraction_rules.xml`: a restored phone must never arrive paired.
+- Only `qr_scanner_view.dart` imports the scanner (`qrscan`); tests override `qrScannerProvider`.
+- Anything new that leaves the phone changes `docs/privacy.md` first (source of the privacy policy and Play's Data safety form).
 - One provider per link: data source → repository → use case → screen state.
 - A repository's provider is typed abstract in presentation and bound in `app/dependencies.dart`.
 - `ui/` widgets take data and callbacks: no features, providers or router.
@@ -94,4 +98,14 @@ flows: `docs/ARCHITECTURE.md`.
 - Before handing back: `dart analyze` and `dart test` in `packages/quoin_core`; `flutter analyze` and `flutter test` at the root.
 - CI also runs `flutter build apk --debug`, on Flutter 3.47.8.
 - No tool or assistant marks in code, comments or docs.
-- Aritz makes the commits; write the message in `msg.txt` (ignored).
+- Comments only say why (a decision, or a trap someone would break without knowing), short; never what the code already says.
+- `qrscan` is pinned to an exact version: a new one is tried on a phone (reads a QR, 16 KB pages) before it is raised.
+- Aritz makes the commits; write each message in `msg-N.txt` (ignored), N the commit's place in the branch.
+
+## Testing on the phone
+
+- Against Quoin from `pnpm dev` with a temporary database, never the real Docker or `data/quoin.sqlite`.
+- One server only, bound to `127.0.0.1` with its own ports (web and sync), never `localhost` or the defaults another `pnpm dev` may hold. Before scanning a QR, check which process listens on those ports and that the real database's mtime has not moved.
+- Before every tap or screenshot, check Quoin (`dev.aritzmmartinez.quoin`) has the focus (`dumpsys window`, `mCurrentFocus`); if not, stop and say so.
+- No blind coordinates: find each element with `uiautomator dump` by its text and tap that; if it is not there, stop.
+- No screenshot without asking first; only with Quoin in front, deleted after the test.
