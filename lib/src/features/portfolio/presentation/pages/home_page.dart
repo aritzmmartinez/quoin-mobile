@@ -13,6 +13,7 @@ import 'package:quoin/src/core/theme/quoin_type.dart';
 import 'package:quoin/src/features/portfolio/domain/entities/portfolio_overview.dart';
 import 'package:quoin/src/features/portfolio/presentation/providers/portfolio_providers.dart';
 import 'package:quoin/src/features/portfolio/presentation/widgets/portfolio_view.dart';
+import 'package:quoin/src/features/sync/presentation/widgets/sync_actions.dart';
 import 'package:quoin/src/features/tax/domain/entities/realized_report.dart';
 import 'package:quoin/src/features/tax/presentation/providers/tax_providers.dart';
 import 'package:quoin/src/ui/atoms/display_figure.dart';
@@ -33,6 +34,7 @@ class HomePage extends ConsumerWidget {
     return PortfolioView(
       title: l10n.tabHome,
       overview: ref.watch(portfolioOverviewProvider),
+      onRefresh: () => refreshFromPc(context, ref),
       empty: EmptyState(
         message: l10n.homeEmpty,
         actionLabel: l10n.importCsv,
@@ -40,6 +42,7 @@ class HomePage extends ConsumerWidget {
       ),
       builder: (overview) => QuoinPage.list(
         title: l10n.tabHome,
+        onRefresh: () => refreshFromPc(context, ref),
         children: _content(context, overview, switch (ref
             .watch(realizedReportProvider)
             .value) {

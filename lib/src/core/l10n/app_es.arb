@@ -648,5 +648,175 @@
       }
     }
   },
-  "taxTotal": "Total"
+  "taxTotal": "Total",
+  "settingsSync": "Sincronización",
+  "syncPair": "Vincular con tu PC",
+  "syncLastSync": "Última: {when}",
+  "@syncLastSync": {
+    "placeholders": {
+      "when": {
+        "type": "String"
+      }
+    }
+  },
+  "syncNever": "Aún sin sincronizar",
+  "syncNow": "Sincronizar ahora",
+  "syncUnpair": "Desvincular",
+  "syncUnpairTitle": "¿Desvincular {pc}?",
+  "@syncUnpairTitle": {
+    "placeholders": {
+      "pc": {
+        "type": "String"
+      }
+    }
+  },
+  "syncUnpairBody": "Este móvil dejará de sincronizar con tu PC. La cartera se queda en el móvil.",
+  "syncCancel": "Cancelar",
+  "syncUnreachable": "No encuentro tu Quoin",
+  "syncUnreachableHint": "El móvil no llega a tu PC. Comprueba que el móvil está conectado a la misma Wi‑Fi que el PC (no a los datos móviles), que el PC está encendido con Quoin abierto y que el cortafuegos de Windows permite la conexión. Si el PC ha cambiado de dirección, vuelve a escanear el código.",
+  "syncRescan": "Volver a escanear",
+  "syncCertificateChanged": "El certificado de tu PC ha cambiado",
+  "syncCertificateHint": "El equipo que responde en la dirección de tu PC no se identifica como el que vinculaste: puede que Quoin se haya reinstalado o que otro equipo use esa dirección. Por seguridad no se ha enviado nada. Vincula de nuevo desde Ajustes → Dispositivos en tu PC.",
+  "syncRevoked": "Tu PC ya no acepta este móvil",
+  "syncRevokedHint": "Este móvil se ha desvinculado desde el PC, o el PC ya no reconoce su clave. Vincúlalo de nuevo escaneando un código nuevo en Ajustes → Dispositivos.",
+  "syncPairAgain": "Vincular de nuevo",
+  "pairScanHint": "En tu PC, abre Ajustes → Dispositivos y escanea el código.",
+  "pairScan": "Escanear el código",
+  "pairCameraDenied": "Sin acceso a la cámara no se puede leer el código. Permítelo en los ajustes del sistema.",
+  "pairChecking": "Conectando con tu PC…",
+  "pairPhoneName": "Nombre de este móvil",
+  "pairPhoneNameHelp": "Así lo verás en tu PC.",
+  "pairDefaultName": "Mi móvil",
+  "@pairDefaultName": {
+    "description": "Nombre del móvil propuesto al vincular; editable."
+  },
+  "pairNameInvalid": "Escribe un nombre de 1 a 100 caracteres.",
+  "pairCodeTitle": "Comprueba que tu PC muestra este código",
+  "pairSend": "Vincular",
+  "pairWaiting": "Confirma la vinculación en tu PC…",
+  "syncFailInvalidQr": "Este código no es de Quoin.",
+  "syncFailTokenUsed": "Este código ya se ha usado. Muestra uno nuevo en tu PC.",
+  "syncFailExpired": "La vinculación ha caducado. Muestra un código nuevo en tu PC.",
+  "syncFailRejected": "Se ha rechazado la vinculación en el PC.",
+  "syncFailUpdateApp": "Actualiza la app para sincronizar con tu PC.",
+  "syncFailUpdateQuoin": "Actualiza Quoin en tu PC para sincronizar.",
+  "syncFailBusy": "Tu PC está ocupado. Inténtalo en un momento.",
+  "syncFailStateChanged": "Tu PC ha cambiado mientras sincronizabas. Inténtalo de nuevo.",
+  "syncFailDeviceIdentity": "No se ha podido comprobar la identidad de este móvil. Reinicia la app.",
+  "syncFailSample": "La cartera de ejemplo no se sincroniza. Vacíala antes.",
+  "syncFailConflictsChanged": "Los conflictos han cambiado. Revísalos de nuevo.",
+  "syncFailRefused": "Tu PC ha rechazado la sincronización ({code}).",
+  "@syncFailRefused": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "syncFailNotPaired": "Este móvil no está vinculado a ningún PC.",
+  "syncFailStorage": "No se ha podido guardar en el móvil.",
+  "syncFailNetwork": "No se ha podido conectar.",
+  "syncRunning": "Sincronizando con {pc}…",
+  "@syncRunning": {
+    "placeholders": {
+      "pc": {
+        "type": "String"
+      }
+    }
+  },
+  "syncPreviewIntro": "Es la primera sincronización con este PC. Revisa qué recibirá cada lado.",
+  "syncToPhone": "Del PC a este móvil",
+  "syncToPc": "De este móvil al PC",
+  "syncNothing": "Nada nuevo",
+  "syncCountLedger": "{count, plural, =1{1 movimiento} other{{count} movimientos}}",
+  "@syncCountLedger": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncCountInstruments": "{count, plural, =1{1 instrumento nuevo o cambiado} other{{count} instrumentos nuevos o cambiados}}",
+  "@syncCountInstruments": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncCountTargets": "{count, plural, =1{1 cambio de objetivo} other{{count} cambios de objetivo}}",
+  "@syncCountTargets": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncCountHoldings": "{count, plural, =1{1 composición de fondo} other{{count} composiciones de fondo}}",
+  "@syncCountHoldings": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncCountIdentities": "{count, plural, =1{1 identificador de valor} other{{count} identificadores de valor}}",
+  "@syncCountIdentities": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncCountSettings": "La residencia fiscal",
+  "syncConfirm": "Sincronizar",
+  "syncDone": "Sincronizado",
+  "syncUpToDate": "Ya estaba todo al día",
+  "syncReceived": "Recibido del PC",
+  "syncPricesPending": "Precios pendientes; se completarán en la próxima sincronización",
+  "syncPricesFailed": "No se han podido traer los precios; se intentará en la próxima sincronización.",
+  "syncRatesUnavailable": "Sin tipos de cambio del BCE para {currencies}.",
+  "@syncRatesUnavailable": {
+    "placeholders": {
+      "currencies": {
+        "type": "String"
+      }
+    }
+  },
+  "syncSetAsideTitle": "Movimientos apartados",
+  "syncSetAsideHint": "Son distintos en el PC y en el móvil; cada lado conserva el suyo hasta que coincidan.",
+  "syncConflictsIntro": "Estos datos han cambiado en los dos lados. Elige qué versión se queda en ambos.",
+  "syncKeepPhone": "Este móvil",
+  "syncTakePc": "PC",
+  "syncApply": "Aplicar y sincronizar",
+  "syncEmptyValue": "Sin valor",
+  "syncConflictTarget": "Objetivo de cartera",
+  "syncConflictTargetDay": "Objetivos del {day}",
+  "@syncConflictTargetDay": {
+    "placeholders": {
+      "day": {
+        "type": "String"
+      }
+    }
+  },
+  "syncConflictHoldings": "Composición de {instrument}",
+  "@syncConflictHoldings": {
+    "placeholders": {
+      "instrument": {
+        "type": "String"
+      }
+    }
+  },
+  "syncConflictVersion": "Su versión",
+  "syncFieldQuoteSymbol": "Símbolo de cotización",
+  "syncFieldExposure": "Exposición",
+  "syncFieldTer": "TER",
+  "syncFieldHedged": "Cubierto a euros",
+  "syncFieldThesis": "Tesis",
+  "syncFieldResidence": "Residencia fiscal",
+  "syncReviewSnack": "Tu PC tiene cambios por revisar",
+  "syncReview": "Revisar",
+  "syncDoneSnack": "Sincronizado con tu PC",
+  "syncYes": "Sí",
+  "syncNo": "No"
 }

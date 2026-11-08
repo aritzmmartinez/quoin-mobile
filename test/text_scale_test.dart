@@ -61,6 +61,8 @@ void main() {
       Routes.instrument('IE00QSAMPLE1'),
       Routes.instrument('IE00QSAMPLE7'),
       Routes.realized,
+      Routes.pair,
+      Routes.sync,
     ]) {
       await visit(location);
       await scrollToEnd();

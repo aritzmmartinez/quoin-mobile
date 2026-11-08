@@ -829,6 +829,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.7.0"
+  qrscan:
+    dependency: "direct main"
+    description:
+      name: qrscan
+      sha256: e49b514fd9eef37414f94e1cd2c33ee1df1db3cbe09d2740914cac13a4f13878
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.2.4"
   quoin_core:
     dependency: "direct main"
     description:

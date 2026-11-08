@@ -59,6 +59,18 @@ abstract final class QuoinIcons {
   static const csvFile = QuoinIconData._(HugeIcons.strokeRoundedCsv01);
   static const alert = QuoinIconData._(HugeIcons.strokeRoundedAlert02);
 
+  // Sync.
+  static const computer = QuoinIconData._(HugeIcons.strokeRoundedComputer);
+  static const sync = QuoinIconData._(
+    HugeIcons.strokeRoundedArrowReloadHorizontal,
+  );
+  static const pair = QuoinIconData._(HugeIcons.strokeRoundedQrCode);
+  static const unpair = QuoinIconData._(HugeIcons.strokeRoundedUnlink01);
+  static const offline = QuoinIconData._(HugeIcons.strokeRoundedWifiError01);
+  static const certificate = QuoinIconData._(
+    HugeIcons.strokeRoundedSecurityLock,
+  );
+
   // Generic.
   static const chevronRight = QuoinIconData._(
     HugeIcons.strokeRoundedArrowRight01,

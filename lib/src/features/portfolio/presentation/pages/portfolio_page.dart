@@ -13,6 +13,7 @@ import 'package:quoin/src/features/portfolio/domain/entities/holding_order.dart'
 import 'package:quoin/src/features/portfolio/domain/entities/portfolio_overview.dart';
 import 'package:quoin/src/features/portfolio/presentation/providers/portfolio_providers.dart';
 import 'package:quoin/src/features/portfolio/presentation/widgets/portfolio_view.dart';
+import 'package:quoin/src/features/sync/presentation/widgets/sync_actions.dart';
 import 'package:quoin/src/ui/atoms/display_figure.dart';
 import 'package:quoin/src/ui/atoms/quoin_chip.dart';
 import 'package:quoin/src/ui/atoms/quoin_icon.dart';
@@ -38,9 +39,11 @@ class _PortfolioPageState extends ConsumerState<PortfolioPage> {
     return PortfolioView(
       title: l10n.tabPortfolio,
       overview: ref.watch(portfolioOverviewProvider),
+      onRefresh: () => refreshFromPc(context, ref),
       empty: EmptyState(message: l10n.portfolioEmpty),
       builder: (overview) => QuoinPage.list(
         title: l10n.tabPortfolio,
+        onRefresh: () => refreshFromPc(context, ref),
         trailing: IconButton(
           icon: const QuoinIcon(QuoinIcons.movements),
           tooltip: l10n.movementsTitle,

@@ -19,24 +19,12 @@ class FakePc {
   LocalDevice device;
   final int nowMs;
 
-  /// Every request, as `METHOD /path`.
   final log = <String>[];
-
-  /// The body of every pairing and prices request.
   final bodies = <String, List<Object?>>{};
-
   List<int> versions = const [1];
-
-  /// Answers queued per path, sent before any real one, as
-  /// `(status, body, headers)`.
+  var offline = false;
   final scripted = <String, List<(int, Object?, Map<String, String>)>>{};
-
-  /// Runs once before the next `POST /v1/sync` is handled, as another write
-  /// on the PC between the phone's read and its write would.
   void Function()? beforePush;
-
-  /// Answers to `POST /v1/prices`, queued per instrument; with none left the
-  /// PC answers a full empty series.
   final prices = <String, List<Map<String, Object?>>>{};
 
   String get etag =>
@@ -45,6 +33,7 @@ class FakePc {
   late final http.Client client = MockClient(_handle);
 
   Future<http.Response> _handle(http.Request request) async {
+    if (offline) throw const SocketException('Connection refused');
     final path = request.url.path;
     final key = '${request.method} $path';
     log.add(key);

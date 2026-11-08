@@ -1,7 +1,17 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- Public data only: ECB exchange rates. The request carries the currency
-         code and nothing about the portfolio. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <!-- Two destinations only: the ECB's exchange rates (public data in, the
+         currency code out) and the paired PC on the local network, over
+         HTTPS pinned to its certificate (docs/privacy.md).
+         Android 17: once targetSdk reaches it, reaching the PC needs the
+         local network permission, asked at run time before pairing. -->
     <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Only to read the pairing QR; asked at run time, frames never kept. -->
+    <uses-permission android:name="android.permission.CAMERA"/>
+    <uses-feature android:name="android.hardware.camera" android:required="false"/>
+    <!-- The scanner plugin declares these and uses neither. -->
+    <uses-permission android:name="android.permission.VIBRATE" tools:node="remove"/>
+    <uses-permission android:name="android.permission.FLASHLIGHT" tools:node="remove"/>
     <application
         android:label="Quoin"
         android:name="${applicationName}"

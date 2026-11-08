@@ -126,11 +126,9 @@ void main() {
     await pumpApp(tester, prefs: {'locale': 'es'});
     await tester.tap(_tab('Ajustes'));
     await tester.pumpAndSettle();
-    await tester.scrollUntilVisible(
-      find.text('Galería de componentes'),
-      200,
-      scrollable: find.byType(Scrollable).last,
-    );
+    // To the end of the list, so the row sits clear of the bar.
+    await tester.drag(find.byType(Scrollable).last, const Offset(0, -2000));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Galería de componentes'));
     await tester.pumpAndSettle();
     expect(_pageTitle('Galería de componentes'), findsOneWidget);
