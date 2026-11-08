@@ -3,4 +3,6 @@
 <full-backup-content>
     <exclude domain="file" path="install_id" />
     <exclude domain="file" path="prices" />
+    <exclude domain="sharedpref" path="FlutterSecureStorage.xml" />
+    <exclude domain="sharedpref" path="FlutterSecureKeyStorage.xml" />
 </full-backup-content>

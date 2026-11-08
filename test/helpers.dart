@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:drift/drift.dart' show driftRuntimeOptions;
 import 'package:drift/native.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -39,6 +41,7 @@ Future<SharedPreferencesWithCache> pumpApp(
           cache,
           database ?? memoryDatabase(),
           prices ?? memoryPrices(),
+          Directory.systemTemp.createTempSync('quoin-test-'),
         ),
         appVersionProvider.overrideWith((ref) => '0.0.0-test'),
         nowProvider.overrideWithValue(() => testNow),

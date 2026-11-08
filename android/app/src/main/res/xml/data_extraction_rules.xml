@@ -3,15 +3,21 @@
      of the app's data; install_id does not, so the copy knows it is a copy and
      takes a device id of its own (DeviceIdentityDataSource). Neither does
      prices/, the price histories (PricesDatabase): a cache the restored phone
-     fetches again from the PC. Cloud backup only runs when it is end-to-end
-     encrypted. -->
+     fetches again from the PC. Nor does the pairing with the PC, device token
+     included (flutter_secure_storage: the data and its wrapped key): a
+     restored phone is a new device and pairs again. Cloud backup only runs
+     when it is end-to-end encrypted. -->
 <data-extraction-rules>
     <cloud-backup disableIfNoEncryptionCapabilities="true">
         <exclude domain="file" path="install_id" />
         <exclude domain="file" path="prices" />
+        <exclude domain="sharedpref" path="FlutterSecureStorage.xml" />
+        <exclude domain="sharedpref" path="FlutterSecureKeyStorage.xml" />
     </cloud-backup>
     <device-transfer>
         <exclude domain="file" path="install_id" />
         <exclude domain="file" path="prices" />
+        <exclude domain="sharedpref" path="FlutterSecureStorage.xml" />
+        <exclude domain="sharedpref" path="FlutterSecureKeyStorage.xml" />
     </device-transfer>
 </data-extraction-rules>

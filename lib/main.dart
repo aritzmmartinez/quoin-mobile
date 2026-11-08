@@ -27,18 +27,16 @@ Future<void> main() async {
     ),
   );
   final database = QuoinDatabase.open();
+  final support = await getApplicationSupportDirectory();
   try {
-    await DeviceIdentityDataSource(
-      database,
-      await getApplicationSupportDirectory(),
-    ).claim();
+    await DeviceIdentityDataSource(database, support).claim();
   } on Exception {
     // The app opens all the same; the next start tries again.
   }
   await LiquidGlassWidgets.initialize();
   runApp(
     ProviderScope(
-      overrides: dependencies(prefs, database, PricesDatabase.open()),
+      overrides: dependencies(prefs, database, PricesDatabase.open(), support),
       child: LiquidGlassWidgets.wrap(
         brightnessResolver: Theme.maybeBrightnessOf,
         child: const QuoinApp(),

@@ -560,6 +560,7 @@ String failureText(BuildContext context, Failure failure) {
         QuoinFormat.of(context).day(CalendarDate.parse(day)),
         currency,
       ),
+    SyncFailure() => l10n.importStorageFailed,
   };
 }
 

@@ -82,3 +82,93 @@ final class InvalidLedgerEventFailure extends ImportFailure {
   final String type;
   final String currency;
 }
+
+/// What can stop pairing with the PC or syncing with it.
+sealed class SyncFailure extends Failure {
+  const SyncFailure();
+}
+
+/// No PC is paired.
+final class NotPairedFailure extends SyncFailure {
+  const NotPairedFailure();
+}
+
+/// The PC could not be reached at its address: «No encuentro tu Quoin».
+final class PcUnreachableFailure extends SyncFailure {
+  const PcUnreachableFailure();
+}
+
+/// The PC showed another certificate: only a new pairing trusts it.
+final class CertificateMismatchFailure extends SyncFailure {
+  const CertificateMismatchFailure();
+}
+
+/// The PC no longer accepts this phone (revoked, or a token it does not
+/// know): pair again.
+final class PairingRevokedFailure extends SyncFailure {
+  const PairingRevokedFailure();
+}
+
+/// A code that is not a Quoin pairing QR.
+final class InvalidQrFailure extends SyncFailure {
+  const InvalidQrFailure();
+}
+
+/// The QR's token was used already, or no pairing is under way on the PC.
+final class PairingTokenUsedFailure extends SyncFailure {
+  const PairingTokenUsedFailure();
+}
+
+/// The pairing ran out of time on the PC.
+final class PairingExpiredFailure extends SyncFailure {
+  const PairingExpiredFailure();
+}
+
+/// The owner rejected the pairing on the PC.
+final class PairingRejectedFailure extends SyncFailure {
+  const PairingRejectedFailure();
+}
+
+enum UpdateSide { app, quoin }
+
+/// The two sides read no common exchange version: [side] must be updated.
+final class UpdateRequiredFailure extends SyncFailure {
+  const UpdateRequiredFailure(this.side);
+
+  final UpdateSide side;
+}
+
+/// The PC is busy (another write, or too many failed attempts) for longer
+/// than is worth waiting.
+final class PcBusyFailure extends SyncFailure {
+  const PcBusyFailure();
+}
+
+/// The PC changed during the sync twice in a row.
+final class StateChangedFailure extends SyncFailure {
+  const StateChangedFailure();
+}
+
+/// The database could not claim this install's device id, so it may be a
+/// copy signing as the original: the sync stops.
+final class DeviceIdentityFailure extends SyncFailure {
+  const DeviceIdentityFailure();
+}
+
+/// The phone holds the invented sample portfolio, which never syncs.
+final class SampleDataFailure extends SyncFailure {
+  const SampleDataFailure();
+}
+
+/// The conflicts changed since they were resolved: show them again.
+final class ConflictsChangedFailure extends SyncFailure {
+  const ConflictsChangedFailure();
+}
+
+/// The PC refused the request for a reason the phone cannot act on; [code]
+/// is its error code.
+final class PcRefusedFailure extends SyncFailure {
+  const PcRefusedFailure(this.code);
+
+  final String code;
+}

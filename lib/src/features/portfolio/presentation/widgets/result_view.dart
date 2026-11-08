@@ -30,7 +30,10 @@ class ResultView<T> extends StatelessWidget {
       Ok(:final value) => builder(value),
       Err(:final failure) => switch (failure) {
         UnsupportedResidenceFailure() => failed(l10n.residenceUnsupported),
-        StorageFailure() || NetworkFailure() || ImportFailure() => failed(),
+        StorageFailure() ||
+        NetworkFailure() ||
+        ImportFailure() ||
+        SyncFailure() => failed(),
       },
       null when value.hasError => failed(),
       null => QuoinPage(title: title, body: const SizedBox.shrink()),

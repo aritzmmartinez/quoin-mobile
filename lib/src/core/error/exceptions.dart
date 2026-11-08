@@ -57,3 +57,35 @@ class UnsupportedResidenceException implements Exception {
   @override
   String toString() => 'UnsupportedResidenceException: $residence';
 }
+
+/// The PC answered over TLS with a certificate whose SHA-256 is not the one
+/// paired with. Nothing was sent: the pin is checked during the handshake.
+class PinMismatchException implements Exception {
+  const PinMismatchException();
+
+  @override
+  String toString() => 'PinMismatchException';
+}
+
+/// The PC refused a request: [status] and the `error` code of its body
+/// (`{ "error": code }`), with the fields some codes carry.
+class SyncHttpException implements Exception {
+  const SyncHttpException(
+    this.status,
+    this.code, {
+    this.retryAfter,
+    this.update,
+  });
+
+  final int status;
+  final String code;
+
+  /// `Retry-After` of a 429 or a 503.
+  final Duration? retryAfter;
+
+  /// `update` of `unsupported-schema-version`: `client` or `server`.
+  final String? update;
+
+  @override
+  String toString() => 'SyncHttpException ($status): $code';
+}

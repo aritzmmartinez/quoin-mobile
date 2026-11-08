@@ -7,7 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:quoin/src/core/error/exceptions.dart';
 import 'package:quoin/src/features/portfolio/data/database/quoin_database.dart';
 import 'package:quoin/src/features/sync/data/datasources/sync_local_datasource.dart';
-import 'package:quoin/src/features/sync/data/models/exchange_import.dart';
+import 'package:quoin/src/features/sync/domain/entities/exchange_import.dart';
 import 'package:quoin_core/quoin_core.dart';
 
 import '../../helpers.dart';

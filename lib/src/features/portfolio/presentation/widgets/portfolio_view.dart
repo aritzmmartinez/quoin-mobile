@@ -49,7 +49,8 @@ class PortfolioView extends StatelessWidget {
             UnsupportedResidenceFailure() => l10n.residenceUnsupported,
             StorageFailure() ||
             NetworkFailure() ||
-            ImportFailure() => l10n.portfolioLoadFailed,
+            ImportFailure() ||
+            SyncFailure() => l10n.portfolioLoadFailed,
           },
         ),
       ),

@@ -17,7 +17,3 @@ final class EffectFailed extends EffectOutcome {
 
   final Failure failure;
 }
-
-final class EffectPending extends EffectOutcome {
-  const EffectPending(super.effect);
-}
