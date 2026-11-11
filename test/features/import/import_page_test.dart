@@ -52,16 +52,22 @@ void main() {
     expect(find.text('Clase de activo sin soporte'), findsOneWidget);
     expect(find.text('Con error'), findsOneWidget);
     expect(find.text('fila 12'), findsOneWidget);
+    expect(
+      find.textContaining('· Saveback'),
+      findsWidgets,
+      reason: 'a broker row type is shown by name, never as its code',
+    );
+    expect(find.textContaining('BENEFITS_SAVEBACK'), findsNothing);
 
     await tester.tap(find.text('Ver detalle'));
     await tester.pumpAndSettle();
     expect(find.text('Fondo Ejemplo Mundial'), findsWidgets);
 
-    await tester.tap(find.text('Importar 6 movimientos'));
+    await tester.tap(find.text('Importar 6 operaciones'));
     await tester.pumpAndSettle();
     expect(find.text('Importación completada'), findsOneWidget);
     expect(
-      find.text('Se han añadido 6 movimientos a tu cartera'),
+      find.text('Se han guardado 6 operaciones en tu cartera'),
       findsOneWidget,
     );
 
@@ -71,13 +77,17 @@ void main() {
 
     await open(tester, Routes.importSample);
     expect(
-      find.text('Los movimientos ya existentes se omitirán'),
+      find.text(
+        'Las operaciones duplicadas ya estaban en el registro y se omitirán',
+      ),
       findsOneWidget,
     );
-    final confirm = find.widgetWithText(
-      FilledButton,
-      'Nada nuevo que importar',
+    expect(
+      find.textContaining('Nada que importar: ninguna operación'),
+      findsOneWidget,
+      reason: 'the set-aside operations are not duplicates',
     );
+    final confirm = find.widgetWithText(FilledButton, 'Nada que importar');
     expect(tester.widget<FilledButton>(confirm).onPressed, isNull);
   });
 
@@ -120,6 +130,41 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Cómo exportar tus movimientos'), findsNothing);
     expect(find.text('Aún no has importado ningún movimiento'), findsOneWidget);
+  });
+
+  testWidgets('a saveback pair that cannot be read is one failed operation, '
+      'the saveback nested under its purchase', (tester) async {
+    await pumpApp(
+      tester,
+      prefs: {'locale': 'es'},
+      overrides: [
+        importFileDataSourceProvider.overrideWithValue(
+          const _Files(
+            'datetime,category,type,asset_class,name,symbol,shares,price,'
+            'amount,fee,tax,currency,transaction_id\n'
+            '2025-12-01T08:00:00Z,CASH,BENEFITS_SAVEBACK,,,,,,15,,-2.85,EUR,'
+            'QSAMPLE-s2\n'
+            '2025-12-02T09:00:00Z,TRADING,BUY,FUND,Fondo QSAMPLE,,0.1215,100,'
+            '-12.15,,,EUR,QSAMPLE-b2\n',
+          ),
+        ),
+      ],
+    );
+    await open(tester, Routes.import);
+    await tester.tap(find.text('Continuar'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Toca para seleccionar archivo'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Continuar'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('QSAMPLE-b2'), findsOneWidget);
+    expect(find.text('QSAMPLE-s2'), findsNothing);
+    expect(find.textContaining('misma operación: Saveback'), findsOneWidget);
+    expect(
+      find.textContaining('Nada que importar: ninguna operación'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('an old Kraken export is refused, naming why', (tester) async {
@@ -177,7 +222,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.drag(find.byType(Scrollable).last, const Offset(0, -3000));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Importar 6 movimientos'));
+    await tester.tap(find.text('Importar 6 operaciones'));
     await tester.pumpAndSettle();
     expect(find.text('Importación completada'), findsOneWidget);
   });

@@ -304,6 +304,59 @@ class ApplyPlan {
         'restamp': [for (final r in restamp) r.toJson()],
         'peers': [for (final p in peers) p.toJson()],
       };
+
+  factory ApplyPlan.fromJson(Map<String, Object?> json) {
+    Map<String, Object?> part(String key) =>
+        (json[key] ?? const <String, Object?>{}) as Map<String, Object?>;
+    List<T> each<T>(Object? raw, T Function(Object? row) read) => [
+          for (final row in (raw ?? const <Object?>[]) as List<Object?>)
+            read(row)
+        ];
+    List<String> keys(Object? raw) => each(raw, (key) => key! as String);
+    final ledger = part('ledger');
+    final instruments = part('instruments');
+    final targets = part('targets');
+    return ApplyPlan(
+      ledgerInsert: each(ledger['insert'], LedgerRecord.fromJson),
+      markInKind: keys(ledger['markInKind']),
+      instrumentInsert: each(instruments['insert'], InstrumentRecord.fromJson),
+      instrumentUpdate: each(instruments['update'], (raw) {
+        final row = raw! as Map<String, Object?>;
+        return InstrumentUpdate(
+          row['id']! as String,
+          row['patch']! as Map<String, Object?>,
+        );
+      }),
+      targetInsert: each(targets['insert'], TargetRecord.fromJson),
+      targetDelete: keys(targets['delete']),
+      tombstones: each(json['tombstones'], Tombstone.fromJson),
+      holdings: each(json['holdings'], HoldingsBlock.fromJson),
+      identities: each(json['identities'], IdentityRecord.fromJson),
+      settings: json['settings'] == null
+          ? null
+          : SettingsRecord.fromJson(json['settings']),
+      restamp: each(
+        json['restamp'],
+        (raw) => switch (raw) {
+          {
+            'kind': 'instrument',
+            'id': final String id,
+            'field': final String field,
+          } =>
+            InstrumentRestamp(id, InstrumentField.values.byName(field)),
+          {'kind': 'settings'} => const SettingsRestamp(),
+          {'kind': 'holdings', 'instrumentId': final String id} =>
+            HoldingsRestamp(id),
+          {'kind': 'tombstone', 'key': final String key} =>
+            TombstoneRestamp(key),
+          {'kind': 'reissue', 'target': final Object target} =>
+            ReissueRestamp(TargetRecord.fromJson(target)),
+          _ => throw FormatException('Not a restamp: $raw'),
+        },
+      ),
+      peers: each(json['peers'], Peer.fromJson),
+    );
+  }
 }
 
 class MergePlan {

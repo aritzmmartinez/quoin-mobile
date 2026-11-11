@@ -40,6 +40,7 @@ final class NoticeItem extends MappedItem {
 final class MappedBatch {
   const MappedBatch({
     required this.total,
+    required this.failed,
     required this.instruments,
     required this.events,
     required this.operationOf,
@@ -51,6 +52,7 @@ final class MappedBatch {
   });
 
   final int total;
+  final int failed;
   final List<Instrument> instruments;
   final List<LedgerEvent> events;
 
@@ -63,6 +65,7 @@ final class MappedBatch {
 
   MappedBatch withInstruments(List<Instrument> instruments) => MappedBatch(
         total: total,
+        failed: failed,
         instruments: instruments,
         events: events,
         operationOf: operationOf,
@@ -122,7 +125,7 @@ final class BatchBuilder {
       final rate = rateAt(event.currency, event.ts);
       if (rate == null) {
         _needRate(event.currency, dayOf(event.ts, zone));
-        _addItem(_unrated(item), operation);
+        _addDiscard(_unrated(item), null);
         return;
       }
       converted.add(
@@ -138,7 +141,12 @@ final class BatchBuilder {
       );
     }
 
+    _Lead? lead;
     for (final item in converted) {
+      if (item is DiscardItem) {
+        lead = _addDiscard(item, lead);
+        continue;
+      }
       if (item is DomainItem &&
           _invalid == null &&
           ledgerWriteIssues(item.event).isNotEmpty) {
@@ -155,20 +163,40 @@ final class BatchBuilder {
   void addNotice(NoticeReason reason, DiscardDetail detail) =>
       _noticed.putIfAbsent(reason, () => []).add(detail);
 
-  void addError(RowError error) => _errors.add(error);
+  void addError(RowError error, [List<RowError> others = const []]) {
+    _operations += 1;
+    _errors.add(
+      others.isEmpty
+          ? error
+          : RowError(error.row, error.reason, rows: [...error.rows, ...others]),
+    );
+  }
+
+  _Lead _addDiscard(DiscardItem item, _Lead? lead) {
+    for (final instrument in [item.instrument, ...item.related]) {
+      if (instrument != null) _instruments[instrument.id] = instrument;
+    }
+    final detail = item.detail;
+    if (lead != null) {
+      if ((lead.index, detail) case (final index?, final detail?)) {
+        final list = _discardedDetails[lead.reason]!;
+        list[index] = list[index].withRow(detail);
+      }
+      return lead;
+    }
+    final reason = item.reason;
+    _discarded[reason] = (_discarded[reason] ?? 0) + 1;
+    if (detail == null) return (reason: reason, index: null);
+    final list = _discardedDetails.putIfAbsent(reason, () => [])..add(detail);
+    return (reason: reason, index: list.length - 1);
+  }
 
   void _addItem(MappedItem item, int operation) {
     switch (item) {
       case NoticeItem(:final reason, :final detail):
         addNotice(reason, detail);
-      case DiscardItem(:final reason, :final detail):
-        _discarded[reason] = (_discarded[reason] ?? 0) + 1;
-        if (detail != null) {
-          _discardedDetails.putIfAbsent(reason, () => []).add(detail);
-        }
-        for (final instrument in [item.instrument, ...item.related]) {
-          if (instrument != null) _instruments[instrument.id] = instrument;
-        }
+      case DiscardItem():
+        throw StateError('Discards go through _addDiscard');
       case DomainItem(:final instrument, :final event):
         if (instrument != null) _instruments[instrument.id] = instrument;
         _events.add(event);
@@ -181,11 +209,12 @@ final class BatchBuilder {
     if (held == null || day.compareTo(held) < 0) _ratesNeeded[currency] = day;
   }
 
-  MappedBatch build(int total) {
+  MappedBatch build() {
     final invalid = _invalid;
     if (invalid != null) throw invalid;
     return MappedBatch(
-      total: total,
+      total: _operations,
+      failed: _errors.length,
       instruments: [..._instruments.values],
       events: _events,
       operationOf: _operationOf,
@@ -211,21 +240,50 @@ DiscardItem _unrated(DomainItem item) {
   );
 }
 
-({int imported, int duplicates}) countOperations(
+typedef _Lead = ({DiscardReason reason, int? index});
+typedef OperationCounts = ({int imported, int completed, int duplicates});
+
+OperationCounts countOperations(
   MappedBatch batch,
   Set<(String, String)> existing,
 ) {
-  final writes = <int, bool>{};
+  final operations = <int, ({bool stored, bool fresh})>{};
   for (var i = 0; i < batch.events.length; i += 1) {
     final event = batch.events[i];
     final operation = i < batch.operationOf.length ? batch.operationOf[i] : i;
     final id = event.externalId ?? '';
     final isNew = id.isEmpty || !existing.contains((event.source, id));
-    writes[operation] = (writes[operation] ?? false) || isNew;
+    final seen = operations[operation] ?? (stored: false, fresh: false);
+    operations[operation] = (
+      stored: seen.stored || !isNew,
+      fresh: seen.fresh || isNew,
+    );
   }
-  final imported = writes.values.where((writes) => writes).length;
-  return (imported: imported, duplicates: writes.length - imported);
+  var imported = 0, completed = 0, duplicates = 0;
+  for (final (:stored, :fresh) in operations.values) {
+    if (!fresh) {
+      duplicates += 1;
+    } else if (stored) {
+      completed += 1;
+    } else {
+      imported += 1;
+    }
+  }
+  return (imported: imported, completed: completed, duplicates: duplicates);
 }
+
+int operationsToWrite(OperationCounts counts) =>
+    counts.imported + counts.completed;
+
+enum NothingToImport { alreadyStored, nothingToSave }
+
+NothingToImport nothingToImport({
+  required int total,
+  required int duplicates,
+}) =>
+    total > 0 && duplicates == total
+        ? NothingToImport.alreadyStored
+        : NothingToImport.nothingToSave;
 
 RowErrorReason rowErrorReason(Object error) => switch (error) {
       MissingInstrument() => RowErrorReason.missingInstrument,

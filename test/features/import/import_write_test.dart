@@ -53,6 +53,7 @@ MappedBatch batchOf(
   List<core.Instrument>? instruments,
 }) => MappedBatch(
   total: events.length,
+  failed: 0,
   instruments: instruments ?? [instrument()],
   events: events,
   operationOf: operationOf ?? [for (var i = 0; i < events.length; i += 1) i],
@@ -65,8 +66,8 @@ MappedBatch batchOf(
 
 ImportPreview previewOf(MappedBatch batch) => ImportPreview(
   batch: batch,
-  imported: 0,
-  duplicates: 0,
+  broker: Broker.tradeRepublic,
+  counts: (imported: 0, completed: 0, duplicates: 0),
   zone: 'Europe/Madrid',
 );
 
@@ -102,13 +103,25 @@ void main() {
     expect(countOperations(batch, await stored(batch)).imported, 2);
 
     final first = ok(await commit(previewOf(batch)));
-    expect((first.imported, first.duplicates), (2, 0));
+    expect((first.counts.imported, first.counts.duplicates), (2, 0));
     expect(await entries(), hasLength(2));
 
     final again = ok(await commit(previewOf(batch)));
-    expect((again.imported, again.duplicates), (0, 2));
+    expect((again.counts.imported, again.counts.duplicates), (0, 2));
     expect(await entries(), hasLength(2));
     expect(countOperations(batch, await stored(batch)).imported, 0);
+  });
+
+  test('an operation that only gains its missing row is completed', () async {
+    ok(await commit(previewOf(batchOf([buy('a')]))));
+    final batch = batchOf([buy('a'), buy('b')], operationOf: [0, 0]);
+    final preview = previewOf(batch)
+        .counted(countOperations(batch, await stored(batch)));
+    expect(preview.counts, (imported: 0, completed: 1, duplicates: 0));
+    expect(preview.toWrite, 1);
+
+    ok(await commit(preview));
+    expect(await entries(), hasLength(2));
   });
 
   test('rows are stored as Quoin writes them', () async {
@@ -193,7 +206,7 @@ void main() {
           previewOf(batchOf([buy('a', funding: Funding.inKind), buy('b')])),
         ),
       );
-      expect(result.imported, 0);
+      expect(result.counts.imported, 0);
       final funding = {
         for (final r in await entries()) r.externalId: r.funding,
       };
@@ -215,11 +228,11 @@ void main() {
     final first = ok(
       await commit(previewOf(batchOf(legs, operationOf: [0, 0]))),
     );
-    expect((first.imported, first.duplicates), (1, 0));
+    expect((first.counts.imported, first.counts.duplicates), (1, 0));
     final again = ok(
       await commit(previewOf(batchOf(legs, operationOf: [0, 0]))),
     );
-    expect((again.imported, again.duplicates), (0, 1));
+    expect((again.counts.imported, again.counts.duplicates), (0, 1));
   });
 
   test('a failed write leaves nothing behind', () async {
@@ -270,12 +283,16 @@ void main() {
     );
     expect(preview.batch.errors.single.reason, RowErrorReason.wrongFieldCount);
     final result = ok(await commit(preview));
-    expect(result.imported, 6, reason: 'a saveback and its purchase are one');
+    expect(
+      result.counts.imported,
+      6,
+      reason: 'a saveback and its purchase are one',
+    );
     final types = {for (final r in await entries()) r.type};
     expect(types, {'DEPOSIT', 'BUY', 'SELL', 'DIVIDEND', 'INTEREST'});
 
     final again = ok(await plan(repository.sampleFile(at), now: at));
-    expect((again.imported, again.duplicates), (0, 6));
+    expect((again.counts.imported, again.counts.duplicates), (0, 6));
   });
 
   test('the context reads the residence zone and the stored rates', () async {

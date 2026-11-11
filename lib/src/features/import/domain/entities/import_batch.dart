@@ -17,29 +17,30 @@ final class ImportFile {
 
 final class ImportPreview {
   const ImportPreview({
+    required this.broker,
     required this.batch,
-    required this.imported,
-    required this.duplicates,
+    required this.counts,
     required this.zone,
     this.ratesUnavailable = const [],
     this.rateConflicts = const [],
   });
 
+  final Broker broker;
   final MappedBatch batch;
-  final int imported;
-  final int duplicates;
+  final OperationCounts counts;
 
   final String zone;
   final List<String> ratesUnavailable;
   final List<RateConflict> rateConflicts;
 
-  ImportPreview counted(({int imported, int duplicates}) counts) =>
-      ImportPreview(
-        batch: batch,
-        imported: counts.imported,
-        duplicates: counts.duplicates,
-        zone: zone,
-        ratesUnavailable: ratesUnavailable,
-        rateConflicts: rateConflicts,
-      );
+  int get toWrite => operationsToWrite(counts);
+
+  ImportPreview counted(OperationCounts counts) => ImportPreview(
+    broker: broker,
+    batch: batch,
+    counts: counts,
+    zone: zone,
+    ratesUnavailable: ratesUnavailable,
+    rateConflicts: rateConflicts,
+  );
 }

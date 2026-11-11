@@ -60,7 +60,7 @@ class _ImportPageState extends ConsumerState<ImportPage> {
       ),
       ImportStage.processing || ImportStage.writing => const ImportBusyStep(),
       ImportStage.review => ImportReviewStep(preview: state.preview!),
-      ImportStage.done => ImportDoneStep(imported: state.preview!.imported),
+      ImportStage.done => ImportDoneStep(written: state.preview!.toWrite),
     };
 
     final actions = <Widget>[
@@ -80,8 +80,8 @@ class _ImportPageState extends ConsumerState<ImportPage> {
         ImportStage.processing || ImportStage.writing => const <Widget>[],
         ImportStage.review => [
           FilledButton(
-            onPressed: state.preview!.imported == 0 ? null : flow.commit,
-            child: Text(l10n.importConfirm(state.preview!.imported)),
+            onPressed: state.preview!.toWrite == 0 ? null : flow.commit,
+            child: Text(l10n.importConfirm(state.preview!.toWrite)),
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(),

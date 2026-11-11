@@ -430,9 +430,38 @@ void main() {
 
         for (final (i, step) in rows(c['steps']).indexed) {
           final label = 'step ${i + 1}';
+          clock = step['nowMs']! as int;
+          if (step['edit'] case final String id) {
+            final device = models[id]!;
+            final plan = ApplyPlan.fromJson({
+              ...step['apply']! as Json,
+              'peers': [for (final p in device.state.peers) p.toJson()],
+            });
+            final edited = applyPlan(device, plan, clock);
+            await stores[id]!.apply(
+              plan,
+              SyncSender(deviceId: device.state.deviceId, name: null),
+              clock,
+            );
+            expect(
+              await held(dbs[id]!, stores[id]!),
+              modelled(
+                LocalDevice(
+                  state: withOriginals(edited.state),
+                  lastHlc: edited.lastHlc,
+                ),
+              ),
+              reason: '$label, $id',
+            );
+            // As with the seeds: the model reads back in the database's order.
+            models[id] = LocalDevice(
+              state: await stores[id]!.state(),
+              lastHlc: edited.lastHlc,
+            );
+            continue;
+          }
           final from = step['from']! as String;
           final to = step['to']! as String;
-          clock = step['nowMs']! as int;
 
           final sent = exportDevice(models[from]!, clock);
           models[from] = sent.device;
