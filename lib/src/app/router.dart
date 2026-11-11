@@ -25,6 +25,7 @@ abstract final class Routes {
   static const realized = '/realized';
   static const movements = '/movements';
   static const pair = '/pair';
+  static const repair = '/pair?repair=1';
   static const sync = '/sync';
 
   static String instrument(String id) =>
@@ -85,9 +86,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: Routes.pair,
-        pageBuilder: (context, state) => const MaterialPage(
+        pageBuilder: (context, state) => MaterialPage(
           fullscreenDialog: true,
-          child: Scaffold(body: PairPage()),
+          child: Scaffold(
+            body: PairPage(repair: state.uri.queryParameters['repair'] == '1'),
+          ),
         ),
       ),
       GoRoute(

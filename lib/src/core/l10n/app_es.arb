@@ -698,7 +698,7 @@
       }
     }
   },
-  "syncUnpairBody": "Este móvil dejará de sincronizar con tu PC. La cartera se queda en el móvil.",
+  "syncUnpairBody": "Este móvil dejará de sincronizar con este PC y borrará su clave; la cartera se queda en el móvil. El PC seguirá viendo este móvil como vinculado: revócalo también en Ajustes → Dispositivos del PC.",
   "syncCancel": "Cancelar",
   "syncUnreachable": "No encuentro tu Quoin",
   "syncUnreachableHint": "El móvil no llega a tu PC. Comprueba que el móvil está conectado a la misma Wi‑Fi que el PC (no a los datos móviles), que el PC está encendido con Quoin abierto y que el cortafuegos de Windows permite la conexión. Si el PC ha cambiado de dirección, vuelve a escanear el código.",
@@ -846,5 +846,70 @@
   "syncReview": "Revisar",
   "syncDoneSnack": "Sincronizado con tu PC",
   "syncYes": "Sí",
+  "syncAddPc": "Añadir otro PC",
+  "syncPcStep": "{pc} · {step} de {total}",
+  "@syncPcStep": {
+    "placeholders": {
+      "pc": {
+        "type": "String"
+      },
+      "step": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "syncSharedIdentity": "Comparte identidad con {other}",
+  "@syncSharedIdentity": {
+    "placeholders": {
+      "other": {
+        "type": "String"
+      }
+    }
+  },
+  "syncSharedIdentityHint": "Este PC y {other} tienen la misma identidad de sincronización: la base de uno se restauró en el otro. Mientras sea así solo se sincroniza con {other}; sincronizar con los dos haría que sus datos se separaran sin avisar.",
+  "@syncSharedIdentityHint": {
+    "placeholders": {
+      "other": {
+        "type": "String"
+      }
+    }
+  },
+  "syncCheckAgain": "Comprobar de nuevo",
+  "syncSameIdentityTitle": "{pc} tiene la misma identidad que {other}, que ahora no responde.",
+  "@syncSameIdentityTitle": {
+    "placeholders": {
+      "pc": {
+        "type": "String"
+      },
+      "other": {
+        "type": "String"
+      }
+    }
+  },
+  "syncSameIdentityQuestion": "¿Es el mismo PC con un certificado nuevo?",
+  "syncSamePc": "Sí, es el mismo PC",
+  "syncOtherPc": "No, es otro PC",
+  "syncPcFailure": "{pc}: {failure}",
+  "@syncPcFailure": {
+    "placeholders": {
+      "pc": {
+        "type": "String"
+      },
+      "failure": {
+        "type": "String"
+      }
+    }
+  },
+  "pairAddressUpdated": "Ya estaba vinculado con {pc}. Se ha guardado su nueva dirección; no hace falta volver a vincular.",
+  "@pairAddressUpdated": {
+    "placeholders": {
+      "pc": {
+        "type": "String"
+      }
+    }
+  },
   "syncNo": "No"
 }

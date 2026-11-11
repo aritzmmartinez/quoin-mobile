@@ -17,10 +17,12 @@ import 'package:quoin/src/ui/molecules/empty_state.dart';
 import 'package:quoin/src/ui/molecules/quoin_text_field.dart';
 import 'package:quoin/src/ui/templates/quoin_page.dart';
 
-enum _Step { scan, checking, name, waiting }
+enum _Step { scan, checking, name, waiting, moved }
 
 class PairPage extends ConsumerStatefulWidget {
-  const PairPage({super.key});
+  const PairPage({super.key, this.repair = false});
+
+  final bool repair;
 
   @override
   ConsumerState<PairPage> createState() => _PairPageState();
@@ -57,13 +59,15 @@ class _PairPageState extends ConsumerState<PairPage> {
 
   Future<void> _scanned(String text) async {
     setState(() => _step = _Step.checking);
-    final result = await ref.read(pairWithPcProvider).start(text);
+    final result = await ref
+        .read(pairWithPcProvider)
+        .start(text, repair: widget.repair);
     if (!mounted) return;
     setState(() {
       switch (result) {
         case Ok(:final value):
           _start = value;
-          _step = _Step.name;
+          _step = value.known == null ? _Step.name : _Step.moved;
         case Err(:final failure):
           _failure = failure;
       }
@@ -127,6 +131,17 @@ class _PairPageState extends ConsumerState<PairPage> {
           message: l10n.pairScanHint,
           actionLabel: l10n.pairScan,
           onAction: _scan,
+        ),
+      ),
+      _Step.moved => QuoinPage(
+        title: l10n.syncPair,
+        body: EmptyState(
+          message: l10n.pairAddressUpdated(_start!.known!.pcName),
+          actionLabel: l10n.syncNow,
+          onAction: () {
+            ref.read(syncControllerProvider.notifier).reset();
+            context.pushReplacement(Routes.sync);
+          },
         ),
       ),
       _Step.checking => QuoinPage(

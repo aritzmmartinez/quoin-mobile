@@ -6,9 +6,8 @@ import 'package:quoin/src/features/sync/domain/entities/pairing.dart';
 import 'package:quoin/src/features/sync/domain/entities/pc_state.dart';
 
 abstract interface class SyncRepository {
-  Future<Result<Pairing?>> pairing();
-  Future<Result<void>> savePairing(Pairing pairing);
-  Future<Result<void>> unpair();
+  Future<Result<Pairings>> pairings();
+  Future<Result<void>> savePairings(Pairings pairings);
   Future<Result<String>> claim();
   Future<Result<List<int>>> hello(SyncEndpoint endpoint);
   Future<Result<String>> pair(

@@ -28,9 +28,10 @@ class SyncPage extends ConsumerStatefulWidget {
 }
 
 class _SyncPageState extends ConsumerState<SyncPage> {
-  Result<SyncOutcome>? _result;
-  final Map<String, Resolution> _choices = {};
-  var _confirmed = false;
+  Result<SyncPass>? _result;
+  final Map<String, Map<String, Resolution>> _choices = {};
+  final Set<String> _confirmed = {};
+  var _waitingAtMost = 0;
 
   @override
   void initState() {
@@ -42,29 +43,53 @@ class _SyncPageState extends ConsumerState<SyncPage> {
     setState(() => _result = null);
     final result = await ref
         .read(syncControllerProvider.notifier)
-        .sync(resolutions: Map.of(_choices), confirm: _confirmed);
+        .sync(
+          resolutions: {
+            for (final MapEntry(:key, :value) in _choices.entries)
+              if (value.isNotEmpty) key: Map.of(value),
+          },
+          confirm: Set.of(_confirmed),
+        );
     if (!mounted) return;
     setState(() {
       _result = result;
-      if (result case Ok(value: SyncConflicts(:final conflicts))) {
-        final open = {for (final c in conflicts) conflictKey(c)};
-        _choices.removeWhere((key, _) => !open.contains(key));
+      if (result case Ok(value: final pass)) {
+        final waiting = pass.waiting.length;
+        if (waiting > _waitingAtMost) _waitingAtMost = waiting;
+        for (final pc in pass.pcs) {
+          final open = switch (pc.result) {
+            Ok(value: SyncConflicts(:final conflicts)) => {
+              for (final c in conflicts) conflictKey(c),
+            },
+            _ => const <String>{},
+          };
+          _choices[pc.pairing.sha256]?.removeWhere(
+            (key, _) => !open.contains(key),
+          );
+        }
       }
     });
   }
 
-  void _confirm() {
-    _confirmed = true;
-    _run();
+  Future<void> _answer(
+    String sha256,
+    SyncSameIdentity question, {
+    required bool samePc,
+  }) async {
+    setState(() => _result = null);
+    final answered = await ref
+        .read(pcIdentityProvider)
+        .resolve(sha256, question, samePc: samePc);
+    if (!mounted) return;
+    if (answered case Err(:final failure)) {
+      return setState(() => _result = Err(failure));
+    }
+    await _run();
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final pc = switch (ref.watch(pairingProvider).value) {
-      Ok(:final value?) => value.pcName,
-      _ => '',
-    };
     final title = l10n.settingsSync;
     return switch (_result) {
       null => QuoinPage(
@@ -75,89 +100,176 @@ class _SyncPageState extends ConsumerState<SyncPage> {
             spacing: 16,
             children: [
               const CircularProgressIndicator(),
-              Text(l10n.syncRunning(pc), style: QuoinType.of(context).row),
+              Text(
+                l10n.syncRunning(_names()),
+                textAlign: TextAlign.center,
+                style: QuoinType.of(context).row,
+              ),
             ],
           ),
         ),
       ),
-      Err(:final failure) => QuoinPage(
-        title: title,
-        body: EmptyState(
-          message: syncFailureDetail(l10n, failure),
-          actionLabel: switch (failure) {
-            PcUnreachableFailure() => l10n.syncRescan,
-            CertificateMismatchFailure() ||
-            PairingRevokedFailure() ||
-            NotPairedFailure() => l10n.syncPairAgain,
-            _ => l10n.syncNow,
-          },
-          onAction: needsPairing(failure)
-              ? () => context.pushReplacement(Routes.pair)
-              : _run,
-        ),
+      Err(:final failure) => _failed(context, failure),
+      Ok(value: final pass) when pass.noneAnswered => _failed(
+        context,
+        const PcUnreachableFailure(),
       ),
-      Ok(value: SyncPreview(:final toPhone, :final toPc)) => QuoinPage.list(
-        title: title,
-        children: [
-          Text(l10n.syncPreviewIntro, style: QuoinType.of(context).row),
-          sectionLabel(context, l10n.syncToPhone),
-          _Counts(counts: toPhone),
-          sectionLabel(context, l10n.syncToPc),
-          _Counts(counts: toPc),
-          const SizedBox(height: QuoinSpace.gutter),
-          FilledButton(onPressed: _confirm, child: Text(l10n.syncConfirm)),
-        ],
-      ),
-      Ok(value: SyncConflicts(:final conflicts, :final setAside)) =>
-        QuoinPage.list(
+      Ok(value: final pass) => switch (pass.waiting) {
+        [final pc, ...] => QuoinPage.list(
           title: title,
           children: [
-            Text(l10n.syncConflictsIntro, style: QuoinType.of(context).row),
-            for (final conflict in conflicts) ...[
-              const SizedBox(height: 12),
-              _ConflictCard(
-                conflict: conflict,
-                choice: _choices[conflictKey(conflict)],
-                onChanged: (choice) =>
-                    setState(() => _choices[conflictKey(conflict)] = choice),
-              ),
-            ],
-            ..._setAside(context, [for (final row in setAside) row.key]),
-            const SizedBox(height: QuoinSpace.gutter),
-            FilledButton(
-              onPressed:
-                  conflicts.every((c) => _choices.containsKey(conflictKey(c)))
-                  ? _run
-                  : null,
-              child: Text(l10n.syncApply),
-            ),
+            if (_waitingAtMost > 1)
+              sectionLabel(
+                context,
+                l10n.syncPcStep(
+                  pc.pairing.pcName,
+                  '${_waitingAtMost - pass.waiting.length + 1}',
+                  '$_waitingAtMost',
+                ),
+              )
+            else
+              sectionLabel(context, pc.pairing.pcName),
+            ..._waiting(context, pc),
           ],
         ),
-      Ok(value: final SyncDone done) => QuoinPage.list(
-        title: title,
-        children: _done(context, done),
-      ),
+        [] => QuoinPage.list(title: title, children: _done(context, pass)),
+      },
     };
   }
 
-  List<Widget> _done(BuildContext context, SyncDone done) {
+  String _names() => switch (ref.read(pairingsProvider).value) {
+    Ok(:final value) => [
+      for (final pc in value.pcs)
+        if (!pc.shared) pc.pcName,
+    ].join(', '),
+    _ => '',
+  };
+
+  Widget _failed(BuildContext context, Failure failure) {
     final l10n = AppLocalizations.of(context);
+    return QuoinPage(
+      title: l10n.settingsSync,
+      body: EmptyState(
+        message: syncFailureDetail(l10n, failure),
+        actionLabel: switch (failure) {
+          PcUnreachableFailure() => l10n.syncRescan,
+          NotPairedFailure() => l10n.syncPair,
+          _ => l10n.syncNow,
+        },
+        onAction: switch (failure) {
+          PcUnreachableFailure() ||
+          NotPairedFailure() => () => context.pushReplacement(Routes.pair),
+          _ => _run,
+        },
+      ),
+    );
+  }
+
+  List<Widget> _waiting(BuildContext context, PcSync pc) {
+    final l10n = AppLocalizations.of(context);
+    final type = QuoinType.of(context);
+    final sha = pc.pairing.sha256;
+    return switch (pc.result) {
+      Ok(value: SyncPreview(:final toPhone, :final toPc)) => [
+        Text(l10n.syncPreviewIntro, style: type.row),
+        sectionLabel(context, l10n.syncToPhone),
+        _Counts(counts: toPhone),
+        sectionLabel(context, l10n.syncToPc),
+        _Counts(counts: toPc),
+        const SizedBox(height: QuoinSpace.gutter),
+        FilledButton(
+          onPressed: () {
+            _confirmed.add(sha);
+            _run();
+          },
+          child: Text(l10n.syncConfirm),
+        ),
+      ],
+      Ok(value: SyncConflicts(:final conflicts, :final setAside)) => [
+        Text(l10n.syncConflictsIntro, style: type.row),
+        for (final conflict in conflicts) ...[
+          const SizedBox(height: 12),
+          _ConflictCard(
+            conflict: conflict,
+            choice: _choices[sha]?[conflictKey(conflict)],
+            onChanged: (choice) => setState(
+              () => (_choices[sha] ??= {})[conflictKey(conflict)] = choice,
+            ),
+          ),
+        ],
+        ..._setAside(context, [for (final row in setAside) row.key]),
+        const SizedBox(height: QuoinSpace.gutter),
+        FilledButton(
+          onPressed:
+              conflicts.every(
+                (c) => _choices[sha]?.containsKey(conflictKey(c)) ?? false,
+              )
+              ? _run
+              : null,
+          child: Text(l10n.syncApply),
+        ),
+      ],
+      Ok(value: final SyncSameIdentity question) => [
+        Text(
+          l10n.syncSameIdentityTitle(pc.pairing.pcName, question.other.pcName),
+          style: type.row,
+        ),
+        const SizedBox(height: 12),
+        Text(l10n.syncSameIdentityQuestion, style: type.row),
+        const SizedBox(height: QuoinSpace.gutter),
+        FilledButton(
+          onPressed: () => _answer(sha, question, samePc: true),
+          child: Text(l10n.syncSamePc),
+        ),
+        const SizedBox(height: 8),
+        OutlinedButton(
+          onPressed: () => _answer(sha, question, samePc: false),
+          child: Text(l10n.syncOtherPc),
+        ),
+      ],
+      _ => const [],
+    };
+  }
+
+  List<Widget> _done(BuildContext context, SyncPass pass) {
+    final l10n = AppLocalizations.of(context);
+    final type = QuoinType.of(context);
+    final c = QuoinColors.of(context);
     final rates = {
-      for (final outcome in done.effects)
-        if (outcome case EffectFailed(effect: RatesEffect(:final currency)))
-          currency,
-      if (done.prices case Ok(:final value)) ...value.unavailableRates,
+      for (final pc in pass.pcs)
+        if (pc.result case Ok(value: SyncDone(:final effects)))
+          for (final outcome in effects)
+            if (outcome case EffectFailed(effect: RatesEffect(:final currency)))
+              currency,
+      if (pass.prices case Ok(:final value)) ...value.unavailableRates,
     }.toList()..sort();
     return [
-      Text(l10n.syncDone, style: QuoinType.of(context).title),
-      if (done.prices case Ok(value: PricesOutcome(pending: [_, ...])))
+      if (pass.pcs.any((pc) => pc.done)) Text(l10n.syncDone, style: type.title),
+      if (pass.prices case Ok(value: PricesOutcome(pending: [_, ...])))
         _Notice(text: l10n.syncPricesPending),
-      if (done.prices case Err()) _Notice(text: l10n.syncPricesFailed),
+      if (pass.prices case Err()) _Notice(text: l10n.syncPricesFailed),
       if (rates.isNotEmpty)
         _Notice(text: l10n.syncRatesUnavailable(rates.join(', '))),
-      sectionLabel(context, l10n.syncReceived),
-      _Counts(counts: done.counts, empty: l10n.syncUpToDate),
-      ..._setAside(context, done.setAside),
+      for (final pc in pass.pcs) ...[
+        sectionLabel(context, pc.pairing.pcName),
+        ...switch (pc.result) {
+          Ok(value: SyncDone(:final counts, :final setAside)) => [
+            Text(
+              l10n.syncReceived,
+              style: type.secondary.copyWith(color: c.muted),
+            ),
+            const SizedBox(height: 8),
+            _Counts(counts: counts, empty: l10n.syncUpToDate),
+            ..._setAside(context, setAside),
+          ],
+          Err(:final failure) => [
+            QuoinCard(
+              child: Text(syncFailureDetail(l10n, failure), style: type.row),
+            ),
+          ],
+          Ok() => const <Widget>[],
+        },
+      ],
     ];
   }
 

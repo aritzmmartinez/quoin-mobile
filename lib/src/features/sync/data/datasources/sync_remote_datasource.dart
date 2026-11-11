@@ -23,6 +23,7 @@ class SyncRemoteDataSource {
     ClientFor? clientFor,
     this.timeout = const Duration(seconds: 30),
     this.pairTimeout = const Duration(seconds: 75),
+    this.helloTimeout = const Duration(seconds: 3),
     Future<void> Function(Duration)? wait,
   }) : _clientFor = clientFor ?? ((e) => PinnedClient(e.sha256)),
        _wait = wait ?? Future<void>.delayed;
@@ -30,17 +31,23 @@ class SyncRemoteDataSource {
   final ClientFor _clientFor;
   final Duration timeout;
   final Duration pairTimeout;
+  final Duration helloTimeout;
   final Future<void> Function(Duration) _wait;
   static const longestWait = Duration(seconds: 5);
 
-  Future<List<int>> hello(SyncEndpoint endpoint) async =>
-      switch (await _json(endpoint, 'GET', '/v1/hello')) {
-        {'versions': final List<Object?> versions} => [
-          for (final v in versions)
-            if (v is int) v,
-        ],
-        _ => throw const SyncHttpException(200, 'invalid-response'),
-      };
+  Future<List<int>> hello(SyncEndpoint endpoint) async => switch (await _json(
+    endpoint,
+    'GET',
+    '/v1/hello',
+    timeout: helloTimeout,
+    retry: false,
+  )) {
+    {'versions': final List<Object?> versions} => [
+      for (final v in versions)
+        if (v is int) v,
+    ],
+    _ => throw const SyncHttpException(200, 'invalid-response'),
+  };
 
   Future<String> pair(
     SyncEndpoint endpoint, {
