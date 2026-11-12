@@ -10,6 +10,7 @@ export 'src/domain/coded.dart';
 export 'src/domain/instrument.dart';
 export 'src/domain/ledger.dart';
 export 'src/domain/residence.dart';
+export 'src/fx/ecb_schedule.dart';
 export 'src/fx/rates.dart';
 export 'src/fx/to_base.dart';
 export 'src/fx/value.dart';

@@ -269,7 +269,7 @@ void main() {
   });
 
   test('the sample export goes through the adapter and imports once', () async {
-    final plan = PlanImport(repository, const EnsureRates(_Offline()));
+    final plan = PlanImport(repository, EnsureRates(_Offline()));
     final preview = ok(await plan(repository.sampleFile(at), now: at));
     expect(preview.ratesUnavailable, ['USD']);
     expect(

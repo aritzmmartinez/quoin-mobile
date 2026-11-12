@@ -9,8 +9,6 @@ import 'package:quoin/src/features/sync/domain/entities/sync_outcome.dart';
 import 'package:quoin/src/features/sync/domain/repositories/sync_repository.dart';
 import 'package:quoin/src/features/sync/domain/usecases/exchange_versions.dart';
 import 'package:quoin/src/features/sync/domain/usecases/pc_identity.dart';
-import 'package:quoin/src/features/sync/domain/usecases/pull_prices.dart';
-import 'package:quoin/src/features/sync/domain/usecases/run_effects.dart';
 
 /// One pass over every paired PC (`docs/sync-api.md` in Quoin):
 ///
@@ -18,28 +16,22 @@ import 'package:quoin/src/features/sync/domain/usecases/run_effects.dart';
 /// 2. `GET /v1/hello` to every PC at once, with a short wait;
 /// 3. one after another, each PC that answered: `GET /v1/sync`, its
 ///    identity against the other PCs, the merge here in one transaction,
-///    `POST /v1/sync` with `If-Match` (a 409 starts that PC again, once),
-///    then its effects;
+///    `POST /v1/sync` with `If-Match` (a 409 starts that PC again, once);
 /// 4. when a later PC brought changes, once more to the PCs synced before
 ///    it, so the phone carries each PC's changes to the others in one pass;
-/// 5. the price histories, from one PC.
+/// 5. the PC the price histories will come from.
+///
+/// The effects and the price histories are left to `FinishSync`.
 ///
 /// One PC's failure never stops the others. A PC's first sync only previews
 /// both directions until [call] is given its id in `confirm`; open conflicts
 /// write nothing on either side.
 class SyncNow {
-  const SyncNow(
-    this._repository,
-    this._identity,
-    this._runEffects,
-    this._pullPrices, {
-    DateTime Function()? now,
-  }) : _now = now ?? DateTime.now;
+  const SyncNow(this._repository, this._identity, {DateTime Function()? now})
+    : _now = now ?? DateTime.now;
 
   final SyncRepository _repository;
   final PcIdentity _identity;
-  final RunEffects _runEffects;
-  final PullPrices _pullPrices;
   final DateTime Function() _now;
 
   /// [resolutions] and [confirm] are keyed by the PC's certificate SHA-256.
@@ -87,6 +79,7 @@ class SyncNow {
     ]);
 
     final synced = <Pairing>[];
+    final effects = <Effect>[];
     var lastBringer = -1;
     for (final (i, pc) in active.indexed) {
       final gap = switch (hellos[i]) {
@@ -97,13 +90,14 @@ class SyncNow {
         results[pc.sha256] = Err(gap);
         continue;
       }
-      final (result, brought) = await _syncOne(
+      final (result, brought, left) = await _syncOne(
         pc,
         phoneId,
         resolutions: resolutions[pc.sha256] ?? const {},
         confirm: confirm.contains(pc.sha256),
       );
       results[pc.sha256] = result;
+      effects.addAll(left);
       if (result case Ok(value: SyncDone())) {
         synced.add(pc);
         if (brought) lastBringer = synced.length - 1;
@@ -115,7 +109,11 @@ class SyncNow {
         Err() => pairings,
       };
       for (final pc in synced.take(lastBringer)) {
-        final (again, _) = await _syncOne(now.of(pc.sha256) ?? pc, phoneId);
+        final (again, _, left) = await _syncOne(
+          now.of(pc.sha256) ?? pc,
+          phoneId,
+        );
+        effects.addAll(left);
         if (again case Err()) results[pc.sha256] = again;
       }
     }
@@ -130,40 +128,35 @@ class SyncNow {
           for (final pc in pcs)
             PcSync(fresh.of(pc.sha256) ?? pc, results[pc.sha256]!),
         ],
-        prices: await _prices(fresh, synced, phoneId),
+        effects: effects,
+        pricesFrom: await _pricesFrom(fresh, synced),
+        phoneId: phoneId,
       ),
     );
   }
 
   /// Prices come from the PC that served them last while it syncs; else from
   /// the first that did, which becomes the source.
-  Future<Result<PricesOutcome>?> _prices(
-    Pairings pairings,
-    List<Pairing> synced,
-    String phoneId,
-  ) async {
+  Future<Pairing?> _pricesFrom(Pairings pairings, List<Pairing> synced) async {
     final source =
         synced.where((pc) => pc.sha256 == pairings.pricesFrom).firstOrNull ??
         synced.firstOrNull;
-    if (source == null) return null;
-    if (source.sha256 != pairings.pricesFrom) {
-      final saved = await _repository.savePairings(
-        pairings.pricesFromPc(source.sha256),
-      );
-      if (saved case Err(:final failure)) return Err(failure);
+    if (source != null && source.sha256 != pairings.pricesFrom) {
+      await _repository.savePairings(pairings.pricesFromPc(source.sha256));
     }
-    final zone = await _repository.zone();
-    return _pullPrices(source, phoneId, zone: zone);
+    return source;
   }
 
-  Future<(Result<SyncOutcome>, bool)> _syncOne(
+  /// One PC: how it ended, whether it brought changes, and the effects its
+  /// merge left.
+  Future<(Result<SyncOutcome>, bool, List<Effect>)> _syncOne(
     Pairing pairing,
     String phoneId, {
     Resolutions resolutions = const {},
     bool confirm = false,
   }) async {
-    (Result<SyncOutcome>, bool) failed(Failure failure) =>
-        (Err(failure), false);
+    (Result<SyncOutcome>, bool, List<Effect>) failed(Failure failure) =>
+        (Err(failure), false, const []);
 
     for (var attempt = 0; ; attempt++) {
       final PcState pc;
@@ -186,6 +179,7 @@ class SyncNow {
           return (
             Ok(SyncSameIdentity(other: other, deviceId: pc.exchange.deviceId)),
             false,
+            const <Effect>[],
           );
         case Err(:final failure):
           return failed(failure);
@@ -212,6 +206,7 @@ class SyncNow {
             ),
           ),
           false,
+          const <Effect>[],
         );
       }
 
@@ -234,6 +229,7 @@ class SyncNow {
             ),
           ),
           false,
+          const <Effect>[],
         );
       }
 
@@ -260,8 +256,6 @@ class SyncNow {
         case Err(:final failure):
           return failed(failure);
       }
-      final zone = await _repository.zone();
-      final effects = await _runEffects(imported.pendingEffects, zone: zone);
       return (
         Ok(
           SyncDone(
@@ -270,10 +264,10 @@ class SyncNow {
               for (final row in imported.plan.setAside) row.key,
               ...pushed.setAside,
             }.toList()..sort(),
-            effects: effects,
           ),
         ),
         imported.status == ImportStatus.applied,
+        imported.pendingEffects,
       );
     }
   }

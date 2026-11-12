@@ -18,6 +18,7 @@ import 'package:quoin/src/features/sync/data/repositories/sync_repository_impl.d
 import 'package:quoin/src/features/sync/domain/entities/effect_outcome.dart';
 import 'package:quoin/src/features/sync/domain/entities/pairing.dart';
 import 'package:quoin/src/features/sync/domain/entities/sync_outcome.dart';
+import 'package:quoin/src/features/sync/domain/usecases/finish_sync.dart';
 import 'package:quoin/src/features/sync/domain/usecases/pair_with_pc.dart';
 import 'package:quoin/src/features/sync/domain/usecases/pc_identity.dart';
 import 'package:quoin/src/features/sync/domain/usecases/pull_prices.dart';
@@ -72,9 +73,13 @@ void main() {
   late PricesDatabase prices;
   late FakePc pc;
   late FakePc pc2;
-  late SyncPass lastPass;
   late SyncRepositoryImpl repository;
-  late SyncNow syncNow;
+  late Future<Result<SyncPass>> Function({
+    Map<String, Resolutions> resolutions,
+    Set<String> confirm,
+  })
+  syncNow;
+  late SyncFollowUp lastFollowUp;
   late String phoneId;
   late List<Map<String, String>> ratesAsked;
   late List<Duration> waited;
@@ -131,13 +136,24 @@ void main() {
       prices: PricesLocalDataSource(db, prices),
       now: () => DateTime.utc(2026, 11, 8, 10),
     );
-    syncNow = SyncNow(
+    final pass = SyncNow(
       repository,
       PcIdentity(repository),
-      RunEffects(rates, repository.dropPrices),
-      PullPrices(repository, rates, wait: wait),
       now: () => DateTime.utc(2026, 11, 8, 10),
     );
+    final finish = FinishSync(
+      repository,
+      RunEffects(rates, repository.dropPrices),
+      PullPrices(repository, rates, wait: wait),
+    );
+    // As SyncController: the pass, then its follow-up.
+    syncNow = ({resolutions = const {}, confirm = const {}}) async {
+      final result = await pass(resolutions: resolutions, confirm: confirm);
+      if (result case Ok(value: final done)) {
+        lastFollowUp = await finish(done);
+      }
+      return result;
+    };
   });
   tearDown(() async {
     await db.close();
@@ -178,7 +194,7 @@ void main() {
       confirm: {if (confirm) pcSha},
     );
     return switch (result) {
-      Ok(value: final pass) => (lastPass = pass).pcs.single.result,
+      Ok(value: final pass) => pass.pcs.single.result,
       Err(:final failure) => Err(failure),
     };
   }
@@ -468,8 +484,8 @@ void main() {
 
       expect(ok(await syncOne(confirm: true)), isA<SyncDone>());
 
-      expect(ok(lastPass.prices!).updated, 1);
-      expect(ok(lastPass.prices!).pending, isEmpty);
+      expect(ok(lastFollowUp.prices!).updated, 1);
+      expect(ok(lastFollowUp.prices!).pending, isEmpty);
       expect(await stored(), [
         '2026-11-02T16:30:00.000Z 10.5',
         '2026-11-03T16:30:00.000Z 11',
@@ -550,11 +566,11 @@ void main() {
         {'instrumentId': pcFund, 'kind': 'pending'},
       ];
 
-      final done = ok(await syncOne()) as SyncDone;
+      expect(ok(await syncOne()), isA<SyncDone>());
 
-      expect(done.effects.single, isA<EffectDone>());
+      expect(lastFollowUp.effects.single, isA<EffectDone>());
       expect(await stored(), isEmpty);
-      expect(ok(lastPass.prices!).pending, [pcFund]);
+      expect(ok(lastFollowUp.prices!).pending, [pcFund]);
       expect(pc.bodies['POST /v1/prices']!.last, {
         'instruments': [
           {'instrumentId': pcFund, 'seriesVersion': null, 'last': null},

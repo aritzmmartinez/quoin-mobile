@@ -19,26 +19,23 @@ final class EnsuredRates {
   final List<RateConflict> conflicts;
 }
 
-String syncStart(
-  String needed,
-  String? firstUse,
-  ({String? first, String? last}) stored,
-) {
-  final (:first, :last) = stored;
-  if (first == null || last == null) return needed;
-  if (firstUse != null && firstUse.compareTo(first) < 0) return needed;
-  return last;
-}
-
+/// Brings the ECB rates [needs] asks for (currency to the day of its first
+/// use), asking the ECB only for what it may have published since the
+/// stored series ends (`ecbFetchFrom`), and not again for a while after an
+/// answer that lacked the expected day (`EcbHold`). Without [withBook] the
+/// stored series are not read back, for callers that only need to know
+/// what could not be brought.
 class EnsureRates {
-  const EnsureRates(this._fx);
+  EnsureRates(this._fx, {EcbHold? hold}) : _hold = hold ?? EcbHold();
 
   final FxRepository _fx;
+  final EcbHold _hold;
 
   Future<Result<EnsuredRates>> call(
     Map<String, String> needs, {
     required DateTime now,
     required String zone,
+    bool withBook = true,
   }) async {
     final currencies = [
       for (final currency in needs.keys)
@@ -60,7 +57,15 @@ class EnsureRates {
         case Err(:final failure):
           return Err(failure);
       }
-      final from = syncStart(shiftDay(used, -firstUseMarginDays), used, stored);
+      final from = ecbFetchFrom(
+        needed: shiftDay(used, -firstUseMarginDays),
+        firstUse: used,
+        stored: stored,
+        now: now,
+      );
+      if (from == null || (from == stored.last && _hold.holds(quote, now))) {
+        continue;
+      }
       final List<FxRate> rates;
       switch (await _fx.fetch(quote, from, to)) {
         case Ok(:final value):
@@ -80,8 +85,22 @@ class EnsureRates {
         case Err(:final failure):
           return Err(failure);
       }
+      final newest = [
+        ?stored.last,
+        for (final rate in rates) rate.day,
+      ].fold<String?>(null, (a, b) => a == null || b.compareTo(a) > 0 ? b : a);
+      _hold.answered(quote, newest, now);
     }
 
+    if (!withBook) {
+      return Ok(
+        EnsuredRates(
+          book: const {},
+          unavailable: unavailable,
+          conflicts: conflicts,
+        ),
+      );
+    }
     return switch (await _fx.book(currencies)) {
       Ok(:final value) => Ok(
         EnsuredRates(

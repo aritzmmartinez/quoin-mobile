@@ -85,7 +85,9 @@ void main() {
         () => Future<void>.delayed(const Duration(milliseconds: 10)),
       );
       await tester.pump();
-      if (i > 5 && find.byType(CircularProgressIndicator).evaluate().isEmpty) {
+      if (i > 5 &&
+          find.byType(CircularProgressIndicator).evaluate().isEmpty &&
+          find.textContaining('Actualizando precios').evaluate().isEmpty) {
         break;
       }
     }

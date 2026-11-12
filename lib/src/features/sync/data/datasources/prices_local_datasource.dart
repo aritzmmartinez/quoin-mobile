@@ -60,10 +60,22 @@ class PricesLocalDataSource {
     ];
   });
 
+  static const _rebuiltIndexes = {
+    'PriceSnapshot_instrumentId_idx': 'CREATE INDEX "PriceSnapshot_instrumentId_idx" ON "PriceSnapshot" ("instrumentId")',
+    'PriceSnapshot_asOf_idx':
+        'CREATE INDEX "PriceSnapshot_asOf_idx" ON "PriceSnapshot" ("asOf")',
+  };
+
   Future<Map<String, String>> save(List<PriceAnswer> answers) => _guard(
     () => _prices.transaction(() async {
       final now = _now().toUtc();
       final firstOf = <String, DateTime>{};
+      final whole = answers.any((a) => a is FullPrices && a.rows.isNotEmpty);
+      if (whole) {
+        for (final name in _rebuiltIndexes.keys) {
+          await _prices.customStatement('DROP INDEX "$name"');
+        }
+      }
       for (final answer in answers) {
         final (version, rows) = switch (answer) {
           PendingPrices() => (null, const <PriceRow>[]),
@@ -86,18 +98,26 @@ class PricesLocalDataSource {
         await drop.go();
         await _prices.batch((batch) {
           batch
-            ..insertAll(_prices.priceSnapshot, [
-              for (final row in rows)
-                PriceSnapshotCompanion.insert(
-                  id: uuidV4(),
-                  instrumentId: id,
-                  price: row.price,
-                  currency: row.currency,
-                  asOf: row.instant.toUtc(),
-                  source: Value(row.source),
-                  createdAt: now,
-                ),
-            ], mode: InsertMode.insertOrReplace)
+            ..insertAll(
+              _prices.priceSnapshot,
+              [
+                for (final row in rows)
+                  PriceSnapshotCompanion.insert(
+                    // Ordered and unique, as (instrumentId, asOf) is: a random
+                    // key scatters a full download across the primary key.
+                    id: '$id|${row.instant.toUtc().toIso8601String()}',
+                    instrumentId: id,
+                    price: row.price,
+                    currency: row.currency,
+                    asOf: row.instant.toUtc(),
+                    source: Value(row.source),
+                    createdAt: now,
+                  ),
+              ],
+              mode: answer is FullPrices
+                  ? InsertMode.insert
+                  : InsertMode.insertOrReplace,
+            )
             ..insert(
               _prices.priceSeries,
               PriceSeriesCompanion.insert(
@@ -112,6 +132,11 @@ class PricesLocalDataSource {
           final at = row.instant.toUtc();
           final known = firstOf[row.currency];
           if (known == null || at.isBefore(known)) firstOf[row.currency] = at;
+        }
+      }
+      if (whole) {
+        for (final create in _rebuiltIndexes.values) {
+          await _prices.customStatement(create);
         }
       }
       return {

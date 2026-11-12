@@ -48,6 +48,10 @@ class SyncSettingsSection extends ConsumerWidget {
                   : status.failures[pc.sha256],
             ),
           ),
+        if (status.finishing)
+          SettingsRow(icon: QuoinIcons.sync, label: l10n.syncPricesRunning)
+        else if (status.followUp?.prices case Err())
+          SettingsRow(icon: QuoinIcons.alert, label: l10n.syncPricesFailed),
         if (status.failure case final failure?)
           SettingsRow(
             icon: QuoinIcons.alert,

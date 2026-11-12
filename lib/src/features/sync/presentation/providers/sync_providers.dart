@@ -7,6 +7,7 @@ import 'package:quoin/src/features/portfolio/presentation/providers/portfolio_pr
 import 'package:quoin/src/features/sync/domain/entities/pairing.dart';
 import 'package:quoin/src/features/sync/domain/entities/sync_outcome.dart';
 import 'package:quoin/src/features/sync/domain/repositories/sync_repository.dart';
+import 'package:quoin/src/features/sync/domain/usecases/finish_sync.dart';
 import 'package:quoin/src/features/sync/domain/usecases/get_pairings.dart';
 import 'package:quoin/src/features/sync/domain/usecases/pair_with_pc.dart';
 import 'package:quoin/src/features/sync/domain/usecases/pc_identity.dart';
@@ -49,9 +50,12 @@ final pullPricesProvider = Provider(
   ),
 );
 final syncNowProvider = Provider(
-  (ref) => SyncNow(
+  (ref) =>
+      SyncNow(ref.watch(syncRepositoryProvider), ref.watch(pcIdentityProvider)),
+);
+final finishSyncProvider = Provider(
+  (ref) => FinishSync(
     ref.watch(syncRepositoryProvider),
-    ref.watch(pcIdentityProvider),
     ref.watch(runEffectsProvider),
     ref.watch(pullPricesProvider),
   ),
@@ -68,11 +72,24 @@ final class SyncStatus {
     this.running = false,
     this.failure,
     this.failures = const {},
+    this.finishing = false,
+    this.followUp,
   });
 
   final bool running;
   final Failure? failure;
   final Map<String, Failure> failures;
+  final bool finishing;
+  final SyncFollowUp? followUp;
+
+  SyncStatus copy({bool? running, bool? finishing, SyncFollowUp? followUp}) =>
+      SyncStatus(
+        running: running ?? this.running,
+        failure: failure,
+        failures: failures,
+        finishing: finishing ?? this.finishing,
+        followUp: followUp ?? this.followUp,
+      );
 }
 
 final syncControllerProvider = NotifierProvider<SyncController, SyncStatus>(
@@ -81,6 +98,8 @@ final syncControllerProvider = NotifierProvider<SyncController, SyncStatus>(
 
 class SyncController extends Notifier<SyncStatus> {
   Future<Result<SyncPass>>? _running;
+  Future<SyncFollowUp>? _finishing;
+  Future<SyncFollowUp>? get finishing => _finishing;
 
   @override
   SyncStatus build() => const SyncStatus();
@@ -90,9 +109,15 @@ class SyncController extends Notifier<SyncStatus> {
     Set<String> confirm = const {},
     bool onlyConfirmed = false,
   }) async {
-    for (var running = _running; running != null; running = _running) {
-      if (resolutions.isEmpty && confirm.isEmpty) return running;
-      await running;
+    while (true) {
+      if (_running case final running?) {
+        if (resolutions.isEmpty && confirm.isEmpty) return running;
+        await running;
+      } else if (_finishing case final finishing?) {
+        await finishing;
+      } else {
+        break;
+      }
     }
     final run = _pass(resolutions, confirm, onlyConfirmed);
     _running = run;
@@ -108,11 +133,7 @@ class SyncController extends Notifier<SyncStatus> {
     Set<String> confirm,
     bool onlyConfirmed,
   ) async {
-    state = SyncStatus(
-      running: true,
-      failure: state.failure,
-      failures: state.failures,
-    );
+    state = state.copy(running: true);
     final result = await ref.read(syncNowProvider)(
       resolutions: resolutions,
       confirm: confirm,
@@ -126,13 +147,25 @@ class SyncController extends Notifier<SyncStatus> {
           for (final pc in pass.pcs)
             if (pc.result case Err(:final failure)) pc.pairing.sha256: failure,
         },
+        followUp: state.followUp,
       ),
     };
     if (result case Ok(value: final pass) when pass.pcs.any((pc) => pc.done)) {
       ref.invalidate(ledgerProvider);
+      _finishing = _finish(pass).whenComplete(() => _finishing = null);
     }
     ref.invalidate(pairingsProvider);
     return result;
+  }
+
+  Future<SyncFollowUp> _finish(SyncPass pass) async {
+    state = state.copy(finishing: true);
+    final followUp = await ref.read(finishSyncProvider)(pass);
+    if (ref.mounted) {
+      state = state.copy(finishing: false, followUp: followUp);
+      ref.invalidate(ledgerProvider);
+    }
+    return followUp;
   }
 
   void reset() {

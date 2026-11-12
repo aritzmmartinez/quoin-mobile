@@ -56,7 +56,9 @@ Future<void> refreshFromPc(BuildContext context, WidgetRef ref) async {
       );
     }
   }
-  switch (pass.prices) {
+  final followUp = await ref.read(syncControllerProvider.notifier).finishing;
+  if (followUp == null || !context.mounted) return;
+  switch (followUp.prices) {
     case Err():
       say(l10n.syncPricesFailed);
     case Ok(value: PricesOutcome(pending: [_, ...])):

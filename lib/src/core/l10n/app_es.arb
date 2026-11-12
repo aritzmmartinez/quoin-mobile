@@ -801,6 +801,7 @@
   "syncDone": "Sincronizado",
   "syncUpToDate": "Ya estaba todo al día",
   "syncReceived": "Recibido del PC",
+  "syncPricesRunning": "Actualizando precios y tipos de cambio…",
   "syncPricesPending": "Precios pendientes; se completarán en la próxima sincronización",
   "syncPricesFailed": "No se han podido traer los precios; se intentará en la próxima sincronización.",
   "syncRatesUnavailable": "Sin tipos de cambio del BCE para {currencies}.",

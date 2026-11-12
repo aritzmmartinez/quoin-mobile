@@ -321,6 +321,7 @@
   "syncDone": "Synced",
   "syncUpToDate": "Everything was up to date",
   "syncReceived": "Received from the PC",
+  "syncPricesRunning": "Updating prices and exchange rates…",
   "syncPricesPending": "Prices pending; they will be completed on the next sync",
   "syncPricesFailed": "The prices could not be fetched; the next sync will try again.",
   "syncRatesUnavailable": "No ECB exchange rates for {currencies}.",

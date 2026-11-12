@@ -31,15 +31,10 @@ final class SyncSameIdentity extends SyncOutcome {
 }
 
 final class SyncDone extends SyncOutcome {
-  const SyncDone({
-    required this.counts,
-    required this.setAside,
-    required this.effects,
-  });
+  const SyncDone({required this.counts, required this.setAside});
 
   final PlanCounts counts;
   final List<String> setAside;
-  final List<EffectOutcome> effects;
 }
 
 final class PcSync {
@@ -60,10 +55,17 @@ final class PcSync {
 }
 
 final class SyncPass {
-  const SyncPass({required this.pcs, this.prices});
+  const SyncPass({
+    required this.pcs,
+    this.effects = const [],
+    this.pricesFrom,
+    this.phoneId = '',
+  });
 
   final List<PcSync> pcs;
-  final Result<PricesOutcome>? prices;
+  final List<Effect> effects;
+  final Pairing? pricesFrom;
+  final String phoneId;
 
   List<PcSync> get waiting => [
     for (final pc in pcs)
@@ -83,6 +85,13 @@ final class SyncPass {
           },
         );
   }
+}
+
+final class SyncFollowUp {
+  const SyncFollowUp({this.effects = const [], this.prices});
+
+  final List<EffectOutcome> effects;
+  final Result<PricesOutcome>? prices;
 }
 
 final class PricesOutcome {

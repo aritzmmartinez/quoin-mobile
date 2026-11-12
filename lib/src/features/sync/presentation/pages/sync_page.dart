@@ -235,19 +235,21 @@ class _SyncPageState extends ConsumerState<SyncPage> {
     final l10n = AppLocalizations.of(context);
     final type = QuoinType.of(context);
     final c = QuoinColors.of(context);
+    final status = ref.watch(syncControllerProvider);
+    final followUp = status.finishing ? null : status.followUp;
+    final prices = followUp?.prices;
     final rates = {
-      for (final pc in pass.pcs)
-        if (pc.result case Ok(value: SyncDone(:final effects)))
-          for (final outcome in effects)
-            if (outcome case EffectFailed(effect: RatesEffect(:final currency)))
-              currency,
-      if (pass.prices case Ok(:final value)) ...value.unavailableRates,
+      for (final outcome in followUp?.effects ?? const <EffectOutcome>[])
+        if (outcome case EffectFailed(effect: RatesEffect(:final currency)))
+          currency,
+      if (prices case Ok(:final value)) ...value.unavailableRates,
     }.toList()..sort();
     return [
       if (pass.pcs.any((pc) => pc.done)) Text(l10n.syncDone, style: type.title),
-      if (pass.prices case Ok(value: PricesOutcome(pending: [_, ...])))
+      if (status.finishing) _Notice(text: l10n.syncPricesRunning),
+      if (prices case Ok(value: PricesOutcome(pending: [_, ...])))
         _Notice(text: l10n.syncPricesPending),
-      if (pass.prices case Err()) _Notice(text: l10n.syncPricesFailed),
+      if (prices case Err()) _Notice(text: l10n.syncPricesFailed),
       if (rates.isNotEmpty)
         _Notice(text: l10n.syncRatesUnavailable(rates.join(', '))),
       for (final pc in pass.pcs) ...[
