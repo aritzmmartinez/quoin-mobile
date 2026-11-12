@@ -9,6 +9,7 @@ import 'package:quoin/src/features/sync/domain/entities/pairing.dart';
 import 'package:quoin/src/features/sync/domain/entities/sync_outcome.dart';
 import 'package:quoin/src/features/sync/domain/repositories/sync_repository.dart';
 import 'package:quoin/src/features/sync/domain/usecases/finish_sync.dart';
+import 'package:quoin/src/features/sync/domain/usecases/get_last_sync.dart';
 import 'package:quoin/src/features/sync/domain/usecases/get_pairings.dart';
 import 'package:quoin/src/features/sync/domain/usecases/pair_with_pc.dart';
 import 'package:quoin/src/features/sync/domain/usecases/pc_identity.dart';
@@ -64,6 +65,17 @@ final finishSyncProvider = Provider(
 
 final pairingsProvider = FutureProvider<Result<Pairings>>(
   (ref) => ref.watch(getPairingsProvider)(),
+);
+
+final getLastSyncProvider = Provider(
+  (ref) => GetLastSync(ref.watch(syncRepositoryProvider)),
+);
+
+final lastSyncProvider = FutureProvider.family<LastSync?, String>(
+  (ref, sha256) async => switch (await ref.watch(getLastSyncProvider)(sha256)) {
+    Ok(:final value) => value,
+    Err() => null,
+  },
 );
 
 final qrScannerProvider = Provider<QrScanner>((ref) => scanQr);
@@ -179,7 +191,9 @@ class SyncController extends Notifier<SyncStatus> {
       ref.invalidate(ledgerProvider);
       _finishing = _finish(pass).whenComplete(() => _finishing = null);
     }
-    ref.invalidate(pairingsProvider);
+    ref
+      ..invalidate(pairingsProvider)
+      ..invalidate(lastSyncProvider);
     return result;
   }
 
@@ -195,6 +209,8 @@ class SyncController extends Notifier<SyncStatus> {
 
   void reset() {
     state = const SyncStatus();
-    ref.invalidate(pairingsProvider);
+    ref
+      ..invalidate(pairingsProvider)
+      ..invalidate(lastSyncProvider);
   }
 }

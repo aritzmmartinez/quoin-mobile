@@ -35,6 +35,7 @@ export 'src/series/as_of.dart';
 export 'src/sort.dart';
 export 'src/swap/values.dart';
 export 'src/sync/apply_plan.dart';
+export 'src/sync/detail.dart';
 export 'src/sync/exchange.dart';
 export 'src/sync/hlc.dart';
 export 'src/sync/merge.dart';

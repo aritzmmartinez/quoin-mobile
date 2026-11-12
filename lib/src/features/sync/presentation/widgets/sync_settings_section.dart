@@ -8,11 +8,14 @@ import 'package:quoin/src/core/error/result.dart';
 import 'package:quoin/src/core/l10n/gen/app_localizations.dart';
 import 'package:quoin/src/core/theme/quoin_icons.dart';
 import 'package:quoin/src/core/theme/quoin_type.dart';
+import 'package:quoin/src/features/portfolio/presentation/widgets/portfolio_view.dart';
 import 'package:quoin/src/features/sync/domain/entities/pairing.dart';
+import 'package:quoin/src/features/sync/domain/entities/sync_outcome.dart';
 import 'package:quoin/src/features/sync/domain/usecases/sync_now.dart';
 import 'package:quoin/src/features/sync/presentation/providers/sync_providers.dart';
 import 'package:quoin/src/features/sync/presentation/widgets/pc_row.dart';
 import 'package:quoin/src/features/sync/presentation/widgets/sync_actions.dart';
+import 'package:quoin/src/features/sync/presentation/widgets/sync_detail_view.dart';
 import 'package:quoin/src/features/sync/presentation/widgets/sync_failure_text.dart';
 import 'package:quoin/src/ui/molecules/settings_row.dart';
 import 'package:quoin/src/ui/organisms/settings_section.dart';
@@ -42,6 +45,7 @@ class SyncSettingsSection extends ConsumerWidget {
             running: status.running,
             searching: status.searching.contains(pc.sha256),
             failure: status.failures[pc.sha256],
+            last: ref.watch(lastSyncProvider(pc.sha256)).value,
             onTap: () => _actions(
               context,
               ref,
@@ -49,6 +53,7 @@ class SyncSettingsSection extends ConsumerWidget {
               pc.shared
                   ? SharedIdentityFailure(pairings.twinOf(pc)?.pcName ?? '')
                   : status.failures[pc.sha256],
+              ref.read(lastSyncProvider(pc.sha256)).value,
             ),
           ),
         if (status.finishing)
@@ -87,6 +92,7 @@ class SyncSettingsSection extends ConsumerWidget {
     WidgetRef ref,
     Pairing pc,
     Failure? failure,
+    LastSync? last,
   ) async {
     final l10n = AppLocalizations.of(context);
     final chosen = await showModalBottomSheet<VoidCallback>(
@@ -109,6 +115,14 @@ class SyncSettingsSection extends ConsumerWidget {
                     syncFailureDetail(l10n, failure),
                     style: QuoinType.of(sheet).secondary,
                   ),
+                if (last != null) ...[
+                  sectionLabel(sheet, l10n.syncDetailLast),
+                  ...syncDetailSections(
+                    sheet,
+                    toPhone: last.toPhone,
+                    toPc: last.toPc,
+                  ),
+                ],
                 if (pc.shared)
                   SettingsRow(
                     icon: QuoinIcons.sync,

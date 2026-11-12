@@ -780,43 +780,9 @@
       }
     }
   },
-  "syncCountInstruments": "{count, plural, =1{1 instrumento nuevo o cambiado} other{{count} instrumentos nuevos o cambiados}}",
-  "@syncCountInstruments": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "syncCountTargets": "{count, plural, =1{1 cambio de objetivo} other{{count} cambios de objetivo}}",
-  "@syncCountTargets": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "syncCountHoldings": "{count, plural, =1{1 composición de fondo} other{{count} composiciones de fondo}}",
-  "@syncCountHoldings": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "syncCountIdentities": "{count, plural, =1{1 identificador de valor} other{{count} identificadores de valor}}",
-  "@syncCountIdentities": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "syncCountSettings": "La residencia fiscal",
   "syncConfirm": "Sincronizar",
   "syncDone": "Sincronizado",
   "syncUpToDate": "Ya estaba todo al día",
-  "syncReceived": "Recibido del PC",
   "syncPricesRunning": "Actualizando precios y tipos de cambio…",
   "syncPricesPending": "Precios pendientes; se completarán en la próxima sincronización",
   "syncPricesFailed": "No se han podido traer los precios; se intentará en la próxima sincronización.",
@@ -830,6 +796,91 @@
   },
   "syncSetAsideTitle": "Movimientos apartados",
   "syncSetAsideHint": "Son distintos en el PC y en el móvil; cada lado conserva el suyo hasta que coincidan.",
+  "syncDetailInKind": "{count, plural, =1{1 movimiento pasa a traspaso en especie} other{{count} movimientos pasan a traspaso en especie}}",
+  "@syncDetailInKind": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncDetailNewInstruments": "Instrumentos nuevos",
+  "syncDetailChangedInstruments": "Instrumentos cambiados",
+  "syncDetailNewTargets": "Objetivos nuevos",
+  "syncDetailDeletedTargets": "Objetivos borrados",
+  "syncDetailCompositions": "Composiciones de fondo",
+  "syncDetailResolved": "Conflictos resueltos",
+  "syncDetailMore": "y {count} más",
+  "@syncDetailMore": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncDetailOtherRows": "Otros",
+  "syncDetailLast": "Última sincronización",
+  "syncDetailNothing": "sin cambios",
+  "syncDetailInstruments": "{count, plural, =1{1 instrumento} other{{count} instrumentos}}",
+  "@syncDetailInstruments": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncDetailTargets": "{count, plural, =1{1 objetivo} other{{count} objetivos}}",
+  "@syncDetailTargets": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncDetailCompositionsCount": "{count, plural, =1{1 composición} other{{count} composiciones}}",
+  "@syncDetailCompositionsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncDetailResidence": "residencia fiscal",
+  "syncDetailResolvedCount": "{count, plural, =1{1 conflicto resuelto} other{{count} conflictos resueltos}}",
+  "@syncDetailResolvedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncDetailSetAsideCount": "{count, plural, =1{1 apartado} other{{count} apartados}}",
+  "@syncDetailSetAsideCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncSetAsideDiffers": "Difiere: {fields}",
+  "@syncSetAsideDiffers": {
+    "placeholders": {
+      "fields": {
+        "type": "String"
+      }
+    }
+  },
+  "syncFieldAssetClass": "Clase de activo",
+  "syncColumnDate": "fecha",
+  "syncColumnType": "tipo",
+  "syncColumnInstrument": "instrumento",
+  "syncColumnQuantity": "cantidad",
+  "syncColumnPrice": "precio",
+  "syncColumnAmount": "importe",
+  "syncColumnFees": "comisiones",
+  "syncColumnTax": "retención",
+  "syncColumnCurrency": "divisa",
+  "syncColumnOther": "otros datos",
   "syncConflictsIntro": "Estos datos han cambiado en los dos lados. Elige qué versión se queda en ambos.",
   "syncKeepPhone": "Este móvil",
   "syncTakePc": "PC",

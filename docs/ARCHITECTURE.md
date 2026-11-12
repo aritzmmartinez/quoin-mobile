@@ -311,6 +311,20 @@ only the phone's token, so the PC must revoke it too. Inicio and Cartera
 sync on pull to refresh; the app syncs silently when it opens, with the PCs
 already confirmed.
 
+**Detail** (`syncDetail`, quoin_core). What a merge plan writes, by name and
+never with ids or amounts: instruments new and changed (which fields),
+ledger rows by type, targets added and deleted, fund compositions, the
+residence, rows set aside (day, type, instrument, which columns differ) and
+the conflicts the user settled, built from the conflicts as shown and the
+answers given, so `merge` stays Quoin's. Lists keep 20 names and their whole
+count. The preview, the result screen and a PC's sheet show it with
+`SyncDetailView`; the PC's row adds a one-line summary. The last completed
+sync with each PC is kept in `flutter_secure_storage` under
+`syncDetail:<sha256>` (`LastSync`), apart from `pairings`, which is rewritten
+several times a pass; a second sync with one PC in a pass adds to its first.
+Unpairing a PC, or replacing it with the same PC's new certificate, deletes
+it.
+
 **Failures.** Each refusal of the API is its own `Failure`: unreachable,
 certificate mismatch, revoked, invalid or used or expired QR, rejected
 pairing, update required (app or Quoin), PC busy, conflicts changed, refused

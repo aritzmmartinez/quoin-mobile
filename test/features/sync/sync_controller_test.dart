@@ -49,22 +49,6 @@ class _HeldFinish implements FinishSync {
   }
 }
 
-const _none = PlanCounts(
-  ledger: 0,
-  inKind: 0,
-  setAside: 0,
-  newInstruments: 0,
-  changedInstruments: 0,
-  newTargets: 0,
-  deletedTargets: 0,
-  newHoldings: 0,
-  replacedHoldings: 0,
-  newIdentities: 0,
-  updatedIdentities: 0,
-  settings: false,
-  restamped: 0,
-);
-
 final _synced = SyncPass(
   pcs: [
     PcSync(
@@ -75,7 +59,7 @@ final _synced = SyncPass(
         pairedAt: DateTime.utc(2026),
         confirmed: true,
       ),
-      const Ok(SyncDone(counts: _none, setAside: [])),
+      const Ok(SyncDone(toPhone: SyncDetail(), toPc: SyncDetail())),
     ),
   ],
 );

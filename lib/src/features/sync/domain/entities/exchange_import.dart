@@ -7,11 +7,15 @@ final class ExchangeImport {
     required this.status,
     required this.plan,
     required this.counts,
+    required this.detail,
+    required this.instrumentNames,
   });
 
   final ImportStatus status;
   final MergePlan plan;
   final PlanCounts counts;
+  final SyncDetail detail;
+  final Map<String, String> instrumentNames;
 
   List<Effect> get pendingEffects =>
       status == ImportStatus.applied ? plan.effects : const [];

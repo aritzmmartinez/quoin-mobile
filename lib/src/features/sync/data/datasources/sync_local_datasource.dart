@@ -135,6 +135,16 @@ class SyncLocalDataSource {
         status: status,
         plan: plan,
         counts: planCounts(plan, local),
+        detail: syncDetail(
+          plan,
+          local,
+          incoming,
+          conflicts: resolutions.isEmpty
+              ? const []
+              : merge(local, incoming).conflicts,
+          resolutions: resolutions,
+        ),
+        instrumentNames: instrumentNames(plan, local, incoming),
       );
       if (plan.conflicts.isNotEmpty) return outcome(ImportStatus.conflicts);
 

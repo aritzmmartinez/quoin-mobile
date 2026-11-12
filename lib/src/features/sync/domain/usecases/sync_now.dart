@@ -134,7 +134,29 @@ class SyncNow {
           phoneId,
         );
         effects.addAll(left);
-        if (again case Err()) results[pc.sha256] = again;
+        switch ((again, results[pc.sha256])) {
+          case (Err(), _):
+            results[pc.sha256] = again;
+          case (
+            Ok(value: final SyncDone later),
+            Ok(value: final SyncDone first),
+          ):
+            results[pc.sha256] = Ok(first.plus(later));
+          case _:
+            break;
+        }
+      }
+    }
+
+    final at = _now().toUtc();
+    for (final pc in synced) {
+      if (results[pc.sha256] case Ok(
+        value: SyncDone(:final toPhone, :final toPc),
+      )) {
+        await _repository.saveLastSync(
+          pc.sha256,
+          LastSync(at: at, toPhone: toPhone, toPc: toPc),
+        );
       }
     }
 
@@ -283,7 +305,8 @@ class SyncNow {
           Ok(
             SyncConflicts(
               conflicts: imported.plan.conflicts,
-              setAside: imported.plan.setAside,
+              setAside: imported.detail.setAside,
+              instrumentNames: imported.instrumentNames,
             ),
           ),
           false,
@@ -298,17 +321,14 @@ class SyncNow {
         case Err(:final failure):
           return failed(failure);
       }
+      final toPc = syncDetail(
+        merge(pc.exchange, local, const {}),
+        pc.exchange,
+        local,
+      );
       if (preview) {
         return (
-          Ok(
-            SyncPreview(
-              toPhone: imported.counts,
-              toPc: planCounts(
-                merge(pc.exchange, local, const {}),
-                pc.exchange,
-              ),
-            ),
-          ),
+          Ok(SyncPreview(toPhone: imported.detail, toPc: toPc)),
           false,
           const <Effect>[],
         );
@@ -338,15 +358,7 @@ class SyncNow {
           return failed(failure);
       }
       return (
-        Ok(
-          SyncDone(
-            counts: imported.counts,
-            setAside: {
-              for (final row in imported.plan.setAside) row.key,
-              ...pushed.setAside,
-            }.toList()..sort(),
-          ),
-        ),
+        Ok(SyncDone(toPhone: imported.detail, toPc: toPc)),
         imported.status == ImportStatus.applied,
         imported.pendingEffects,
       );

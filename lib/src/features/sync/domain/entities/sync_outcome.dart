@@ -12,15 +12,20 @@ sealed class SyncOutcome {
 final class SyncPreview extends SyncOutcome {
   const SyncPreview({required this.toPhone, required this.toPc});
 
-  final PlanCounts toPhone;
-  final PlanCounts toPc;
+  final SyncDetail toPhone;
+  final SyncDetail toPc;
 }
 
 final class SyncConflicts extends SyncOutcome {
-  const SyncConflicts({required this.conflicts, required this.setAside});
+  const SyncConflicts({
+    required this.conflicts,
+    required this.setAside,
+    this.instrumentNames = const {},
+  });
 
   final List<Conflict> conflicts;
-  final List<LedgerConflict> setAside;
+  final Cut<SetAsideRow> setAside;
+  final Map<String, String> instrumentNames;
 }
 
 final class SyncSameIdentity extends SyncOutcome {
@@ -31,10 +36,23 @@ final class SyncSameIdentity extends SyncOutcome {
 }
 
 final class SyncDone extends SyncOutcome {
-  const SyncDone({required this.counts, required this.setAside});
+  const SyncDone({required this.toPhone, required this.toPc});
 
-  final PlanCounts counts;
-  final List<String> setAside;
+  final SyncDetail toPhone;
+  final SyncDetail toPc;
+
+  SyncDone plus(SyncDone later) => SyncDone(
+    toPhone: toPhone.plus(later.toPhone),
+    toPc: toPc.plus(later.toPc),
+  );
+}
+
+final class LastSync {
+  const LastSync({required this.at, required this.toPhone, required this.toPc});
+
+  final DateTime at;
+  final SyncDetail toPhone;
+  final SyncDetail toPc;
 }
 
 final class PcSync {

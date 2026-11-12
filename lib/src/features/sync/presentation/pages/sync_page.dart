@@ -15,6 +15,7 @@ import 'package:quoin/src/features/sync/domain/entities/effect_outcome.dart';
 import 'package:quoin/src/features/sync/domain/entities/sync_outcome.dart';
 import 'package:quoin/src/features/sync/domain/usecases/sync_now.dart';
 import 'package:quoin/src/features/sync/presentation/providers/sync_providers.dart';
+import 'package:quoin/src/features/sync/presentation/widgets/sync_detail_view.dart';
 import 'package:quoin/src/features/sync/presentation/widgets/sync_failure_text.dart';
 import 'package:quoin/src/ui/atoms/quoin_card.dart';
 import 'package:quoin/src/ui/molecules/empty_state.dart';
@@ -184,9 +185,9 @@ class _SyncPageState extends ConsumerState<SyncPage> {
       Ok(value: SyncPreview(:final toPhone, :final toPc)) => [
         Text(l10n.syncPreviewIntro, style: type.row),
         sectionLabel(context, l10n.syncToPhone),
-        _Counts(counts: toPhone),
+        SyncDetailView(detail: toPhone),
         sectionLabel(context, l10n.syncToPc),
-        _Counts(counts: toPc),
+        SyncDetailView(detail: toPc, setAside: false),
         const SizedBox(height: QuoinSpace.gutter),
         FilledButton(
           onPressed: () {
@@ -196,30 +197,38 @@ class _SyncPageState extends ConsumerState<SyncPage> {
           child: Text(l10n.syncConfirm),
         ),
       ],
-      Ok(value: SyncConflicts(:final conflicts, :final setAside)) => [
-        Text(l10n.syncConflictsIntro, style: type.row),
-        for (final conflict in conflicts) ...[
-          const SizedBox(height: 12),
-          _ConflictCard(
-            conflict: conflict,
-            choice: _choices[sha]?[conflictKey(conflict)],
-            onChanged: (choice) => setState(
-              () => (_choices[sha] ??= {})[conflictKey(conflict)] = choice,
+      Ok(
+        value: SyncConflicts(
+          :final conflicts,
+          :final setAside,
+          :final instrumentNames,
+        ),
+      ) =>
+        [
+          Text(l10n.syncConflictsIntro, style: type.row),
+          for (final conflict in conflicts) ...[
+            const SizedBox(height: 12),
+            _ConflictCard(
+              conflict: conflict,
+              names: instrumentNames,
+              choice: _choices[sha]?[conflictKey(conflict)],
+              onChanged: (choice) => setState(
+                () => (_choices[sha] ??= {})[conflictKey(conflict)] = choice,
+              ),
             ),
+          ],
+          SetAsideView(rows: setAside),
+          const SizedBox(height: QuoinSpace.gutter),
+          FilledButton(
+            onPressed:
+                conflicts.every(
+                  (c) => _choices[sha]?.containsKey(conflictKey(c)) ?? false,
+                )
+                ? _run
+                : null,
+            child: Text(l10n.syncApply),
           ),
         ],
-        ..._setAside(context, [for (final row in setAside) row.key]),
-        const SizedBox(height: QuoinSpace.gutter),
-        FilledButton(
-          onPressed:
-              conflicts.every(
-                (c) => _choices[sha]?.containsKey(conflictKey(c)) ?? false,
-              )
-              ? _run
-              : null,
-          child: Text(l10n.syncApply),
-        ),
-      ],
       Ok(value: final SyncSameIdentity question) => [
         Text(
           l10n.syncSameIdentityTitle(pc.pairing.pcName, question.other.pcName),
@@ -245,7 +254,6 @@ class _SyncPageState extends ConsumerState<SyncPage> {
   List<Widget> _done(BuildContext context, SyncPass pass) {
     final l10n = AppLocalizations.of(context);
     final type = QuoinType.of(context);
-    final c = QuoinColors.of(context);
     final status = ref.watch(syncControllerProvider);
     final followUp = status.finishing ? null : status.followUp;
     final prices = followUp?.prices;
@@ -266,15 +274,8 @@ class _SyncPageState extends ConsumerState<SyncPage> {
       for (final pc in pass.pcs) ...[
         sectionLabel(context, pc.pairing.pcName),
         ...switch (pc.result) {
-          Ok(value: SyncDone(:final counts, :final setAside)) => [
-            Text(
-              l10n.syncReceived,
-              style: type.secondary.copyWith(color: c.muted),
-            ),
-            const SizedBox(height: 8),
-            _Counts(counts: counts, empty: l10n.syncUpToDate),
-            ..._setAside(context, setAside),
-          ],
+          Ok(value: SyncDone(:final toPhone, :final toPc)) =>
+            syncDetailSections(context, toPhone: toPhone, toPc: toPc),
           Err(:final failure) => [
             QuoinCard(
               child: Text(syncFailureDetail(l10n, failure), style: type.row),
@@ -285,77 +286,18 @@ class _SyncPageState extends ConsumerState<SyncPage> {
       ],
     ];
   }
-
-  List<Widget> _setAside(BuildContext context, List<String> keys) {
-    if (keys.isEmpty) return const [];
-    final l10n = AppLocalizations.of(context);
-    final type = QuoinType.of(context);
-    final c = QuoinColors.of(context);
-    return [
-      sectionLabel(context, l10n.syncSetAsideTitle),
-      Text(
-        l10n.syncSetAsideHint,
-        style: type.secondary.copyWith(color: c.muted),
-      ),
-      const SizedBox(height: 8),
-      QuoinCard(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          spacing: 6,
-          children: [
-            for (final key in keys) Text(key, style: type.secondary.mono),
-          ],
-        ),
-      ),
-    ];
-  }
-}
-
-class _Counts extends StatelessWidget {
-  const _Counts({required this.counts, this.empty});
-
-  final PlanCounts counts;
-  final String? empty;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final type = QuoinType.of(context);
-    final lines = [
-      if (counts.ledger > 0) l10n.syncCountLedger(counts.ledger),
-      if (counts.newInstruments + counts.changedInstruments case final n
-          when n > 0)
-        l10n.syncCountInstruments(n),
-      if (counts.newTargets + counts.deletedTargets case final n when n > 0)
-        l10n.syncCountTargets(n),
-      if (counts.newHoldings + counts.replacedHoldings case final n when n > 0)
-        l10n.syncCountHoldings(n),
-      if (counts.newIdentities + counts.updatedIdentities case final n
-          when n > 0)
-        l10n.syncCountIdentities(n),
-      if (counts.settings) l10n.syncCountSettings,
-    ];
-    return QuoinCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        spacing: 6,
-        children: [
-          if (lines.isEmpty) Text(empty ?? l10n.syncNothing, style: type.row),
-          for (final line in lines) Text(line, style: type.row),
-        ],
-      ),
-    );
-  }
 }
 
 class _ConflictCard extends StatelessWidget {
   const _ConflictCard({
     required this.conflict,
+    required this.names,
     required this.choice,
     required this.onChanged,
   });
 
   final Conflict conflict;
+  final Map<String, String> names;
   final Resolution? choice;
   final ValueChanged<Resolution> onChanged;
 
@@ -377,7 +319,7 @@ class _ConflictCard extends StatelessWidget {
         shown(incoming),
       ),
       FieldConflict(:final key, :final field, :final local, :final incoming) =>
-        (_field(l10n, field), key, shown(local), shown(incoming)),
+        (_field(l10n, field), names[key], shown(local), shown(incoming)),
       TargetConflict() => (l10n.syncConflictTarget, null, null, null),
       TargetDayConflict(:final day) => (
         l10n.syncConflictTargetDay(day),
@@ -386,7 +328,7 @@ class _ConflictCard extends StatelessWidget {
         null,
       ),
       HoldingsConflict(:final instrumentId) => (
-        l10n.syncConflictHoldings(instrumentId),
+        l10n.syncConflictHoldings(names[instrumentId] ?? ''),
         null,
         null,
         null,
@@ -399,7 +341,7 @@ class _ConflictCard extends StatelessWidget {
         children: [
           Text(title, style: type.row.copyWith(fontWeight: FontWeight.w600)),
           if (subject != null)
-            Text(subject, style: type.secondary.mono.copyWith(color: c.muted)),
+            Text(subject, style: type.secondary.copyWith(color: c.muted)),
           if (phone != null && pc != null) ...[
             Text(
               '${l10n.syncKeepPhone}: $phone',
@@ -423,14 +365,11 @@ class _ConflictCard extends StatelessWidget {
     );
   }
 
-  static String _field(AppLocalizations l10n, String field) => switch (field) {
-    'quoteSymbol' => l10n.syncFieldQuoteSymbol,
-    'exposure' => l10n.syncFieldExposure,
-    'ter' => l10n.syncFieldTer,
-    'hedgedToBase' => l10n.syncFieldHedged,
-    'thesis' => l10n.syncFieldThesis,
-    _ => field,
-  };
+  static String _field(AppLocalizations l10n, String field) =>
+      switch (DetailField.values.asNameMap()[field]) {
+        final known? => detailFieldLabel(l10n, known),
+        null => field,
+      };
 }
 
 class _Notice extends StatelessWidget {

@@ -37,6 +37,23 @@ class PairingLocalDataSource {
   Future<void> write(Map<String, Object?> pairings) =>
       _guard(() => _storage.write(key: key, value: jsonEncode(pairings)));
 
+  static String detailKey(String sha256) => 'syncDetail:$sha256';
+
+  Future<Map<String, Object?>?> readDetail(String sha256) => _guard(
+    () async => switch (await _storage.read(key: detailKey(sha256))) {
+      final text? => _object(text),
+      null => null,
+    },
+  );
+
+  Future<void> writeDetail(String sha256, Map<String, Object?> detail) =>
+      _guard(
+        () => _storage.write(key: detailKey(sha256), value: jsonEncode(detail)),
+      );
+
+  Future<void> deleteDetail(String sha256) =>
+      _guard(() => _storage.delete(key: detailKey(sha256)));
+
   Map<String, Object?>? _object(String text) => switch (jsonDecode(text)) {
     final Map<String, Object?> json => json,
     _ => null,

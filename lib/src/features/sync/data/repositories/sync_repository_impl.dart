@@ -15,6 +15,7 @@ import 'package:quoin/src/features/sync/data/models/pairing_model.dart';
 import 'package:quoin/src/features/sync/domain/entities/exchange_import.dart';
 import 'package:quoin/src/features/sync/domain/entities/pairing.dart';
 import 'package:quoin/src/features/sync/domain/entities/pc_state.dart';
+import 'package:quoin/src/features/sync/domain/entities/sync_outcome.dart';
 import 'package:quoin/src/features/sync/domain/repositories/sync_repository.dart';
 
 class SyncRepositoryImpl implements SyncRepository {
@@ -44,6 +45,18 @@ class SyncRepositoryImpl implements SyncRepository {
   @override
   Future<Result<void>> savePairings(Pairings pairings) =>
       _run(() => _pairings.write(pairings.toJson()));
+
+  @override
+  Future<Result<LastSync?>> lastSync(String sha256) =>
+      _run(() async => lastSyncFromJson(await _pairings.readDetail(sha256)));
+
+  @override
+  Future<Result<void>> saveLastSync(String sha256, LastSync last) =>
+      _run(() => _pairings.writeDetail(sha256, last.toJson()));
+
+  @override
+  Future<Result<void>> dropLastSync(String sha256) =>
+      _run(() => _pairings.deleteDetail(sha256));
 
   @override
   Future<Result<String>> claim() async {

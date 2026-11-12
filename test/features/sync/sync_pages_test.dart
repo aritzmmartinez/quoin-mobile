@@ -166,7 +166,9 @@ void main() {
       'Móvil de prueba',
     );
     expect(find.text('Del PC a este móvil'.toUpperCase()), findsOneWidget);
-    expect(find.text('1 instrumento nuevo o cambiado'), findsNWidgets(2));
+    expect(find.text('Instrumentos nuevos'), findsNWidgets(2));
+    expect(find.text('PC Fund'), findsOneWidget);
+    expect(find.text('Phone Fund'), findsOneWidget);
     expect(pc.log, isNot(contains('POST /v1/sync')));
 
     await tester.tap(find.text('Sincronizar'));
@@ -183,6 +185,13 @@ void main() {
     await settle(tester);
     expect(find.text('Test PC'), findsOneWidget);
     expect(find.textContaining('Última: '), findsOneWidget);
+    expect(find.textContaining('· 2 instrumentos'), findsOneWidget);
+
+    await openRow(tester, 'Test PC');
+    expect(find.text('Última sincronización'.toUpperCase()), findsOneWidget);
+    expect(find.text('PC Fund'), findsOneWidget);
+    expect(find.text('Phone Fund'), findsOneWidget);
+    expect(find.textContaining('XX00TEST'), findsNothing);
   });
 
   testWidgets('says when prices are still pending on the PC', (tester) async {
@@ -248,6 +257,8 @@ void main() {
 
     await tapVisible(tester, find.text('Sincronizar ahora'));
     expect(find.text('TER'), findsOneWidget);
+    expect(find.text('PC Fund'), findsOneWidget);
+    expect(find.textContaining(pcFund), findsNothing);
     expect(find.text('Este móvil: 0.0020'), findsOneWidget);
     expect(find.text('PC: 0.0030'), findsOneWidget);
     final apply = find.widgetWithText(FilledButton, 'Aplicar y sincronizar');
@@ -259,6 +270,8 @@ void main() {
     await settle(tester);
 
     expect(find.text('Sincronizado'), findsOneWidget);
+    expect(find.text('PC Fund · TER → PC'), findsOneWidget);
+    expect(find.textContaining(pcFund), findsNothing);
     final settled = await (db.select(
       db.instrument,
     )..where((i) => i.id.equals(pcFund))).getSingle();

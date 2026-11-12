@@ -1,4 +1,7 @@
+import 'package:quoin_core/quoin_core.dart' show SyncDetail;
+
 import 'package:quoin/src/features/sync/domain/entities/pairing.dart';
+import 'package:quoin/src/features/sync/domain/entities/sync_outcome.dart';
 
 extension PairingModel on Pairing {
   Map<String, Object?> toJson() => {
@@ -61,3 +64,20 @@ Pairings pairingsFromJson(Map<String, Object?> json) {
     pricesFrom: pcs.any((p) => p.sha256 == from && !p.shared) ? from : null,
   );
 }
+
+extension LastSyncModel on LastSync {
+  Map<String, Object?> toJson() => {
+    'at': at.toUtc().toIso8601String(),
+    'toPhone': toPhone.toJson(),
+    'toPc': toPc.toJson(),
+  };
+}
+
+LastSync? lastSyncFromJson(Map<String, Object?>? json) => switch (json) {
+  {'at': final String at} when DateTime.tryParse(at) != null => LastSync(
+    at: DateTime.parse(at),
+    toPhone: SyncDetail.fromJson(json['toPhone']),
+    toPc: SyncDetail.fromJson(json['toPc']),
+  ),
+  _ => null,
+};

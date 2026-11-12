@@ -87,11 +87,15 @@ class PcIdentity {
     final pc = pairings.of(sha256);
     if (pc == null) return const Err(NotPairedFailure());
     final mine = pc.copy(pcDeviceId: question.deviceId);
-    return _repository.savePairings(
+    final saved = await _repository.savePairings(
       samePc
           ? pairings.without(question.other.sha256).put(mine)
           : pairings.put(mine.copy(shared: true)),
     );
+    if (saved case Ok() when samePc) {
+      return _repository.dropLastSync(question.other.sha256);
+    }
+    return saved;
   }
 
   Future<Result<Identity>> _settle(

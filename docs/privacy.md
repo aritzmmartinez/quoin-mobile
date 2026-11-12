@@ -72,7 +72,10 @@ in the background sync when the app opens.
 
 On the phone each pairing (the PC's address and certificate pin, the device
 token, the PC's name and sync identity) is kept in Android's encrypted storage
-(`flutter_secure_storage`, its key in the Android Keystore).
+(`flutter_secure_storage`, its key in the Android Keystore). So is what the
+last sync with each PC wrote on each side, by name and count (instruments,
+targets, fund compositions, movements by type), never amounts; it goes when
+the PC is unpaired or replaced, and never leaves the phone.
 
 ## The camera
 
