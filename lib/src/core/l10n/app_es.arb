@@ -701,8 +701,24 @@
   "syncUnpairBody": "Este móvil dejará de sincronizar con este PC y borrará su clave; la cartera se queda en el móvil. El PC seguirá viendo este móvil como vinculado: revócalo también en Ajustes → Dispositivos del PC.",
   "syncCancel": "Cancelar",
   "syncUnreachable": "No encuentro tu Quoin",
-  "syncUnreachableHint": "El móvil no llega a tu PC. Comprueba que el móvil está conectado a la misma Wi‑Fi que el PC (no a los datos móviles), que el PC está encendido con Quoin abierto y que el cortafuegos de Windows permite la conexión. Si el PC ha cambiado de dirección, vuelve a escanear el código.",
+  "syncUnreachableHint": "El móvil no llega a tu PC. Comprueba que el móvil está conectado a la misma Wi‑Fi que el PC (no a los datos móviles), que el PC está encendido con Quoin abierto y que el cortafuegos de Windows permite la conexión. Si el PC ha cambiado de dirección, búscalo en la red o vuelve a escanear su código.",
   "syncRescan": "Volver a escanear",
+  "syncSearch": "Buscar en la red",
+  "syncSearching": "Buscando en la red…",
+  "syncSearchingPc": "Buscando {pc} en la red…",
+  "@syncSearchingPc": {
+    "placeholders": {
+      "pc": {
+        "type": "String"
+      }
+    }
+  },
+  "syncNotFoundOnNetwork": "Tu PC no está en esta red",
+  "syncNotFoundOnNetworkHint": "He buscado tu PC en la Wi‑Fi del móvil y no responde. La búsqueda no funciona si el PC está en otra subred ni en redes de invitados aisladas: en ese caso, vuelve a escanear su código. Comprueba también que el PC está encendido con Quoin abierto.",
+  "syncNoLocalNetwork": "El móvil no está en una red local",
+  "syncNoLocalNetworkHint": "Conecta el móvil a la misma Wi‑Fi que el PC (no a los datos móviles) y vuelve a intentarlo.",
+  "syncLocalNetworkDenied": "Quoin no tiene acceso a la red local",
+  "syncLocalNetworkDeniedHint": "Android no deja a Quoin conectarse a equipos de tu red. Permite el acceso a la red local en los ajustes de la app y vuelve a intentarlo.",
   "syncCertificateChanged": "El certificado de tu PC ha cambiado",
   "syncCertificateHint": "El equipo que responde en la dirección de tu PC no se identifica como el que vinculaste: puede que Quoin se haya reinstalado o que otro equipo use esa dirección. Por seguridad no se ha enviado nada. Vincula de nuevo desde Ajustes → Dispositivos en tu PC.",
   "syncRevoked": "Tu PC ya no acepta este móvil",

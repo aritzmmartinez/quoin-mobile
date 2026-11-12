@@ -60,8 +60,11 @@ class UnsupportedResidenceException implements Exception {
 
 /// The PC answered over TLS with a certificate whose SHA-256 is not the one
 /// paired with. Nothing was sent: the pin is checked during the handshake.
+/// [presented] is the SHA-256 of the certificate that answered.
 class PinMismatchException implements Exception {
-  const PinMismatchException();
+  const PinMismatchException([this.presented]);
+
+  final String? presented;
 
   @override
   String toString() => 'PinMismatchException';
@@ -88,4 +91,21 @@ class SyncHttpException implements Exception {
 
   @override
   String toString() => 'SyncHttpException ($status): $code';
+}
+
+/// The phone has no private IPv4 address to look for a PC from.
+class NoLocalNetworkException implements Exception {
+  const NoLocalNetworkException();
+
+  @override
+  String toString() => 'NoLocalNetworkException';
+}
+
+/// The system refused a connection on the local network (EPERM or EACCES),
+/// as Android does without the local network permission.
+class LocalNetworkDeniedException implements Exception {
+  const LocalNetworkDeniedException();
+
+  @override
+  String toString() => 'LocalNetworkDeniedException';
 }

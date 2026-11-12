@@ -13,15 +13,27 @@ SettingsRow pcRow(
   required Pairing pairing,
   required String? twin,
   required bool running,
+  required bool searching,
   required Failure? failure,
   required VoidCallback onTap,
 }) {
   final l10n = AppLocalizations.of(context);
   final shown = pairing.shared ? SharedIdentityFailure(twin ?? '') : failure;
+  if (searching && !pairing.shared) {
+    return SettingsRow(
+      icon: QuoinIcons.search,
+      label: pairing.pcName,
+      value: l10n.syncSearching,
+      onTap: onTap,
+    );
+  }
   return SettingsRow(
     icon: switch (shown) {
       null => QuoinIcons.computer,
-      PcUnreachableFailure() => QuoinIcons.offline,
+      PcUnreachableFailure() ||
+      PcNotFoundOnNetworkFailure() ||
+      NoLocalNetworkFailure() ||
+      LocalNetworkDeniedFailure() => QuoinIcons.offline,
       CertificateMismatchFailure() ||
       PairingRevokedFailure() => QuoinIcons.certificate,
       _ => QuoinIcons.alert,

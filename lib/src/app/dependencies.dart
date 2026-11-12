@@ -22,6 +22,7 @@ import 'package:quoin/src/features/settings/data/repositories/settings_repositor
 import 'package:quoin/src/features/settings/presentation/providers/settings_providers.dart';
 import 'package:quoin/src/features/sync/data/datasources/device_identity_datasource.dart';
 import 'package:quoin/src/features/sync/data/datasources/pairing_local_datasource.dart';
+import 'package:quoin/src/features/sync/data/datasources/pc_finder_datasource.dart';
 import 'package:quoin/src/features/sync/data/datasources/prices_local_datasource.dart';
 import 'package:quoin/src/features/sync/data/datasources/sync_local_datasource.dart';
 import 'package:quoin/src/features/sync/data/datasources/sync_remote_datasource.dart';
@@ -66,6 +67,7 @@ List<Override> dependencies(
       local: ref.watch(syncLocalDataSourceProvider),
       identity: ref.watch(deviceIdentityDataSourceProvider),
       prices: ref.watch(pricesLocalDataSourceProvider),
+      finder: ref.watch(pcFinderDataSourceProvider),
     ),
   ),
   ensureRatesFromProvider.overrideWith(

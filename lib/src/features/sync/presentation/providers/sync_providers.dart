@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:quoin_core/quoin_core.dart' show Resolutions;
 
@@ -74,6 +75,7 @@ final class SyncStatus {
     this.failures = const {},
     this.finishing = false,
     this.followUp,
+    this.searching = const {},
   });
 
   final bool running;
@@ -82,14 +84,21 @@ final class SyncStatus {
   final bool finishing;
   final SyncFollowUp? followUp;
 
-  SyncStatus copy({bool? running, bool? finishing, SyncFollowUp? followUp}) =>
-      SyncStatus(
-        running: running ?? this.running,
-        failure: failure,
-        failures: failures,
-        finishing: finishing ?? this.finishing,
-        followUp: followUp ?? this.followUp,
-      );
+  final Set<String> searching;
+
+  SyncStatus copy({
+    bool? running,
+    bool? finishing,
+    SyncFollowUp? followUp,
+    Set<String>? searching,
+  }) => SyncStatus(
+    running: running ?? this.running,
+    failure: failure,
+    failures: failures,
+    finishing: finishing ?? this.finishing,
+    followUp: followUp ?? this.followUp,
+    searching: searching ?? this.searching,
+  );
 }
 
 final syncControllerProvider = NotifierProvider<SyncController, SyncStatus>(
@@ -98,6 +107,7 @@ final syncControllerProvider = NotifierProvider<SyncController, SyncStatus>(
 
 class SyncController extends Notifier<SyncStatus> {
   Future<Result<SyncPass>>? _running;
+  var _runningSearch = PcSearch.off;
   Future<SyncFollowUp>? _finishing;
   Future<SyncFollowUp>? get finishing => _finishing;
 
@@ -108,10 +118,15 @@ class SyncController extends Notifier<SyncStatus> {
     Map<String, Resolutions> resolutions = const {},
     Set<String> confirm = const {},
     bool onlyConfirmed = false,
+    PcSearch search = PcSearch.off,
   }) async {
     while (true) {
       if (_running case final running?) {
-        if (resolutions.isEmpty && confirm.isEmpty) return running;
+        if (resolutions.isEmpty &&
+            confirm.isEmpty &&
+            _runningSearch.index >= search.index) {
+          return running;
+        }
         await running;
       } else if (_finishing case final finishing?) {
         await finishing;
@@ -119,8 +134,9 @@ class SyncController extends Notifier<SyncStatus> {
         break;
       }
     }
-    final run = _pass(resolutions, confirm, onlyConfirmed);
+    final run = _pass(resolutions, confirm, onlyConfirmed, search);
     _running = run;
+    _runningSearch = search;
     try {
       return await run;
     } finally {
@@ -132,12 +148,21 @@ class SyncController extends Notifier<SyncStatus> {
     Map<String, Resolutions> resolutions,
     Set<String> confirm,
     bool onlyConfirmed,
+    PcSearch search,
   ) async {
     state = state.copy(running: true);
+    if (kDebugMode) debugPrint('QuoinSync: pass, search ${search.name}');
     final result = await ref.read(syncNowProvider)(
       resolutions: resolutions,
       confirm: confirm,
       onlyConfirmed: onlyConfirmed,
+      search: search,
+      onSearch: (sha256s) {
+        if (kDebugMode) {
+          debugPrint('QuoinSync: searching for ${sha256s.length} PC(s)');
+        }
+        if (ref.mounted) state = state.copy(searching: sha256s);
+      },
     );
     if (!ref.mounted) return result;
     state = switch (result) {

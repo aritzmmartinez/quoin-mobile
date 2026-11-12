@@ -53,6 +53,23 @@ and the phone carries each PC's changes to the others.
   accepts it. Each request carries the device token the PC issued; revoking
   the phone on the PC ends it.
 
+**Finding a PC that changed address.** When a PC does not answer at its saved
+address and the user pulls to refresh, taps «Sync now» or «Search the
+network» on that PC, the phone looks for it on its own local network. Never
+in the background sync when the app opens.
+
+- **What:** a TLS handshake and, only to a server presenting the
+  certificate of a PC already paired, `GET /v1/hello`, which carries no token
+  and no portfolio data. With any other certificate the handshake is
+  abandoned and nothing of the request is sent.
+- **Where:** the addresses of the phone's own /24 that holds the PC's saved
+  address (up to 253 hosts, on the PC's saved port), only on the local
+  network; never another subnet, mobile data or a VPN.
+- **When:** at most once per pass; a PC not found is not looked for again by
+  a pull while the phone's addresses stay the same, for up to 30 minutes.
+- **What is kept:** the new address replaces the old one in that PC's
+  pairing. Which PCs were missed lives in memory only.
+
 On the phone each pairing (the PC's address and certificate pin, the device
 token, the PC's name and sync identity) is kept in Android's encrypted storage
 (`flutter_secure_storage`, its key in the Android Keystore).
@@ -84,6 +101,10 @@ The rules are `android/app/src/main/res/xml/data_extraction_rules.xml`
 
 - `INTERNET`: the ECB and the PC.
 - `CAMERA`, asked at run time: the pairing QR.
+
+Searching the local network needs no other permission on the Android versions
+the app targets. Where the system denies the local network, the search stops
+at the first refused connection and says so.
 
 The scanner's library also declares `VIBRATE` and `FLASHLIGHT`; the manifest
 removes both, since the app uses neither.

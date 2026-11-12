@@ -7,29 +7,37 @@ import 'package:http/io_client.dart';
 import 'package:quoin/src/core/error/exceptions.dart';
 
 class PinnedClient extends http.BaseClient {
-  PinnedClient(this.pin, {Duration connectTimeout = defaultConnectTimeout}) {
+  PinnedClient(String pin, {Duration connectTimeout = defaultConnectTimeout})
+    : this.anyOf({pin}, connectTimeout: connectTimeout);
+
+  PinnedClient.anyOf(
+    this.pins, {
+    Duration connectTimeout = defaultConnectTimeout,
+  }) {
     final io = HttpClient(context: SecurityContext(withTrustedRoots: false))
       ..connectionTimeout = connectTimeout
       ..badCertificateCallback = (cert, host, port) {
-        final ok = sha256.convert(cert.der).toString() == pin;
-        if (!ok) _mismatch = true;
-        return ok;
+        final sha = sha256.convert(cert.der).toString();
+        presented = sha;
+        return pins.contains(sha);
       };
     _inner = IOClient(io);
   }
 
   static const defaultConnectTimeout = Duration(seconds: 5);
 
-  final String pin;
+  final Set<String> pins;
   late final IOClient _inner;
-  var _mismatch = false;
+  String? presented;
 
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
     try {
       return await _inner.send(request);
     } on Exception {
-      if (_mismatch) throw const PinMismatchException();
+      if (presented case final sha? when !pins.contains(sha)) {
+        throw PinMismatchException(sha);
+      }
       rethrow;
     }
   }

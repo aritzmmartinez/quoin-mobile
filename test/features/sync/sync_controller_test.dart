@@ -1,19 +1,24 @@
 import 'dart:async';
 
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:quoin/src/core/error/result.dart';
 import 'package:quoin/src/features/sync/domain/entities/sync_outcome.dart';
 import 'package:quoin/src/core/error/failures.dart';
+import 'package:quoin/src/core/l10n/gen/app_localizations.dart';
 import 'package:quoin/src/features/portfolio/presentation/providers/portfolio_providers.dart';
 import 'package:quoin/src/features/sync/domain/entities/pairing.dart';
 import 'package:quoin/src/features/sync/domain/usecases/finish_sync.dart';
 import 'package:quoin/src/features/sync/domain/usecases/sync_now.dart';
 import 'package:quoin/src/features/sync/presentation/providers/sync_providers.dart';
+import 'package:quoin/src/features/sync/presentation/widgets/sync_actions.dart';
 import 'package:quoin_core/quoin_core.dart';
 
 class _Held implements SyncNow {
   final asked = <Set<String>>[];
+  final searches = <PcSearch>[];
+  final onSearch = <void Function(Set<String>)?>[];
   final ends = <Completer<Result<SyncPass>>>[];
 
   @override
@@ -21,8 +26,12 @@ class _Held implements SyncNow {
     Map<String, Resolutions> resolutions = const {},
     Set<String> confirm = const {},
     bool onlyConfirmed = false,
+    PcSearch search = PcSearch.off,
+    void Function(Set<String>)? onSearch,
   }) {
     asked.add(confirm);
+    searches.add(search);
+    this.onSearch.add(onSearch);
     final end = Completer<Result<SyncPass>>();
     ends.add(end);
     return end.future;
@@ -159,6 +168,87 @@ void main() {
       afterPass + 1,
       reason: 'every valuation reloads once prices and rates are in',
     );
+  });
+
+  test('a pull during the silent sync on opening waits for it, then runs '
+      'its own pass that may search', () async {
+    final opening = controller().sync(onlyConfirmed: true);
+    final pulling = controller().sync(search: PcSearch.held);
+    await pumpEventQueue();
+    expect(held.searches, [PcSearch.off]);
+
+    held.ends.first.complete(const Ok(SyncPass(pcs: [])));
+    await opening;
+    await pumpEventQueue();
+    expect(held.searches, [PcSearch.off, PcSearch.held]);
+
+    final asking = controller().sync(search: PcSearch.held);
+    await pumpEventQueue();
+    expect(held.searches, hasLength(2), reason: 'a pull joins a pull');
+
+    held.ends.last.complete(const Ok(SyncPass(pcs: [])));
+    expect(await pulling, same(await asking));
+  });
+
+  test('the status says which PCs a search looks for, until it ends', () async {
+    final pulling = controller().sync(search: PcSearch.always);
+    await pumpEventQueue();
+
+    held.onSearch.single!({'ab'});
+    expect(container.read(syncControllerProvider).searching, {'ab'});
+    held.onSearch.single!(const {});
+    expect(container.read(syncControllerProvider).searching, isEmpty);
+
+    held.onSearch.single!({'ab'});
+    held.ends.single.complete(const Ok(SyncPass(pcs: [])));
+    await pulling;
+    expect(container.read(syncControllerProvider).searching, isEmpty);
+  });
+
+  testWidgets('the sync on opening never searches; a pull does, held', (
+    tester,
+  ) async {
+    final scope = ProviderContainer(
+      overrides: [
+        syncNowProvider.overrideWithValue(held),
+        finishSyncProvider.overrideWithValue(finish),
+        ledgerProvider.overrideWith((ref) => const Err(StorageFailure())),
+        pairingsProvider.overrideWith(
+          (ref) async => Ok(Pairings(pcs: [_synced.pcs.single.pairing])),
+        ),
+      ],
+    );
+    addTearDown(scope.dispose);
+    late WidgetRef widgetRef;
+    late BuildContext widgetContext;
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: scope,
+        child: Localizations(
+          locale: const Locale('es'),
+          delegates: AppLocalizations.localizationsDelegates,
+          child: Consumer(
+            builder: (context, ref, _) {
+              widgetRef = ref;
+              widgetContext = context;
+              return const SizedBox();
+            },
+          ),
+        ),
+      ),
+    );
+
+    final opening = syncOnOpen(widgetRef);
+    await tester.pump();
+    expect(held.searches, [PcSearch.off]);
+    held.ends.single.complete(const Ok(SyncPass(pcs: [])));
+    await opening;
+
+    final pulling = refreshFromPc(widgetContext, widgetRef);
+    await tester.pump();
+    expect(held.searches, [PcSearch.off, PcSearch.held]);
+    held.ends.last.complete(const Ok(SyncPass(pcs: [])));
+    await pulling;
   });
 
   test('a new pass waits for the last one to finish its follow-up', () async {

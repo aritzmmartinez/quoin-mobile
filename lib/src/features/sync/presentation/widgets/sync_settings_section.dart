@@ -9,8 +9,10 @@ import 'package:quoin/src/core/l10n/gen/app_localizations.dart';
 import 'package:quoin/src/core/theme/quoin_icons.dart';
 import 'package:quoin/src/core/theme/quoin_type.dart';
 import 'package:quoin/src/features/sync/domain/entities/pairing.dart';
+import 'package:quoin/src/features/sync/domain/usecases/sync_now.dart';
 import 'package:quoin/src/features/sync/presentation/providers/sync_providers.dart';
 import 'package:quoin/src/features/sync/presentation/widgets/pc_row.dart';
+import 'package:quoin/src/features/sync/presentation/widgets/sync_actions.dart';
 import 'package:quoin/src/features/sync/presentation/widgets/sync_failure_text.dart';
 import 'package:quoin/src/ui/molecules/settings_row.dart';
 import 'package:quoin/src/ui/organisms/settings_section.dart';
@@ -38,6 +40,7 @@ class SyncSettingsSection extends ConsumerWidget {
             pairing: pc,
             twin: pairings.twinOf(pc)?.pcName,
             running: status.running,
+            searching: status.searching.contains(pc.sha256),
             failure: status.failures[pc.sha256],
             onTap: () => _actions(
               context,
@@ -112,7 +115,17 @@ class SyncSettingsSection extends ConsumerWidget {
                     label: l10n.syncCheckAgain,
                     onTap: () => pick(() => _checkAgain(context, ref, pc)),
                   ),
-                if (failure case PcUnreachableFailure())
+                if (failure != null && searchable(failure))
+                  SettingsRow(
+                    icon: QuoinIcons.search,
+                    label: l10n.syncSearch,
+                    onTap: () => pick(
+                      () =>
+                          refreshFromPc(context, ref, search: PcSearch.always),
+                    ),
+                  ),
+                if (failure
+                    case PcUnreachableFailure() || PcNotFoundOnNetworkFailure())
                   SettingsRow(
                     icon: QuoinIcons.offline,
                     label: l10n.syncRescan,

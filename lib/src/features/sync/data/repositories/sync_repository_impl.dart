@@ -7,6 +7,7 @@ import 'package:quoin/src/core/error/failures.dart';
 import 'package:quoin/src/core/error/result.dart';
 import 'package:quoin/src/features/sync/data/datasources/device_identity_datasource.dart';
 import 'package:quoin/src/features/sync/data/datasources/pairing_local_datasource.dart';
+import 'package:quoin/src/features/sync/data/datasources/pc_finder_datasource.dart';
 import 'package:quoin/src/features/sync/data/datasources/prices_local_datasource.dart';
 import 'package:quoin/src/features/sync/data/datasources/sync_local_datasource.dart';
 import 'package:quoin/src/features/sync/data/datasources/sync_remote_datasource.dart';
@@ -23,14 +24,17 @@ class SyncRepositoryImpl implements SyncRepository {
     required this._local,
     required this._identity,
     required this._prices,
+    PcFinderDataSource? finder,
     DateTime Function()? now,
-  }) : _now = now ?? DateTime.now;
+  }) : _finder = finder ?? PcFinderDataSource(),
+       _now = now ?? DateTime.now;
 
   final PairingLocalDataSource _pairings;
   final SyncRemoteDataSource _remote;
   final SyncLocalDataSource _local;
   final DeviceIdentityDataSource _identity;
   final PricesLocalDataSource _prices;
+  final PcFinderDataSource _finder;
   final DateTime Function() _now;
 
   @override
@@ -53,6 +57,12 @@ class SyncRepositoryImpl implements SyncRepository {
   @override
   Future<Result<List<int>>> hello(SyncEndpoint endpoint) =>
       _run(() => _remote.hello(endpoint));
+
+  @override
+  Future<Result<Map<String, FoundPc>>> find(
+    List<SyncEndpoint> lost, {
+    required bool held,
+  }) => _run(() => _finder.find(lost, held: held));
 
   @override
   Future<Result<String>> pair(
@@ -145,8 +155,12 @@ class SyncRepositoryImpl implements SyncRepository {
   Future<Result<T>> _run<T>(Future<T> Function() body) async {
     try {
       return Ok(await body());
-    } on PinMismatchException {
-      return const Err(CertificateMismatchFailure());
+    } on PinMismatchException catch (e) {
+      return Err(CertificateMismatchFailure(e.presented));
+    } on NoLocalNetworkException {
+      return const Err(NoLocalNetworkFailure());
+    } on LocalNetworkDeniedException {
+      return const Err(LocalNetworkDeniedFailure());
     } on NetworkException {
       return const Err(PcUnreachableFailure());
     } on SyncHttpException catch (e) {

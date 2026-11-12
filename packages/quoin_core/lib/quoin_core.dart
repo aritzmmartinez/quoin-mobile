@@ -41,6 +41,7 @@ export 'src/sync/merge.dart';
 export 'src/sync/pairing.dart';
 export 'src/sync/prices.dart';
 export 'src/sync/sample.dart';
+export 'src/sync/scan.dart';
 export 'src/tax/config.dart';
 export 'src/tax/deferred_loss.dart';
 export 'src/tax/fifo.dart';

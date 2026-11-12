@@ -72,6 +72,15 @@ final class SyncPass {
       if (pc.waits) pc,
   ];
 
+  Failure get unanswered =>
+      [
+        for (final pc in pcs)
+          if (pc.result case Err(:final failure)
+              when failure is! PcUnreachableFailure)
+            failure,
+      ].firstOrNull ??
+      const PcUnreachableFailure();
+
   bool get noneAnswered {
     final tried = [
       for (final pc in pcs)
@@ -80,7 +89,13 @@ final class SyncPass {
     return tried.isNotEmpty &&
         tried.every(
           (pc) => switch (pc.result) {
-            Err(failure: PcUnreachableFailure()) => true,
+            Err(
+              failure: PcUnreachableFailure() ||
+                  PcNotFoundOnNetworkFailure() ||
+                  NoLocalNetworkFailure() ||
+                  LocalNetworkDeniedFailure(),
+            ) =>
+              true,
             _ => false,
           },
         );

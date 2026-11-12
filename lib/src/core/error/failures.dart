@@ -99,8 +99,28 @@ final class PcUnreachableFailure extends SyncFailure {
 }
 
 /// The PC showed another certificate: only a new pairing trusts it.
+/// [presented] is that certificate's SHA-256, when known.
 final class CertificateMismatchFailure extends SyncFailure {
-  const CertificateMismatchFailure();
+  const CertificateMismatchFailure([this.presented]);
+
+  final String? presented;
+}
+
+/// The PC did not answer at its address and a search of the phone's /24 did
+/// not find its certificate either: it is off, on another subnet or on an
+/// isolated guest network, and only its QR brings it back.
+final class PcNotFoundOnNetworkFailure extends SyncFailure {
+  const PcNotFoundOnNetworkFailure();
+}
+
+/// The phone has no private IPv4 address, so there is no network to search.
+final class NoLocalNetworkFailure extends SyncFailure {
+  const NoLocalNetworkFailure();
+}
+
+/// The system denied the app the local network.
+final class LocalNetworkDeniedFailure extends SyncFailure {
+  const LocalNetworkDeniedFailure();
 }
 
 /// The PC no longer accepts this phone (revoked, or a token it does not

@@ -10,6 +10,10 @@ abstract interface class SyncRepository {
   Future<Result<void>> savePairings(Pairings pairings);
   Future<Result<String>> claim();
   Future<Result<List<int>>> hello(SyncEndpoint endpoint);
+  Future<Result<Map<String, FoundPc>>> find(
+    List<SyncEndpoint> lost, {
+    required bool held,
+  });
   Future<Result<String>> pair(
     PairingQr qr, {
     required String deviceId,

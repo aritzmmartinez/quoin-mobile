@@ -5,6 +5,9 @@ String syncFailureText(AppLocalizations l10n, Failure failure) =>
     switch (failure) {
       NotPairedFailure() => l10n.syncFailNotPaired,
       PcUnreachableFailure() => l10n.syncUnreachable,
+      PcNotFoundOnNetworkFailure() => l10n.syncNotFoundOnNetwork,
+      NoLocalNetworkFailure() => l10n.syncNoLocalNetwork,
+      LocalNetworkDeniedFailure() => l10n.syncLocalNetworkDenied,
       CertificateMismatchFailure() => l10n.syncCertificateChanged,
       PairingRevokedFailure() => l10n.syncRevoked,
       InvalidQrFailure() => l10n.syncFailInvalidQr,
@@ -30,6 +33,9 @@ String syncFailureText(AppLocalizations l10n, Failure failure) =>
 String syncFailureDetail(AppLocalizations l10n, Failure failure) {
   final help = switch (failure) {
     PcUnreachableFailure() => l10n.syncUnreachableHint,
+    PcNotFoundOnNetworkFailure() => l10n.syncNotFoundOnNetworkHint,
+    NoLocalNetworkFailure() => l10n.syncNoLocalNetworkHint,
+    LocalNetworkDeniedFailure() => l10n.syncLocalNetworkDeniedHint,
     CertificateMismatchFailure() => l10n.syncCertificateHint,
     PairingRevokedFailure() => l10n.syncRevokedHint,
     SharedIdentityFailure(:final otherPcName) => l10n.syncSharedIdentityHint(
@@ -41,10 +47,10 @@ String syncFailureDetail(AppLocalizations l10n, Failure failure) {
   return help == null ? title : '$title\n\n$help';
 }
 
-bool needsPairing(Failure failure) => switch (failure) {
+bool searchable(Failure failure) => switch (failure) {
   PcUnreachableFailure() ||
-  CertificateMismatchFailure() ||
-  PairingRevokedFailure() ||
-  NotPairedFailure() => true,
+  PcNotFoundOnNetworkFailure() ||
+  NoLocalNetworkFailure() ||
+  LocalNetworkDeniedFailure() => true,
   _ => false,
 };

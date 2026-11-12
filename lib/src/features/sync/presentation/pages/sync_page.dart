@@ -13,6 +13,7 @@ import 'package:quoin/src/core/theme/quoin_type.dart';
 import 'package:quoin/src/features/portfolio/presentation/widgets/portfolio_view.dart';
 import 'package:quoin/src/features/sync/domain/entities/effect_outcome.dart';
 import 'package:quoin/src/features/sync/domain/entities/sync_outcome.dart';
+import 'package:quoin/src/features/sync/domain/usecases/sync_now.dart';
 import 'package:quoin/src/features/sync/presentation/providers/sync_providers.dart';
 import 'package:quoin/src/features/sync/presentation/widgets/sync_failure_text.dart';
 import 'package:quoin/src/ui/atoms/quoin_card.dart';
@@ -32,6 +33,7 @@ class _SyncPageState extends ConsumerState<SyncPage> {
   final Map<String, Map<String, Resolution>> _choices = {};
   final Set<String> _confirmed = {};
   var _waitingAtMost = 0;
+  var _searched = false;
 
   @override
   void initState() {
@@ -49,7 +51,9 @@ class _SyncPageState extends ConsumerState<SyncPage> {
               if (value.isNotEmpty) key: Map.of(value),
           },
           confirm: Set.of(_confirmed),
+          search: _searched ? PcSearch.held : PcSearch.always,
         );
+    _searched = true;
     if (!mounted) return;
     setState(() {
       _result = result;
@@ -101,7 +105,10 @@ class _SyncPageState extends ConsumerState<SyncPage> {
             children: [
               const CircularProgressIndicator(),
               Text(
-                l10n.syncRunning(_names()),
+                switch (_names(ref.watch(syncControllerProvider).searching)) {
+                  '' => l10n.syncRunning(_names(null)),
+                  final lost => l10n.syncSearchingPc(lost),
+                },
                 textAlign: TextAlign.center,
                 style: QuoinType.of(context).row,
               ),
@@ -112,7 +119,7 @@ class _SyncPageState extends ConsumerState<SyncPage> {
       Err(:final failure) => _failed(context, failure),
       Ok(value: final pass) when pass.noneAnswered => _failed(
         context,
-        const PcUnreachableFailure(),
+        pass.unanswered,
       ),
       Ok(value: final pass) => switch (pass.waiting) {
         [final pc, ...] => QuoinPage.list(
@@ -137,13 +144,15 @@ class _SyncPageState extends ConsumerState<SyncPage> {
     };
   }
 
-  String _names() => switch (ref.read(pairingsProvider).value) {
-    Ok(:final value) => [
-      for (final pc in value.pcs)
-        if (!pc.shared) pc.pcName,
-    ].join(', '),
-    _ => '',
-  };
+  /// The names of the PCs of [only], or of every PC that syncs.
+  String _names(Set<String>? only) =>
+      switch (ref.read(pairingsProvider).value) {
+        Ok(:final value) => [
+          for (final pc in value.pcs)
+            if (only?.contains(pc.sha256) ?? !pc.shared) pc.pcName,
+        ].join(', '),
+        _ => '',
+      };
 
   Widget _failed(BuildContext context, Failure failure) {
     final l10n = AppLocalizations.of(context);
@@ -152,12 +161,14 @@ class _SyncPageState extends ConsumerState<SyncPage> {
       body: EmptyState(
         message: syncFailureDetail(l10n, failure),
         actionLabel: switch (failure) {
-          PcUnreachableFailure() => l10n.syncRescan,
+          PcUnreachableFailure() ||
+          PcNotFoundOnNetworkFailure() => l10n.syncRescan,
           NotPairedFailure() => l10n.syncPair,
           _ => l10n.syncNow,
         },
         onAction: switch (failure) {
           PcUnreachableFailure() ||
+          PcNotFoundOnNetworkFailure() ||
           NotPairedFailure() => () => context.pushReplacement(Routes.pair),
           _ => _run,
         },
