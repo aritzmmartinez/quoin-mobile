@@ -13,7 +13,9 @@ import 'package:quoin/src/features/sync/domain/usecases/pc_identity.dart';
 /// One pass over every paired PC (`docs/sync-api.md` in Quoin):
 ///
 /// 1. claim this install's device id; stop if it fails;
-/// 2. `GET /v1/hello` to every PC at once, with a short wait;
+/// 2. `GET /v1/hello` to every PC at once, with a short wait; with [PcSearch],
+///    one sweep of the phone's /24 for those that did not answer, which
+///    takes the address where each one's certificate answers;
 /// 3. one after another, each PC that answered: `GET /v1/sync`, its
 ///    identity against the other PCs, the merge here in one transaction,
 ///    `POST /v1/sync` with `If-Match` (a 409 starts that PC again, once);
@@ -26,6 +28,9 @@ import 'package:quoin/src/features/sync/domain/usecases/pc_identity.dart';
 /// One PC's failure never stops the others. A PC's first sync only previews
 /// both directions until [call] is given its id in `confirm`; open conflicts
 /// write nothing on either side.
+/// Whether a pass looks for the PCs that do not answer at their address.
+enum PcSearch { off, held, always }
+
 class SyncNow {
   const SyncNow(this._repository, this._identity, {DateTime Function()? now})
     : _now = now ?? DateTime.now;
@@ -36,11 +41,14 @@ class SyncNow {
 
   /// [resolutions] and [confirm] are keyed by the PC's certificate SHA-256.
   /// With [onlyConfirmed], PCs not yet confirmed are left out (the sync on
-  /// opening the app never previews).
+  /// opening the app never previews). [onSearch] hears which PCs a search
+  /// looks for, and an empty set when it ends.
   Future<Result<SyncPass>> call({
     Map<String, Resolutions> resolutions = const {},
     Set<String> confirm = const {},
     bool onlyConfirmed = false,
+    PcSearch search = PcSearch.off,
+    void Function(Set<String> sha256s)? onSearch,
   }) async {
     final Pairings pairings;
     switch (await _repository.pairings()) {
@@ -74,9 +82,21 @@ class SyncNow {
         active.add(pc);
       }
     }
-    final hellos = await Future.wait([
-      for (final pc in active) _repository.hello(pc.endpoint),
-    ]);
+    final hellos = [
+      for (final (i, hello) in (await Future.wait([
+        for (final pc in active) _repository.hello(pc.endpoint),
+      ])).indexed)
+        switch (hello) {
+          Err(failure: CertificateMismatchFailure(:final presented?))
+              when presented != active[i].sha256 &&
+                  pairings.of(presented) != null =>
+            const Err<List<int>>(PcUnreachableFailure()),
+          _ => hello,
+        },
+    ];
+    if (search != PcSearch.off) {
+      await _search(active, hellos, search, onSearch);
+    }
 
     final synced = <Pairing>[];
     final effects = <Effect>[];
@@ -114,7 +134,29 @@ class SyncNow {
           phoneId,
         );
         effects.addAll(left);
-        if (again case Err()) results[pc.sha256] = again;
+        switch ((again, results[pc.sha256])) {
+          case (Err(), _):
+            results[pc.sha256] = again;
+          case (
+            Ok(value: final SyncDone later),
+            Ok(value: final SyncDone first),
+          ):
+            results[pc.sha256] = Ok(first.plus(later));
+          case _:
+            break;
+        }
+      }
+    }
+
+    final at = _now().toUtc();
+    for (final pc in synced) {
+      if (results[pc.sha256] case Ok(
+        value: SyncDone(:final toPhone, :final toPc),
+      )) {
+        await _repository.saveLastSync(
+          pc.sha256,
+          LastSync(at: at, toPhone: toPhone, toPc: toPc),
+        );
       }
     }
 
@@ -133,6 +175,67 @@ class SyncNow {
         phoneId: phoneId,
       ),
     );
+  }
+
+  Future<void> _search(
+    List<Pairing> active,
+    List<Result<List<int>>> hellos,
+    PcSearch search,
+    void Function(Set<String>)? onSearch,
+  ) async {
+    final lost = [
+      for (final (i, hello) in hellos.indexed)
+        if (hello case Err(failure: PcUnreachableFailure())) i,
+    ];
+    if (lost.isEmpty) return;
+    onSearch?.call({for (final i in lost) active[i].sha256});
+    final found = await _repository.find([
+      for (final i in lost) active[i].endpoint,
+    ], held: search == PcSearch.held);
+    onSearch?.call(const {});
+    switch (found) {
+      case Err(:final failure):
+        for (final i in lost) {
+          hellos[i] = Err(failure);
+        }
+      case Ok(value: final found):
+        final moved = <int>[];
+        for (final i in lost) {
+          final pc = active[i];
+          if (found[pc.sha256] case (:final host, :final versions)) {
+            active[i] = pc.copy(
+              endpoint: SyncEndpoint(
+                host: host,
+                port: pc.endpoint.port,
+                sha256: pc.sha256,
+              ),
+            );
+            hellos[i] = Ok(versions);
+            moved.add(i);
+          } else {
+            hellos[i] = const Err(PcNotFoundOnNetworkFailure());
+          }
+        }
+        if (moved.isEmpty) return;
+        final saved = switch (await _repository.pairings()) {
+          Ok(value: final now) => await _repository.savePairings(
+            moved.fold(
+              now,
+              (all, i) => all.put(
+                (all.of(active[i].sha256) ?? active[i]).copy(
+                  endpoint: active[i].endpoint,
+                ),
+              ),
+            ),
+          ),
+          Err(:final failure) => Err<void>(failure),
+        };
+        if (saved case Err(:final failure)) {
+          for (final i in moved) {
+            hellos[i] = Err(failure);
+          }
+        }
+    }
   }
 
   /// Prices come from the PC that served them last while it syncs; else from
@@ -202,7 +305,8 @@ class SyncNow {
           Ok(
             SyncConflicts(
               conflicts: imported.plan.conflicts,
-              setAside: imported.plan.setAside,
+              setAside: imported.detail.setAside,
+              instrumentNames: imported.instrumentNames,
             ),
           ),
           false,
@@ -217,17 +321,14 @@ class SyncNow {
         case Err(:final failure):
           return failed(failure);
       }
+      final toPc = syncDetail(
+        merge(pc.exchange, local, const {}),
+        pc.exchange,
+        local,
+      );
       if (preview) {
         return (
-          Ok(
-            SyncPreview(
-              toPhone: imported.counts,
-              toPc: planCounts(
-                merge(pc.exchange, local, const {}),
-                pc.exchange,
-              ),
-            ),
-          ),
+          Ok(SyncPreview(toPhone: imported.detail, toPc: toPc)),
           false,
           const <Effect>[],
         );
@@ -257,15 +358,7 @@ class SyncNow {
           return failed(failure);
       }
       return (
-        Ok(
-          SyncDone(
-            counts: imported.counts,
-            setAside: {
-              for (final row in imported.plan.setAside) row.key,
-              ...pushed.setAside,
-            }.toList()..sort(),
-          ),
-        ),
+        Ok(SyncDone(toPhone: imported.detail, toPc: toPc)),
         imported.status == ImportStatus.applied,
         imported.pendingEffects,
       );

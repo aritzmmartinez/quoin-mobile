@@ -289,8 +289,8 @@ void main() {
 
         final preview = ok(await syncOne()) as SyncPreview;
 
-        expect(preview.toPhone.newInstruments, 1);
-        expect(preview.toPc.newInstruments, 1);
+        expect(preview.toPhone.newInstruments.items, ['PC Fund']);
+        expect(preview.toPc.newInstruments.items, ['Phone Fund']);
         expect(await ids(), [phoneFund]);
         expect(pcIds(), [pcFund]);
         expect(pc.log, isNot(contains('POST /v1/sync')));
@@ -305,7 +305,17 @@ void main() {
 
       final done = ok(await syncOne(confirm: true)) as SyncDone;
 
-      expect(done.counts.newInstruments, 1);
+      expect(done.toPhone.newInstruments.items, ['PC Fund']);
+      expect(done.toPc.newInstruments.items, ['Phone Fund']);
+      final last = ok(await repository.lastSync(pcSha))!;
+      expect(last.at, DateTime.utc(2026, 11, 8, 10));
+      expect(last.toPhone.newInstruments.items, ['PC Fund']);
+      expect(last.toPc.newInstruments.items, ['Phone Fund']);
+      expect(
+        await const FlutterSecureStorage().read(key: 'pairings'),
+        isNot(contains('PC Fund')),
+        reason: 'the detail lives apart from the pairing',
+      );
       expect(await ids(), [phoneFund, pcFund]);
       expect(pcIds(), [phoneFund, pcFund]);
       final pairing = ok(await storedPairing())!;
@@ -380,10 +390,13 @@ void main() {
       expect(pc.log, isNot(contains('POST /v1/sync')));
       expect(await ids(), [phoneFund]);
 
-      expect(
-        ok(await syncOne(resolutions: {key: Resolution.take}, confirm: true)),
-        isA<SyncDone>(),
-      );
+      final done = ok(
+        await syncOne(resolutions: {key: Resolution.take}, confirm: true),
+      ) as SyncDone;
+      final settled = done.toPhone.resolved.items.single;
+      expect(settled.subject, 'Phone Fund');
+      expect(settled.field, DetailField.ter);
+      expect(settled.resolution, Resolution.take);
       final fund = await (db.select(
         db.instrument,
       )..where((i) => i.id.equals(phoneFund))).getSingle();
@@ -670,6 +683,13 @@ void main() {
 
       final done = await pass(confirm: {pcSha, pc2Sha});
       expect(done.pcs.every((p) => p.done), isTrue);
+      final lastWithPc = ok(await repository.lastSync(pcSha))!;
+      expect(
+        lastWithPc.toPc.newInstruments.items,
+        contains('Second Fund'),
+        reason: 'the second round with a PC adds to its first',
+      );
+      expect(lastWithPc.toPhone.newInstruments.items, ['PC Fund']);
       expect(await ids(), [pcFund, pc2Fund]);
       expect(pcIds(), [pcFund, pc2Fund]);
       expect([for (final i in pc2.device.state.instruments) i.id]..sort(), [
@@ -783,8 +803,14 @@ void main() {
         expect(question.other.sha256, pcSha);
         expect(pc2.log, isNot(contains('POST /v1/sync')));
 
+        expect(ok(await repository.lastSync(pcSha)), isNotNull);
         ok(
           await PcIdentity(repository).resolve(pc2Sha, question, samePc: true),
+        );
+        expect(
+          ok(await repository.lastSync(pcSha)),
+          isNull,
+          reason: 'the replaced pairing takes its last sync with it',
         );
         final pairings = await stored();
         expect([for (final p in pairings.pcs) p.sha256], [pc2Sha]);
@@ -815,6 +841,22 @@ void main() {
         expect(pairings.of(pc2Sha)!.shared, isFalse);
         expect(pairings.of(pc2Sha)!.pcDeviceId, 'dev-pc2-own');
       });
+    });
+
+    test('unpairing a PC deletes its last sync, and only its', () async {
+      await pair();
+      await pair(qr2);
+      await pass(confirm: {pcSha, pc2Sha});
+      expect(ok(await repository.lastSync(pcSha)), isNotNull);
+
+      ok(await Unpair(repository)(pcSha));
+
+      expect(ok(await repository.lastSync(pcSha)), isNull);
+      expect(ok(await repository.lastSync(pc2Sha)), isNotNull);
+      expect(
+        await const FlutterSecureStorage().read(key: 'syncDetail:$pcSha'),
+        isNull,
+      );
     });
 
     test('the QR of a PC already paired only takes its new address', () async {

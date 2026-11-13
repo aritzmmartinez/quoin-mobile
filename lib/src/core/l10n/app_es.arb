@@ -701,8 +701,24 @@
   "syncUnpairBody": "Este móvil dejará de sincronizar con este PC y borrará su clave; la cartera se queda en el móvil. El PC seguirá viendo este móvil como vinculado: revócalo también en Ajustes → Dispositivos del PC.",
   "syncCancel": "Cancelar",
   "syncUnreachable": "No encuentro tu Quoin",
-  "syncUnreachableHint": "El móvil no llega a tu PC. Comprueba que el móvil está conectado a la misma Wi‑Fi que el PC (no a los datos móviles), que el PC está encendido con Quoin abierto y que el cortafuegos de Windows permite la conexión. Si el PC ha cambiado de dirección, vuelve a escanear el código.",
+  "syncUnreachableHint": "El móvil no llega a tu PC. Comprueba que el móvil está conectado a la misma Wi‑Fi que el PC (no a los datos móviles), que el PC está encendido con Quoin abierto y que el cortafuegos de Windows permite la conexión. Si el PC ha cambiado de dirección, búscalo en la red o vuelve a escanear su código.",
   "syncRescan": "Volver a escanear",
+  "syncSearch": "Buscar en la red",
+  "syncSearching": "Buscando en la red…",
+  "syncSearchingPc": "Buscando {pc} en la red…",
+  "@syncSearchingPc": {
+    "placeholders": {
+      "pc": {
+        "type": "String"
+      }
+    }
+  },
+  "syncNotFoundOnNetwork": "Tu PC no está en esta red",
+  "syncNotFoundOnNetworkHint": "He buscado tu PC en la Wi‑Fi del móvil y no responde. La búsqueda no funciona si el PC está en otra subred ni en redes de invitados aisladas: en ese caso, vuelve a escanear su código. Comprueba también que el PC está encendido con Quoin abierto.",
+  "syncNoLocalNetwork": "El móvil no está en una red local",
+  "syncNoLocalNetworkHint": "Conecta el móvil a la misma Wi‑Fi que el PC (no a los datos móviles) y vuelve a intentarlo.",
+  "syncLocalNetworkDenied": "Quoin no tiene acceso a la red local",
+  "syncLocalNetworkDeniedHint": "Android no deja a Quoin conectarse a equipos de tu red. Permite el acceso a la red local en los ajustes de la app y vuelve a intentarlo.",
   "syncCertificateChanged": "El certificado de tu PC ha cambiado",
   "syncCertificateHint": "El equipo que responde en la dirección de tu PC no se identifica como el que vinculaste: puede que Quoin se haya reinstalado o que otro equipo use esa dirección. Por seguridad no se ha enviado nada. Vincula de nuevo desde Ajustes → Dispositivos en tu PC.",
   "syncRevoked": "Tu PC ya no acepta este móvil",
@@ -764,43 +780,9 @@
       }
     }
   },
-  "syncCountInstruments": "{count, plural, =1{1 instrumento nuevo o cambiado} other{{count} instrumentos nuevos o cambiados}}",
-  "@syncCountInstruments": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "syncCountTargets": "{count, plural, =1{1 cambio de objetivo} other{{count} cambios de objetivo}}",
-  "@syncCountTargets": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "syncCountHoldings": "{count, plural, =1{1 composición de fondo} other{{count} composiciones de fondo}}",
-  "@syncCountHoldings": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "syncCountIdentities": "{count, plural, =1{1 identificador de valor} other{{count} identificadores de valor}}",
-  "@syncCountIdentities": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "syncCountSettings": "La residencia fiscal",
   "syncConfirm": "Sincronizar",
   "syncDone": "Sincronizado",
   "syncUpToDate": "Ya estaba todo al día",
-  "syncReceived": "Recibido del PC",
   "syncPricesRunning": "Actualizando precios y tipos de cambio…",
   "syncPricesPending": "Precios pendientes; se completarán en la próxima sincronización",
   "syncPricesFailed": "No se han podido traer los precios; se intentará en la próxima sincronización.",
@@ -814,6 +796,91 @@
   },
   "syncSetAsideTitle": "Movimientos apartados",
   "syncSetAsideHint": "Son distintos en el PC y en el móvil; cada lado conserva el suyo hasta que coincidan.",
+  "syncDetailInKind": "{count, plural, =1{1 movimiento pasa a traspaso en especie} other{{count} movimientos pasan a traspaso en especie}}",
+  "@syncDetailInKind": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncDetailNewInstruments": "Instrumentos nuevos",
+  "syncDetailChangedInstruments": "Instrumentos cambiados",
+  "syncDetailNewTargets": "Objetivos nuevos",
+  "syncDetailDeletedTargets": "Objetivos borrados",
+  "syncDetailCompositions": "Composiciones de fondo",
+  "syncDetailResolved": "Conflictos resueltos",
+  "syncDetailMore": "y {count} más",
+  "@syncDetailMore": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncDetailOtherRows": "Otros",
+  "syncDetailLast": "Última sincronización",
+  "syncDetailNothing": "sin cambios",
+  "syncDetailInstruments": "{count, plural, =1{1 instrumento} other{{count} instrumentos}}",
+  "@syncDetailInstruments": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncDetailTargets": "{count, plural, =1{1 objetivo} other{{count} objetivos}}",
+  "@syncDetailTargets": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncDetailCompositionsCount": "{count, plural, =1{1 composición} other{{count} composiciones}}",
+  "@syncDetailCompositionsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncDetailResidence": "residencia fiscal",
+  "syncDetailResolvedCount": "{count, plural, =1{1 conflicto resuelto} other{{count} conflictos resueltos}}",
+  "@syncDetailResolvedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncDetailSetAsideCount": "{count, plural, =1{1 apartado} other{{count} apartados}}",
+  "@syncDetailSetAsideCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncSetAsideDiffers": "Difiere: {fields}",
+  "@syncSetAsideDiffers": {
+    "placeholders": {
+      "fields": {
+        "type": "String"
+      }
+    }
+  },
+  "syncFieldAssetClass": "Clase de activo",
+  "syncColumnDate": "fecha",
+  "syncColumnType": "tipo",
+  "syncColumnInstrument": "instrumento",
+  "syncColumnQuantity": "cantidad",
+  "syncColumnPrice": "precio",
+  "syncColumnAmount": "importe",
+  "syncColumnFees": "comisiones",
+  "syncColumnTax": "retención",
+  "syncColumnCurrency": "divisa",
+  "syncColumnOther": "otros datos",
   "syncConflictsIntro": "Estos datos han cambiado en los dos lados. Elige qué versión se queda en ambos.",
   "syncKeepPhone": "Este móvil",
   "syncTakePc": "PC",

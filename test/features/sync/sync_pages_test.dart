@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
@@ -7,6 +9,8 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:quoin/src/features/portfolio/data/database/quoin_database.dart'
     hide SettingsRow;
+import 'package:http/testing.dart';
+import 'package:quoin/src/features/sync/data/datasources/pc_finder_datasource.dart';
 import 'package:quoin/src/features/sync/data/datasources/sync_remote_datasource.dart';
 import 'package:quoin/src/features/sync/domain/usecases/pull_prices.dart';
 import 'package:quoin/src/features/sync/presentation/providers/sync_providers.dart';
@@ -52,14 +56,22 @@ void main() {
     });
   });
 
-  Future<void> open(WidgetTester tester) async {
+  Future<void> open(
+    WidgetTester tester, {
+    ClientFor? clientFor,
+    PcFinderDataSource? finder,
+  }) async {
     await pumpApp(
       tester,
       prefs: {'locale': 'es'},
       database: db,
+      finder: finder,
       overrides: [
         syncRemoteDataSourceProvider.overrideWithValue(
-          SyncRemoteDataSource(clientFor: (_) => pc.client, wait: (_) async {}),
+          SyncRemoteDataSource(
+            clientFor: clientFor ?? (_) => pc.client,
+            wait: (_) async {},
+          ),
         ),
         pullPricesProvider.overrideWith(
           (ref) => PullPrices(
@@ -154,7 +166,9 @@ void main() {
       'Móvil de prueba',
     );
     expect(find.text('Del PC a este móvil'.toUpperCase()), findsOneWidget);
-    expect(find.text('1 instrumento nuevo o cambiado'), findsNWidgets(2));
+    expect(find.text('Instrumentos nuevos'), findsNWidgets(2));
+    expect(find.text('PC Fund'), findsOneWidget);
+    expect(find.text('Phone Fund'), findsOneWidget);
     expect(pc.log, isNot(contains('POST /v1/sync')));
 
     await tester.tap(find.text('Sincronizar'));
@@ -171,6 +185,13 @@ void main() {
     await settle(tester);
     expect(find.text('Test PC'), findsOneWidget);
     expect(find.textContaining('Última: '), findsOneWidget);
+    expect(find.textContaining('· 2 instrumentos'), findsOneWidget);
+
+    await openRow(tester, 'Test PC');
+    expect(find.text('Última sincronización'.toUpperCase()), findsOneWidget);
+    expect(find.text('PC Fund'), findsOneWidget);
+    expect(find.text('Phone Fund'), findsOneWidget);
+    expect(find.textContaining('XX00TEST'), findsNothing);
   });
 
   testWidgets('says when prices are still pending on the PC', (tester) async {
@@ -236,6 +257,8 @@ void main() {
 
     await tapVisible(tester, find.text('Sincronizar ahora'));
     expect(find.text('TER'), findsOneWidget);
+    expect(find.text('PC Fund'), findsOneWidget);
+    expect(find.textContaining(pcFund), findsNothing);
     expect(find.text('Este móvil: 0.0020'), findsOneWidget);
     expect(find.text('PC: 0.0030'), findsOneWidget);
     final apply = find.widgetWithText(FilledButton, 'Aplicar y sincronizar');
@@ -247,6 +270,8 @@ void main() {
     await settle(tester);
 
     expect(find.text('Sincronizado'), findsOneWidget);
+    expect(find.text('PC Fund · TER → PC'), findsOneWidget);
+    expect(find.textContaining(pcFund), findsNothing);
     final settled = await (db.select(
       db.instrument,
     )..where((i) => i.id.equals(pcFund))).getSingle();
@@ -323,15 +348,74 @@ void main() {
 
     pc.offline = true;
     await tapVisible(tester, find.text('Sincronizar ahora'));
-    expect(find.textContaining('No encuentro tu Quoin'), findsOneWidget);
-    expect(find.textContaining('misma Wi‑Fi'), findsOneWidget);
+    expect(find.textContaining('Tu PC no está en esta red'), findsOneWidget);
+    expect(find.textContaining('redes de invitados aisladas'), findsOneWidget);
     expect(find.text('Volver a escanear'), findsOneWidget);
 
     await tester.tap(find.byTooltip('Atrás'));
     await settle(tester);
-    expect(find.text('No encuentro tu Quoin'), findsOneWidget);
+    expect(find.text('Tu PC no está en esta red'), findsOneWidget);
     await openRow(tester, 'Test PC');
+    expect(find.text('Buscar en la red'), findsOneWidget);
     expect(find.text('Volver a escanear'), findsOneWidget);
     expect(find.text('Desvincular'), findsOneWidget);
+  });
+
+  testWidgets('«Buscar en la red» shows the search on the row of the PC and '
+      'syncs where the PC answers now', (tester) async {
+    fakeQr = jsonEncode({
+      'v': 1,
+      'host': '192.168.1.20',
+      'port': 3443,
+      'sha256': 'ab' * 32,
+      'token': FakePc.qrToken,
+      'name': 'Test PC',
+    });
+    String? answersAt = '192.168.1.20';
+    final gate = Completer<void>();
+    final offline = MockClient(
+      (_) async => throw const SocketException('No route to host'),
+    );
+    await open(
+      tester,
+      clientFor: (e) => e.host == answersAt ? pc.client : offline,
+      finder: PcFinderDataSource(
+        localIps: () async => const ['192.168.1.50'],
+        probe: (host, port, pins, stop) async {
+          if (host != answersAt) return null;
+          await gate.future;
+          return (sha256: 'ab' * 32, versions: const [1]);
+        },
+      ),
+    );
+    await pairFromSettings(tester);
+    await tester.tap(find.text('Sincronizar'));
+    await settle(tester);
+    await tester.tap(find.byTooltip('Atrás'));
+    await settle(tester);
+
+    answersAt = null;
+    await tapVisible(tester, find.text('Sincronizar ahora'));
+    await tester.tap(find.byTooltip('Atrás'));
+    await settle(tester);
+    expect(find.text('Tu PC no está en esta red'), findsOneWidget);
+
+    answersAt = '192.168.1.40';
+    await openRow(tester, 'Test PC');
+    await openRow(tester, 'Buscar en la red');
+    for (var i = 0; i < 100; i++) {
+      if (find.text('Buscando en la red…').evaluate().isNotEmpty) break;
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 10)),
+      );
+      await tester.pump();
+    }
+    expect(find.text('Buscando en la red…'), findsOneWidget);
+
+    gate.complete();
+    await settle(tester);
+    expect(find.text('Buscando en la red…'), findsNothing);
+    expect(find.text('Tu PC no está en esta red'), findsNothing);
+    expect(find.textContaining("Última:"), findsOneWidget);
   });
 }

@@ -14,6 +14,7 @@ import 'package:quoin/src/features/portfolio/data/datasources/portfolio_local_da
 import 'package:quoin/src/features/portfolio/presentation/providers/portfolio_providers.dart';
 import 'package:quoin/src/features/settings/data/datasources/settings_local_datasource.dart';
 import 'package:quoin/src/features/settings/presentation/providers/settings_providers.dart';
+import 'package:quoin/src/features/sync/data/datasources/pc_finder_datasource.dart';
 import 'package:quoin/src/features/sync/presentation/providers/sync_providers.dart';
 import 'package:quoin/src/features/sync/presentation/widgets/qr_scanner_view.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -28,6 +29,7 @@ Future<SharedPreferencesWithCache> pumpApp(
   PricesDatabase? prices,
   bool sample = false,
   List<Override> overrides = const [],
+  PcFinderDataSource? finder,
 }) async {
   if (sample) (:database, :prices) = await sampleStores();
   FlutterSecureStorage.setMockInitialValues({});
@@ -50,6 +52,13 @@ Future<SharedPreferencesWithCache> pumpApp(
         appVersionProvider.overrideWith((ref) => '0.0.0-test'),
         nowProvider.overrideWithValue(() => testNow),
         qrScannerProvider.overrideWithValue(fakeScanner),
+        pcFinderDataSourceProvider.overrideWithValue(
+          finder ??
+              PcFinderDataSource(
+                localIps: () async => const ['192.168.1.50'],
+                probe: (_, _, _, _) async => null,
+              ),
+        ),
         ...overrides,
       ],
       child: const QuoinApp(),

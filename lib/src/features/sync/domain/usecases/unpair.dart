@@ -8,7 +8,12 @@ class Unpair {
 
   Future<Result<void>> call(String sha256) async =>
       switch (await _repository.pairings()) {
-        Ok(:final value) => _repository.savePairings(value.without(sha256)),
+        Ok(:final value) => switch (await _repository.savePairings(
+          value.without(sha256),
+        )) {
+          Ok() => _repository.dropLastSync(sha256),
+          final failed => failed,
+        },
         Err(:final failure) => Err(failure),
       };
 }

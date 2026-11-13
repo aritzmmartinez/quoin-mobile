@@ -261,6 +261,23 @@ time: a plain sync asked during one joins it; one carrying a decision waits
 and then runs; and no pass starts before the last one's follow-up is over,
 so the two never write at once.
 
+**Search** (`PcSearch`). A PC is its certificate; its host is a hint. When
+a PC's `hello` finds nothing, a pull (`held`), «Sync now» and the PC's
+«Buscar en la red» (`always`) sweep the phone's /24 that holds the saved host,
+never the sync on opening (`off`). `scanCandidates` (quoin_core) walks it from
+the saved last octet outwards; `PcFinderDataSource` probes 32 hosts at a time
+(1 s to connect, 3 s per host) with `PinnedClient.anyOf` and the pins of every
+PC sought, so one sweep serves them all and stops when all answered;
+`pickByFingerprint` takes the host. The PC found keeps its pairing with the
+new host, saved, and the pass goes on with it, through its identity as any
+other. A miss holds `held` searches for that PC while the phone's addresses
+stay the same, up to 30 minutes, since two places on one /24 would make every
+pull away from home sweep. A certificate of another paired PC at the saved
+address means this one is not there: unreachable, not a mismatch.
+`PcNotFoundOnNetworkFailure`, `NoLocalNetworkFailure` (no private IPv4) and
+`LocalNetworkDeniedFailure` (EPERM or EACCES, which ends the sweep) say why.
+`SyncStatus.searching` puts «Buscando en la red…» on the PC's row.
+
 **Identity** (`PcIdentity`). Two PCs with one sync identity (a database
 restored from one onto the other) must never both sync: their marks look
 like one device's and values diverge silently. A PC's identity is learnt from
@@ -294,11 +311,26 @@ only the phone's token, so the PC must revoke it too. Inicio and Cartera
 sync on pull to refresh; the app syncs silently when it opens, with the PCs
 already confirmed.
 
+**Detail** (`syncDetail`, quoin_core). What a merge plan writes, by name and
+never with ids or amounts: instruments new and changed (which fields),
+ledger rows by type, targets added and deleted, fund compositions, the
+residence, rows set aside (day, type, instrument, which columns differ) and
+the conflicts the user settled, built from the conflicts as shown and the
+answers given, so `merge` stays Quoin's. Lists keep 20 names and their whole
+count. The preview, the result screen and a PC's sheet show it with
+`SyncDetailView`; the PC's row adds a one-line summary. The last completed
+sync with each PC is kept in `flutter_secure_storage` under
+`syncDetail:<sha256>` (`LastSync`), apart from `pairings`, which is rewritten
+several times a pass; a second sync with one PC in a pass adds to its first.
+Unpairing a PC, or replacing it with the same PC's new certificate, deletes
+it.
+
 **Failures.** Each refusal of the API is its own `Failure`: unreachable,
 certificate mismatch, revoked, invalid or used or expired QR, rejected
 pairing, update required (app or Quoin), PC busy, conflicts changed, refused
-with a code. Unreachable, certificate and revoked offer to pair again, since
-only a new QR carries a new address or certificate.
+with a code. Unreachable and not found on the network offer a search and to
+scan again; certificate and revoked offer to pair again, since only a new QR
+carries a new certificate.
 
 ## Errors
 

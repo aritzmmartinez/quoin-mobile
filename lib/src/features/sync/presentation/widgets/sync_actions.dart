@@ -3,12 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:quoin/src/app/router.dart';
-import 'package:quoin/src/core/error/failures.dart';
 import 'package:quoin/src/core/error/result.dart';
 import 'package:quoin/src/core/l10n/gen/app_localizations.dart';
 import 'package:quoin/src/features/portfolio/presentation/providers/portfolio_providers.dart';
 import 'package:quoin/src/features/sync/domain/entities/pairing.dart';
 import 'package:quoin/src/features/sync/domain/entities/sync_outcome.dart';
+import 'package:quoin/src/features/sync/domain/usecases/sync_now.dart';
 import 'package:quoin/src/features/sync/presentation/providers/sync_providers.dart';
 import 'package:quoin/src/features/sync/presentation/widgets/sync_failure_text.dart';
 
@@ -18,12 +18,18 @@ Future<Pairings> _pairings(WidgetRef ref) async =>
       Err() => const Pairings(),
     };
 
-Future<void> refreshFromPc(BuildContext context, WidgetRef ref) async {
+Future<void> refreshFromPc(
+  BuildContext context,
+  WidgetRef ref, {
+  PcSearch search = PcSearch.held,
+}) async {
   if ((await _pairings(ref)).pcs.isEmpty) {
     ref.invalidate(ledgerProvider);
     return;
   }
-  final result = await ref.read(syncControllerProvider.notifier).sync();
+  final result = await ref
+      .read(syncControllerProvider.notifier)
+      .sync(search: search);
   if (!context.mounted) return;
   final l10n = AppLocalizations.of(context);
   void say(String text, {SnackBarAction? action}) =>
@@ -46,7 +52,7 @@ Future<void> refreshFromPc(BuildContext context, WidgetRef ref) async {
     );
   }
   if (pass.noneAnswered) {
-    return say(syncFailureDetail(l10n, const PcUnreachableFailure()));
+    return say(syncFailureDetail(l10n, pass.unanswered));
   }
   for (final pc in pass.pcs) {
     if (pc.pairing.shared) continue;

@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:crypto/crypto.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:quoin/src/core/error/exceptions.dart';
+import 'package:quoin/src/features/sync/data/datasources/pinned_client.dart';
 import 'package:quoin/src/features/sync/data/datasources/sync_remote_datasource.dart';
 import 'package:quoin/src/features/sync/domain/entities/pairing.dart';
 
@@ -68,8 +69,50 @@ void main() {
         deviceId: 'dev-phone',
         name: 'Phone',
       ),
+      throwsA(
+        isA<PinMismatchException>().having(
+          (e) => e.presented,
+          'presented',
+          pin,
+        ),
+      ),
+    );
+    expect(heard, isEmpty);
+  });
+
+  test('a client for several pins trusts any of them and says which '
+      'answered', () async {
+    final client = PinnedClient.anyOf({'0' * 64, pin});
+    final response = await client.get(
+      Uri(
+        scheme: 'https',
+        host: '127.0.0.1',
+        port: server.port,
+        path: '/v1/hello',
+      ),
+    );
+    client.close();
+
+    expect(response.statusCode, 200);
+    expect(client.presented, pin);
+    expect(heard, ['GET /v1/hello']);
+  });
+
+  test('a client for several pins refuses any other before a byte of the '
+      'request', () async {
+    final client = PinnedClient.anyOf({'0' * 64, '1' * 64});
+    await expectLater(
+      client.get(
+        Uri(
+          scheme: 'https',
+          host: '127.0.0.1',
+          port: server.port,
+          path: '/v1/hello',
+        ),
+      ),
       throwsA(isA<PinMismatchException>()),
     );
+    client.close();
     expect(heard, isEmpty);
   });
 

@@ -12,6 +12,8 @@ final class SyncEndpoint {
   final String sha256;
 }
 
+typedef FoundPc = ({String host, List<int> versions});
+
 final class PairingQr {
   const PairingQr({
     required this.endpoint,

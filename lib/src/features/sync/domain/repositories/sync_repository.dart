@@ -4,12 +4,20 @@ import 'package:quoin/src/core/error/result.dart';
 import 'package:quoin/src/features/sync/domain/entities/exchange_import.dart';
 import 'package:quoin/src/features/sync/domain/entities/pairing.dart';
 import 'package:quoin/src/features/sync/domain/entities/pc_state.dart';
+import 'package:quoin/src/features/sync/domain/entities/sync_outcome.dart';
 
 abstract interface class SyncRepository {
   Future<Result<Pairings>> pairings();
   Future<Result<void>> savePairings(Pairings pairings);
+  Future<Result<LastSync?>> lastSync(String sha256);
+  Future<Result<void>> saveLastSync(String sha256, LastSync last);
+  Future<Result<void>> dropLastSync(String sha256);
   Future<Result<String>> claim();
   Future<Result<List<int>>> hello(SyncEndpoint endpoint);
+  Future<Result<Map<String, FoundPc>>> find(
+    List<SyncEndpoint> lost, {
+    required bool held,
+  });
   Future<Result<String>> pair(
     PairingQr qr, {
     required String deviceId,
