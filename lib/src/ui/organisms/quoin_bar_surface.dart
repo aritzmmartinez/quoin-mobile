@@ -13,15 +13,15 @@ class QuoinGlassLayer extends StatelessWidget {
 
   final Widget child;
 
+  static final _light = LiquidGlassSettings.ios27Light.copyWith(rimShade: 0);
+
   @override
   Widget build(BuildContext context) {
     final dark = Theme.of(context).brightness == Brightness.dark;
     return AdaptiveLiquidGlassLayer(
       quality: GlassQuality.premium,
       blendAmount: 0,
-      settings: dark
-          ? LiquidGlassSettings.ios27Dark
-          : LiquidGlassSettings.ios27Light,
+      settings: dark ? LiquidGlassSettings.ios27Dark : _light,
       child: child,
     );
   }

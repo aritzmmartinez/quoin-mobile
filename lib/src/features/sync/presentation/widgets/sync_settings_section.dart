@@ -7,15 +7,13 @@ import 'package:quoin/src/core/error/failures.dart';
 import 'package:quoin/src/core/error/result.dart';
 import 'package:quoin/src/core/l10n/gen/app_localizations.dart';
 import 'package:quoin/src/core/theme/quoin_icons.dart';
-import 'package:quoin/src/core/theme/quoin_type.dart';
-import 'package:quoin/src/features/portfolio/presentation/widgets/portfolio_view.dart';
 import 'package:quoin/src/features/sync/domain/entities/pairing.dart';
 import 'package:quoin/src/features/sync/domain/entities/sync_outcome.dart';
 import 'package:quoin/src/features/sync/domain/usecases/sync_now.dart';
 import 'package:quoin/src/features/sync/presentation/providers/sync_providers.dart';
 import 'package:quoin/src/features/sync/presentation/widgets/pc_row.dart';
+import 'package:quoin/src/features/sync/presentation/widgets/pc_sheet.dart';
 import 'package:quoin/src/features/sync/presentation/widgets/sync_actions.dart';
-import 'package:quoin/src/features/sync/presentation/widgets/sync_detail_view.dart';
 import 'package:quoin/src/features/sync/presentation/widgets/sync_failure_text.dart';
 import 'package:quoin/src/ui/molecules/settings_row.dart';
 import 'package:quoin/src/ui/organisms/settings_section.dart';
@@ -93,79 +91,17 @@ class SyncSettingsSection extends ConsumerWidget {
     Pairing pc,
     Failure? failure,
     LastSync? last,
-  ) async {
-    final l10n = AppLocalizations.of(context);
-    final chosen = await showModalBottomSheet<VoidCallback>(
-      context: context,
-      useRootNavigator: true,
-      showDragHandle: true,
-      builder: (sheet) {
-        void pick(VoidCallback action) => Navigator.of(sheet).pop(action);
-        return SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              spacing: 8,
-              children: [
-                Text(pc.pcName, style: QuoinType.of(sheet).title),
-                if (failure != null)
-                  Text(
-                    syncFailureDetail(l10n, failure),
-                    style: QuoinType.of(sheet).secondary,
-                  ),
-                if (last != null) ...[
-                  sectionLabel(sheet, l10n.syncDetailLast),
-                  ...syncDetailSections(
-                    sheet,
-                    toPhone: last.toPhone,
-                    toPc: last.toPc,
-                  ),
-                ],
-                if (pc.shared)
-                  SettingsRow(
-                    icon: QuoinIcons.sync,
-                    label: l10n.syncCheckAgain,
-                    onTap: () => pick(() => _checkAgain(context, ref, pc)),
-                  ),
-                if (failure != null && searchable(failure))
-                  SettingsRow(
-                    icon: QuoinIcons.search,
-                    label: l10n.syncSearch,
-                    onTap: () => pick(
-                      () =>
-                          refreshFromPc(context, ref, search: PcSearch.always),
-                    ),
-                  ),
-                if (failure
-                    case PcUnreachableFailure() || PcNotFoundOnNetworkFailure())
-                  SettingsRow(
-                    icon: QuoinIcons.offline,
-                    label: l10n.syncRescan,
-                    onTap: () => pick(() => context.push(Routes.pair)),
-                  ),
-                if (failure
-                    case CertificateMismatchFailure() ||
-                        PairingRevokedFailure())
-                  SettingsRow(
-                    icon: QuoinIcons.certificate,
-                    label: l10n.syncPairAgain,
-                    onTap: () => pick(() => context.push(Routes.repair)),
-                  ),
-                SettingsRow(
-                  icon: QuoinIcons.unpair,
-                  label: l10n.syncUnpair,
-                  onTap: () => pick(() => _unpair(context, ref, pc)),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-    chosen?.call();
-  }
+  ) => showPcSheet(
+    context,
+    pc: pc,
+    failure: failure,
+    last: last,
+    onCheckAgain: () => _checkAgain(context, ref, pc),
+    onSearch: () => refreshFromPc(context, ref, search: PcSearch.always),
+    onRescan: () => context.push(Routes.pair),
+    onPairAgain: () => context.push(Routes.repair),
+    onUnpair: () => _unpair(context, ref, pc),
+  );
 
   Future<void> _checkAgain(
     BuildContext context,

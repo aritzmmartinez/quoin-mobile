@@ -27,6 +27,15 @@ android {
         // flag during build.
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        manifestPlaceholders["appLabel"] = "Quoin"
+    }
+
+    // `flutter run --android-project-arg=dev=true`: a second install beside
+    // the real one, with its own data and pairings, for sample data and
+    // screenshots. Without it a debug run lands on the real install.
+    if (project.hasProperty("dev")) {
+        defaultConfig.applicationIdSuffix = ".dev"
+        defaultConfig.manifestPlaceholders["appLabel"] = "Quoin dev"
     }
 
     buildTypes {

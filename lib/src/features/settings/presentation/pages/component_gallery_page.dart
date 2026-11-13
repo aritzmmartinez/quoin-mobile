@@ -1,9 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:quoin_core/quoin_core.dart';
 
+import 'package:quoin/src/core/error/failures.dart';
 import 'package:quoin/src/core/theme/quoin_colors.dart';
 import 'package:quoin/src/core/theme/quoin_icons.dart';
 import 'package:quoin/src/core/theme/quoin_tokens.dart';
 import 'package:quoin/src/core/theme/quoin_type.dart';
+import 'package:quoin/src/features/sync/domain/entities/pairing.dart';
+import 'package:quoin/src/features/sync/domain/entities/sync_outcome.dart';
+import 'package:quoin/src/features/sync/presentation/widgets/conflict_card.dart';
+import 'package:quoin/src/features/sync/presentation/widgets/pc_row.dart';
+import 'package:quoin/src/features/sync/presentation/widgets/pc_sheet.dart';
+import 'package:quoin/src/features/sync/presentation/widgets/sync_detail_view.dart';
 import 'package:quoin/src/ui/atoms/display_figure.dart';
 import 'package:quoin/src/ui/atoms/quoin_card.dart';
 import 'package:quoin/src/ui/atoms/quoin_chip.dart';
@@ -46,6 +54,7 @@ class _ComponentGalleryPageState extends State<ComponentGalleryPage> {
   var _filter = 'Todas';
   var _placement = QuoinBarActionPlacement.trailing;
   var _tab = 0;
+  final _choices = <String, Resolution>{};
 
   @override
   Widget build(BuildContext context) {
@@ -152,45 +161,7 @@ class _ComponentGalleryPageState extends State<ComponentGalleryPage> {
             onChanged: (v) => setState(() => _placement = v),
           ),
           const SizedBox(height: 12),
-          // Stripes behind the preview so the glass has something to bend.
-          ClipRRect(
-            borderRadius: BorderRadius.circular(QuoinRadius.card),
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [c.dn1, c.dn3, c.dn5, c.dn2],
-                  stops: const [0, 0.35, 0.7, 1],
-                ),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.only(top: 24),
-                child: MediaQuery.removePadding(
-                  context: context,
-                  removeBottom: true,
-                  child: QuoinBottomBar(
-                    items: const [
-                      QuoinBarItem(icon: QuoinIcons.home, label: 'Inicio'),
-                      QuoinBarItem(
-                        icon: QuoinIcons.portfolio,
-                        label: 'Cartera',
-                      ),
-                      QuoinBarItem(
-                        icon: QuoinIcons.analysis,
-                        label: 'Análisis',
-                      ),
-                      QuoinBarItem(icon: QuoinIcons.settings, label: 'Ajustes'),
-                    ],
-                    currentIndex: _tab,
-                    onSelected: (i) => setState(() => _tab = i),
-                    addIcon: QuoinIcons.add,
-                    addLabel: 'Añadir',
-                    onAdd: () {},
-                    placement: _placement,
-                  ),
-                ),
-              ),
-            ),
-          ),
+          _bar(context),
           label('Bloques de cifra'),
           const Wrap(
             spacing: 24,
@@ -332,6 +303,7 @@ class _ComponentGalleryPageState extends State<ComponentGalleryPage> {
               ),
             ),
           ),
+          ..._sync(context, label),
           label('Badge de plusvalía'),
           const Wrap(
             spacing: 8,
@@ -389,7 +361,182 @@ class _ComponentGalleryPageState extends State<ComponentGalleryPage> {
       ),
     );
   }
+
+  Widget _bar(BuildContext context) {
+    final c = QuoinColors.of(context);
+    // Stripes behind the preview so the glass has something to bend.
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(QuoinRadius.card),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [c.dn1, c.dn3, c.dn5, c.dn2],
+            stops: const [0, 0.35, 0.7, 1],
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.only(top: 24),
+          child: MediaQuery.removePadding(
+            context: context,
+            removeBottom: true,
+            child: QuoinBottomBar(
+              items: const [
+                QuoinBarItem(icon: QuoinIcons.home, label: 'Inicio'),
+                QuoinBarItem(icon: QuoinIcons.portfolio, label: 'Cartera'),
+                QuoinBarItem(icon: QuoinIcons.analysis, label: 'Análisis'),
+                QuoinBarItem(icon: QuoinIcons.settings, label: 'Ajustes'),
+              ],
+              currentIndex: _tab,
+              onSelected: (i) => setState(() => _tab = i),
+              addIcon: QuoinIcons.add,
+              addLabel: 'Añadir',
+              onAdd: () {},
+              placement: _placement,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  List<Widget> _sync(BuildContext context, Widget Function(String) label) {
+    SettingsRow pc(
+      Pairing pairing, {
+      Failure? failure,
+      LastSync? last,
+      String? twin,
+      bool running = false,
+      bool searching = false,
+    }) => pcRow(
+      context,
+      pairing: pairing,
+      twin: twin,
+      running: running,
+      searching: searching,
+      failure: failure,
+      last: last,
+      onTap: () => showPcSheet(
+        context,
+        pc: pairing,
+        failure: pairing.shared ? SharedIdentityFailure(twin ?? '') : failure,
+        last: last,
+        onCheckAgain: () {},
+        onSearch: () {},
+        onRescan: () {},
+        onPairAgain: () {},
+        onUnpair: () {},
+      ),
+    );
+
+    return [
+      label('Sincronización: PCs'),
+      SettingsSection(
+        title: 'Sincronización',
+        rows: [
+          pc(_syncedPc, last: _lastSync),
+          pc(_pc('Portátil'), running: true),
+          pc(_pc('Torre'), searching: true),
+          pc(_pc('Oficina'), failure: const PcUnreachableFailure()),
+          pc(_pc('Sobremesa'), failure: const CertificateMismatchFailure()),
+          pc(_pc('Copia de Sobremesa', shared: true), twin: 'Sobremesa'),
+          pc(_pc('Nuevo')),
+        ],
+      ),
+      label('Sincronización: detalle'),
+      ...syncDetailSections(
+        context,
+        toPhone: _lastSync.toPhone,
+        toPc: _lastSync.toPc,
+      ),
+      label('Sincronización: al día'),
+      ...syncDetailSections(
+        context,
+        toPhone: const SyncDetail(),
+        toPc: const SyncDetail(),
+      ),
+      label('Sincronización: conflictos'),
+      for (final conflict in _conflicts) ...[
+        ConflictCard(
+          conflict: conflict,
+          names: const {'XX00EJEMPLO1': 'Fondo de ejemplo'},
+          choice: _choices[conflictKey(conflict)],
+          onChanged: (choice) =>
+              setState(() => _choices[conflictKey(conflict)] = choice),
+        ),
+        const SizedBox(height: 12),
+      ],
+    ];
+  }
 }
+
+Pairing _pc(String name, {bool shared = false, DateTime? lastSyncAt}) =>
+    Pairing(
+      endpoint: SyncEndpoint(
+        host: '192.0.2.10',
+        port: 4443,
+        sha256: name.hashCode.toRadixString(16).padLeft(64, '0'),
+      ),
+      token: 'ejemplo',
+      pcName: name,
+      pairedAt: DateTime.utc(2026, 1, 5),
+      lastSyncAt: lastSyncAt,
+      shared: shared,
+    );
+
+final _syncedPc = _pc('Estudio', lastSyncAt: DateTime.utc(2026, 3, 10, 9, 41));
+
+final _lastSync = LastSync(
+  at: DateTime.utc(2026, 3, 10, 9, 41),
+  toPhone: SyncDetail(
+    ledger: const {'BUY': 3, 'DIVIDEND': 1},
+    newInstruments: Cut.of(const ['Fondo de ejemplo', 'Acción de ejemplo']),
+    changedInstruments: Cut.of(const [
+      InstrumentChange('Bono de ejemplo', [
+        DetailField.quoteSymbol,
+        DetailField.ter,
+      ]),
+    ]),
+    resolved: Cut.of(const [
+      ResolvedConflict(
+        kind: ResolvedKind.instrument,
+        subject: 'Fondo de ejemplo',
+        field: DetailField.exposure,
+        resolution: Resolution.take,
+      ),
+    ]),
+    setAside: Cut.of(const [
+      SetAsideRow(
+        ts: '2026-02-03T10:00:00.000Z',
+        type: 'BUY',
+        instrument: 'Acción de ejemplo',
+        fields: ['quantity', 'price'],
+      ),
+    ]),
+  ),
+  toPc: SyncDetail(
+    ledger: const {'SELL': 1},
+    newTargets: Cut.of(const ['Plan de ejemplo']),
+  ),
+);
+
+const _conflicts = <Conflict>[
+  FieldConflict(
+    entity: 'instrument',
+    key: 'XX00EJEMPLO1',
+    field: 'quoteSymbol',
+    local: 'EJM.DE',
+    incoming: 'EJM.AS',
+  ),
+  FieldConflict(
+    entity: 'settings',
+    key: 'settings',
+    field: 'residence',
+    local: 'ES-BI',
+    incoming: 'ES-MD',
+  ),
+  TargetDayConflict(day: '2026-03-01', local: 'a', incoming: 'b'),
+  HoldingsConflict('XX00EJEMPLO1'),
+];
 
 PositionRow _row((String, String, String, String, int) position) {
   final (name, ticker, value, change, sign) = position;

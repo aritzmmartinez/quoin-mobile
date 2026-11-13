@@ -109,3 +109,4 @@ flows: `docs/ARCHITECTURE.md`.
 - Before every tap or screenshot, check Quoin (`dev.aritzmmartinez.quoin`) has the focus (`dumpsys window`, `mCurrentFocus`); if not, stop and say so.
 - No blind coordinates: find each element with `uiautomator dump` by its text and tap that; if it is not there, stop.
 - No screenshot without asking first; only with Quoin in front, deleted after the test.
+- Sample data and screenshots only on the `.dev` install (`flutter run --android-project-arg=dev=true`): its own app, data and pairings beside the real one. Its focus is exactly `dev.aritzmmartinez.quoin.dev`; if the real package is in front, stop. A plain debug run lands on the real install.
