@@ -74,8 +74,12 @@ List<Override> dependencies(
 ];
 
 EnsureRatesFrom ratesForSync(EnsureRates ensure, {DateTime Function()? now}) =>
-    (needs, {required zone}) async =>
-        switch (await ensure(needs, now: (now ?? DateTime.now)(), zone: zone)) {
-          Ok(:final value) => Ok(value.unavailable),
-          Err(:final failure) => Err(failure),
-        };
+    (needs, {required zone}) async => switch (await ensure(
+      needs,
+      now: (now ?? DateTime.now)(),
+      zone: zone,
+      withBook: false,
+    )) {
+      Ok(:final value) => Ok(value.unavailable),
+      Err(:final failure) => Err(failure),
+    };

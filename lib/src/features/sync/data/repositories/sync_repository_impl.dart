@@ -34,17 +34,12 @@ class SyncRepositoryImpl implements SyncRepository {
   final DateTime Function() _now;
 
   @override
-  Future<Result<Pairing?>> pairing() => _run(() async {
-    final json = await _pairings.read();
-    return json == null ? null : pairingFromJson(json);
-  });
+  Future<Result<Pairings>> pairings() =>
+      _run(() async => pairingsFromJson(await _pairings.read()));
 
   @override
-  Future<Result<void>> savePairing(Pairing pairing) =>
-      _run(() => _pairings.write(pairing.toJson()));
-
-  @override
-  Future<Result<void>> unpair() => _run(_pairings.delete);
+  Future<Result<void>> savePairings(Pairings pairings) =>
+      _run(() => _pairings.write(pairings.toJson()));
 
   @override
   Future<Result<String>> claim() async {

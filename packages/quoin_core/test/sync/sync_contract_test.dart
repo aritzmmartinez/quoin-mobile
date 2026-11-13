@@ -140,12 +140,25 @@ void main() {
         };
         LocalDevice get(String id) =>
             held[id] ?? (throw StateError('No device $id in the scenario'));
+        final apart = <String, Map<String, List<String>>>{};
 
         for (final (i, step) in rows(c['steps']).indexed) {
           final label = 'step ${i + 1}';
+          final nowMs = step['nowMs']! as int;
+          if (step['edit'] case final String id) {
+            final device = get(id);
+            held[id] = applyPlan(
+              device,
+              ApplyPlan.fromJson({
+                ...step['apply']! as Json,
+                'peers': [for (final p in device.state.peers) p.toJson()],
+              }),
+              nowMs,
+            );
+            continue;
+          }
           final from = step['from']! as String;
           final to = step['to']! as String;
-          final nowMs = step['nowMs']! as int;
           final sent = exportDevice(get(from), nowMs);
           held[from] = sent.device;
           final receiver = get(to);
@@ -165,6 +178,15 @@ void main() {
             (step['setAside'] as List<Object?>? ?? const []).cast<String>(),
             reason: label,
           );
+          (apart[to] ??= {})[from] = [for (final x in plan.setAside) x.key];
+          if (step['apply'] case final Json apply) {
+            final planned = plain(plan.apply.toJson())! as Json;
+            final peers = planned.remove('peers');
+            expect(planned, plain(expectedApply(apply)), reason: label);
+            if (apply['peers'] != null) {
+              expect(peers, plain(apply['peers']), reason: label);
+            }
+          }
           if (plan.conflicts.isNotEmpty) {
             expect('conflicts', step['status'], reason: label);
           } else if (!plan.changesData) {
@@ -196,6 +218,22 @@ void main() {
           return plain(json);
         }
 
+        if (c['end'] case final Json end) {
+          expect(held.keys, end.keys);
+          for (final MapEntry(key: id, :value) in end.entries) {
+            final expected = value! as Json;
+            expect(
+              plain(get(id).state.toJson()),
+              plain(stateOf(expected['state']).toJson()),
+              reason: id,
+            );
+            expect(apart[id], plain(expected['setAside']), reason: id);
+          }
+        }
+        if (c['converged'] == null) {
+          expect(c['end'], isNotNull, reason: 'states converged or end');
+          return;
+        }
         final [first, second] = held.values.toList();
         if (c['converged'] == true) {
           expect(userState(first), userState(second));
@@ -203,6 +241,20 @@ void main() {
           expect(userState(first), isNot(userState(second)));
         }
       });
+    }
+  });
+
+  test('a plan reads back as it is written', () {
+    for (final c in rows(contract['merges'])) {
+      if ((c['expected']! as Json)['error'] != null) continue;
+      final plan = merge(
+        stateOf(c['local']),
+        exchangeOf(c['incoming']),
+        resolutionsOf(c['resolutions']),
+      ).apply;
+      final json = plain(plan.toJson())! as Json;
+      expect(plain(ApplyPlan.fromJson(json).toJson()), json,
+          reason: '${c['name']}');
     }
   });
 

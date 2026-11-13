@@ -165,6 +165,15 @@ final class ConflictsChangedFailure extends SyncFailure {
   const ConflictsChangedFailure();
 }
 
+/// This PC has the same sync identity as [otherPcName], another paired PC:
+/// a database restored from one onto the other. Syncing with both would let
+/// their values diverge silently, so only the other one syncs.
+final class SharedIdentityFailure extends SyncFailure {
+  const SharedIdentityFailure(this.otherPcName);
+
+  final String otherPcName;
+}
+
 /// The PC refused the request for a reason the phone cannot act on; [code]
 /// is its error code.
 final class PcRefusedFailure extends SyncFailure {

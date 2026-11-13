@@ -10,10 +10,19 @@ extension PairingModel on Pairing {
     'pairedAt': pairedAt.toUtc().toIso8601String(),
     'lastSyncAt': lastSyncAt?.toUtc().toIso8601String(),
     'confirmed': confirmed,
+    'pcDeviceId': pcDeviceId,
+    'shared': shared,
   };
 }
 
-Pairing? pairingFromJson(Map<String, Object?> json) {
+extension PairingsModel on Pairings {
+  Map<String, Object?> toJson() => {
+    'pcs': [for (final p in pcs) p.toJson()],
+    'pricesFrom': pricesFrom,
+  };
+}
+
+Pairing? pairingFromJson(Object? json) {
   if (json case {
     'host': final String host,
     'port': final int port,
@@ -34,7 +43,21 @@ Pairing? pairingFromJson(Map<String, Object?> json) {
       pairedAt: paired,
       lastSyncAt: synced,
       confirmed: confirmed,
+      pcDeviceId: json['pcDeviceId'] as String?,
+      shared: json['shared'] == true,
     );
   }
   return null;
+}
+
+Pairings pairingsFromJson(Map<String, Object?> json) {
+  final pcs = [
+    for (final raw in json['pcs'] as List<Object?>? ?? const [])
+      ?pairingFromJson(raw),
+  ];
+  final from = json['pricesFrom'] as String?;
+  return Pairings(
+    pcs: pcs,
+    pricesFrom: pcs.any((p) => p.sha256 == from && !p.shared) ? from : null,
+  );
 }

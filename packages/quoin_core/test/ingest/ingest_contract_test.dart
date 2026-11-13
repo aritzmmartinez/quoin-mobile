@@ -72,7 +72,14 @@ Json _evaluate(Json input) {
     for (final key in (stored['existing'] as List).cast<String>())
       (key.split('::').first, key.split('::').last),
   };
-  final (:imported, :duplicates) = countOperations(batch, existing);
+  final (:imported, :completed, :duplicates) = countOperations(batch, existing);
+  final discarded = batch.discarded.values.fold(0, (sum, n) => sum + n);
+  expect(
+    imported + completed + duplicates + discarded + batch.failed,
+    batch.total,
+    reason: 'every operation is counted once',
+  );
+  expect(batch.failed, batch.errors.length);
   return {
     'broker': broker.code,
     'total': batch.total,
@@ -100,11 +107,11 @@ Json _evaluate(Json input) {
       for (final MapEntry(:key, :value) in batch.noticed.entries)
         key.code: [for (final d in value) _detail(d)],
     },
-    'errors': [
-      for (final e in batch.errors) {..._row(e.row), 'reason': e.reason.code},
-    ],
+    'errors': [for (final e in batch.errors) _error(e)],
     'ratesNeeded': batch.ratesNeeded,
+    'failed': batch.failed,
     'imported': imported,
+    'completed': completed,
     'duplicates': duplicates,
   };
 }
@@ -137,6 +144,12 @@ Json _row(RowRef row) => {
       'type': row.type,
     };
 
+Json _error(RowError e) => {
+      ..._row(e.row),
+      'reason': e.reason.code,
+      if (e.rows.isNotEmpty) 'rows': [for (final r in e.rows) _error(r)],
+    };
+
 Json _detail(DiscardDetail d) => {
       'date': d.date,
       'type': d.type,
@@ -144,6 +157,7 @@ Json _detail(DiscardDetail d) => {
       'instrument': d.instrument,
       if (d.unpriced != null) 'unpriced': d.unpriced,
       if (d.affectsPosition != null) 'affectsPosition': d.affectsPosition,
+      if (d.rows.isNotEmpty) 'rows': [for (final r in d.rows) _detail(r)],
     };
 
 Json _event(LedgerEvent e) => {

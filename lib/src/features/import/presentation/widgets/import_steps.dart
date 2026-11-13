@@ -222,10 +222,19 @@ class _ImportReviewStepState extends State<ImportReviewStep> {
       final ts? => format.date(ts, preview.zone),
       null => text,
     };
+    final counts = preview.counts;
     final warnings =
         batch.discarded.values.fold(0, (sum, n) => sum + n) +
         batch.noticed.values.fold(0, (sum, rows) => sum + rows.length) +
-        batch.errors.length;
+        batch.failed;
+    String typeOf(String type) => rowTypeLabel(l10n, preview.broker, type);
+    List<String> sameOperation(List<(String?, String?)> rows) => [
+      for (final (day, kind) in rows)
+        [
+          l10n.importSameOperation(kind == null ? '' : typeOf(kind)),
+          if (day != null) date(day),
+        ].join(' · '),
+    ];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -235,16 +244,23 @@ class _ImportReviewStepState extends State<ImportReviewStep> {
         Row(
           spacing: QuoinSpace.row,
           children: [
-            _Count('${preview.imported}', l10n.importNew, color: c.text),
-            _Count(
-              '${preview.duplicates}',
-              l10n.importExisting,
-              color: c.muted,
-            ),
+            _Count('${counts.imported}', l10n.importNew, color: c.text),
+            if (counts.completed > 0)
+              _Count(
+                '${counts.completed}',
+                l10n.importCompleted,
+                color: c.text,
+              ),
+            _Count('${counts.duplicates}', l10n.importExisting, color: c.muted),
             _Count('$warnings', l10n.importWarnings, color: c.text),
           ],
         ),
-        if (preview.duplicates > 0)
+        if (counts.completed > 0)
+          Text(
+            l10n.importCompletedHelp,
+            style: type.secondary.copyWith(color: c.muted),
+          ),
+        if (counts.duplicates > 0)
           Text(
             l10n.importExistingSkipped,
             style: type.secondary.copyWith(color: c.muted),
@@ -311,18 +327,21 @@ class _ImportReviewStepState extends State<ImportReviewStep> {
         if (batch.errors.isNotEmpty)
           _Group(
             title: l10n.importRowErrors,
-            count: batch.errors.length,
+            count: batch.failed,
             help: l10n.importRowErrorsHelp,
             rows: [
-              for (final RowError(:row, :reason) in batch.errors)
+              for (final RowError(:row, :reason, :rows) in batch.errors)
                 _DetailRow(
                   title:
                       row.externalId ?? l10n.importRowNumber(row.position ?? 0),
                   subtitle: [
                     if (row.date case final text?) date(text),
-                    ?row.type,
+                    if (row.type case final code?) typeOf(code),
                     rowErrorLabel(l10n, reason.code),
                   ].join(' · '),
+                  others: sameOperation([
+                    for (final other in rows) (other.row.date, other.row.type),
+                  ]),
                 ),
             ],
           ),
@@ -339,14 +358,17 @@ class _ImportReviewStepState extends State<ImportReviewStep> {
               for (final detail
                   in batch.discardedDetails[reason] ?? const <DiscardDetail>[])
                 _DetailRow(
-                  title: detail.instrument ?? detail.type,
+                  title: detail.instrument ?? typeOf(detail.type),
                   subtitle: [
                     date(detail.date),
-                    detail.type,
+                    typeOf(detail.type),
                     ?detail.subtype,
                     if (detail.unpriced case final ids? when ids.isNotEmpty)
                       l10n.importUnpriced(ids.join(', ')),
                   ].join(' · '),
+                  others: sameOperation([
+                    for (final other in detail.rows) (other.date, other.type),
+                  ]),
                 ),
             ],
           ),
@@ -359,15 +381,23 @@ class _ImportReviewStepState extends State<ImportReviewStep> {
             rows: [
               for (final detail in details)
                 _DetailRow(
-                  title: detail.instrument ?? detail.type,
+                  title: detail.instrument ?? typeOf(detail.type),
                   subtitle: [
                     date(detail.date),
-                    detail.type,
+                    typeOf(detail.type),
                     ?detail.subtype,
                   ].join(' · '),
                 ),
             ],
           ),
+        if (preview.toWrite == 0)
+          Text(switch (nothingToImport(
+            total: batch.total,
+            duplicates: counts.duplicates,
+          )) {
+            NothingToImport.alreadyStored => l10n.importNothingNew,
+            NothingToImport.nothingToSave => l10n.importNothingToSave,
+          }, style: type.secondary.copyWith(color: c.muted)),
       ],
     );
   }
@@ -450,9 +480,9 @@ class _Group extends StatelessWidget {
 
 /// Step 4: done.
 class ImportDoneStep extends StatelessWidget {
-  const ImportDoneStep({super.key, required this.imported});
+  const ImportDoneStep({super.key, required this.written});
 
-  final int imported;
+  final int written;
 
   @override
   Widget build(BuildContext context) {
@@ -480,7 +510,7 @@ class ImportDoneStep extends StatelessWidget {
             style: type.title,
           ),
           Text(
-            l10n.importDoneBody(imported),
+            l10n.importDoneBody(written),
             textAlign: TextAlign.center,
             style: type.secondary.copyWith(color: c.muted),
           ),
@@ -572,6 +602,35 @@ String _typeLabel(AppLocalizations l10n, LedgerEvent event) => switch (event) {
   CashEvent(type: CashType.withdrawal) => l10n.ledgerWithdrawal,
   CashEvent(type: CashType.interest) => l10n.ledgerInterest,
 };
+
+String rowTypeLabel(AppLocalizations l10n, Broker broker, String type) =>
+    switch (brokerRowTypes[broker]?[type]) {
+      RowType.interest => l10n.rowTypeInterest,
+      RowType.deposit => l10n.rowTypeDeposit,
+      RowType.withdrawal => l10n.rowTypeWithdrawal,
+      RowType.transferIn => l10n.rowTypeTransferIn,
+      RowType.transferOut => l10n.rowTypeTransferOut,
+      RowType.transfer => l10n.rowTypeTransfer,
+      RowType.directDebit => l10n.rowTypeDirectDebit,
+      RowType.saveback => l10n.rowTypeSaveback,
+      RowType.cardPayment => l10n.rowTypeCardPayment,
+      RowType.cardPaymentAbroad => l10n.rowTypeCardPaymentAbroad,
+      RowType.reward => l10n.rowTypeReward,
+      RowType.earn => l10n.rowTypeEarn,
+      RowType.earnWithdrawal => l10n.rowTypeEarnWithdrawal,
+      RowType.spend => l10n.rowTypeSpend,
+      RowType.receive => l10n.rowTypeReceive,
+      RowType.trade => l10n.rowTypeTrade,
+      null => switch (type) {
+        'BUY' => l10n.ledgerBuy,
+        'SELL' => l10n.ledgerSell,
+        'DIVIDEND' => l10n.ledgerDividend,
+        'DEPOSIT' => l10n.ledgerDeposit,
+        'WITHDRAWAL' => l10n.ledgerWithdrawal,
+        'INTEREST' => l10n.ledgerInterest,
+        _ => type,
+      },
+    };
 
 /// A row error's label by its code; file errors on a row share them.
 String rowErrorLabel(AppLocalizations l10n, String code) => switch (code) {
@@ -701,11 +760,19 @@ class _Count extends StatelessWidget {
 }
 
 class _DetailRow extends StatelessWidget {
-  const _DetailRow({required this.title, required this.subtitle, this.amount});
+  const _DetailRow({
+    required this.title,
+    required this.subtitle,
+    this.amount,
+    this.others = const [],
+  });
 
   final String title;
   final String subtitle;
   final String? amount;
+
+  /// The other rows of the same operation, nested under its main row.
+  final List<String> others;
 
   @override
   Widget build(BuildContext context) {
@@ -730,6 +797,14 @@ class _DetailRow extends StatelessWidget {
                 children: [
                   Text(title, style: type.control),
                   Text(subtitle, style: type.small.copyWith(color: c.muted)),
+                  for (final other in others)
+                    Padding(
+                      padding: const EdgeInsetsDirectional.only(start: 12),
+                      child: Text(
+                        other,
+                        style: type.small.copyWith(color: c.faint),
+                      ),
+                    ),
                 ],
               ),
             ),

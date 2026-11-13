@@ -68,6 +68,8 @@ final class Pairing {
     required this.pairedAt,
     this.lastSyncAt,
     this.confirmed = false,
+    this.pcDeviceId,
+    this.shared = false,
   });
 
   final SyncEndpoint endpoint;
@@ -77,12 +79,70 @@ final class Pairing {
   final DateTime? lastSyncAt;
   final bool confirmed;
 
-  Pairing synced(DateTime at) => Pairing(
-    endpoint: endpoint,
+  final String? pcDeviceId;
+  final bool shared;
+
+  String get sha256 => endpoint.sha256;
+
+  Pairing copy({
+    SyncEndpoint? endpoint,
+    String? pcName,
+    DateTime? lastSyncAt,
+    bool? confirmed,
+    String? pcDeviceId,
+    bool? shared,
+  }) => Pairing(
+    endpoint: endpoint ?? this.endpoint,
     token: token,
-    pcName: pcName,
+    pcName: pcName ?? this.pcName,
     pairedAt: pairedAt,
-    lastSyncAt: at,
-    confirmed: true,
+    lastSyncAt: lastSyncAt ?? this.lastSyncAt,
+    confirmed: confirmed ?? this.confirmed,
+    pcDeviceId: pcDeviceId ?? this.pcDeviceId,
+    shared: shared ?? this.shared,
   );
+
+  Pairing synced(DateTime at) => copy(lastSyncAt: at, confirmed: true);
+}
+
+final class Pairings {
+  const Pairings({this.pcs = const [], this.pricesFrom});
+
+  final List<Pairing> pcs;
+  final String? pricesFrom;
+
+  Pairing? of(String sha256) =>
+      pcs.where((p) => p.sha256 == sha256).firstOrNull;
+
+  Pairing? twinOf(Pairing pc) => pcs
+      .where(
+        (p) =>
+            p.sha256 != pc.sha256 &&
+            !p.shared &&
+            p.pcDeviceId != null &&
+            p.pcDeviceId == pc.pcDeviceId,
+      )
+      .firstOrNull;
+
+  Pairings put(Pairing pairing) => Pairings(
+    pcs: [
+      for (final p in pcs)
+        if (p.sha256 == pairing.sha256) pairing else p,
+      if (of(pairing.sha256) == null) pairing,
+    ],
+    pricesFrom: pairing.shared && pricesFrom == pairing.sha256
+        ? null
+        : pricesFrom,
+  );
+
+  Pairings without(String sha256) => Pairings(
+    pcs: [
+      for (final p in pcs)
+        if (p.sha256 != sha256) p,
+    ],
+    pricesFrom: pricesFrom == sha256 ? null : pricesFrom,
+  );
+
+  Pairings pricesFromPc(String? sha256) =>
+      Pairings(pcs: pcs, pricesFrom: sha256);
 }

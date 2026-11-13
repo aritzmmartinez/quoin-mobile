@@ -68,12 +68,11 @@ class PlanImport {
 
     switch (await _repository.existing(batch.events)) {
       case Ok(:final value):
-        final (:imported, :duplicates) = countOperations(batch, value);
         return Ok(
           ImportPreview(
+            broker: broker,
             batch: batch,
-            imported: imported,
-            duplicates: duplicates,
+            counts: countOperations(batch, value),
             zone: context.zone,
             ratesUnavailable: unavailable,
             rateConflicts: conflicts,

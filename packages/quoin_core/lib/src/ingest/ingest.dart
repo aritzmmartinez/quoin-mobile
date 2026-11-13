@@ -4,6 +4,7 @@ import '../fx/value.dart';
 import 'batch.dart';
 import 'detect.dart';
 import 'kraken.dart';
+import 'reasons.dart';
 import 'trade_republic.dart';
 
 final class IngestContext {
@@ -35,6 +36,31 @@ MappedBatch planIngest(Broker broker, String csv, IngestContext context) {
       ),
   };
 }
+
+const Map<Broker, Map<String, RowType>> brokerRowTypes = {
+  Broker.tradeRepublic: {
+    'INTEREST_PAYMENT': RowType.interest,
+    'CUSTOMER_INPAYMENT': RowType.deposit,
+    'TRANSFER_INBOUND': RowType.transferIn,
+    'TRANSFER_INSTANT_INBOUND': RowType.transferIn,
+    'TRANSFER_DIRECT_DEBIT_INBOUND': RowType.directDebit,
+    'TRANSFER_INSTANT_OUTBOUND': RowType.transferOut,
+    'BENEFITS_SAVEBACK': RowType.saveback,
+    'CARD_TRANSACTION': RowType.cardPayment,
+    'CARD_TRANSACTION_INTERNATIONAL': RowType.cardPaymentAbroad,
+  },
+  Broker.kraken: {
+    'deposit': RowType.deposit,
+    'withdrawal': RowType.withdrawal,
+    'transfer': RowType.transfer,
+    'reward': RowType.reward,
+    'earn': RowType.earn,
+    'hybridearnwithdrawal': RowType.earnWithdrawal,
+    'spend': RowType.spend,
+    'receive': RowType.receive,
+    'trade': RowType.trade,
+  },
+};
 
 bool isKrakenReward(LedgerEvent event) =>
     event.source == 'KRAKEN_CSV' &&

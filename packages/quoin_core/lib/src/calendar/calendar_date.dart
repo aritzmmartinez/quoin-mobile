@@ -77,6 +77,19 @@ CalendarDate calendarDateOf(DateTime instant, String zone) {
   return CalendarDate(local.year, local.month, local.day);
 }
 
+DateTime atLocalTime(CalendarDate date, int hour, int minute, String zone) =>
+    DateTime.fromMillisecondsSinceEpoch(
+      tz.TZDateTime(
+        _location(zone),
+        date.year,
+        date.month,
+        date.day,
+        hour,
+        minute,
+      ).millisecondsSinceEpoch,
+      isUtc: true,
+    );
+
 DateTime startOfDay(CalendarDate date, String zone) {
   final start = tz.TZDateTime(_location(zone), date.year, date.month, date.day);
   if (CalendarDate(start.year, start.month, start.day) != date ||

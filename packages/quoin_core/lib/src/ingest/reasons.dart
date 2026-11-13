@@ -65,6 +65,7 @@ final class DiscardDetail {
     this.instrument,
     this.unpriced,
     this.affectsPosition,
+    this.rows = const [],
   });
 
   final String date;
@@ -75,6 +76,18 @@ final class DiscardDetail {
   final List<String>? unpriced;
 
   final bool? affectsPosition;
+
+  final List<DiscardDetail> rows;
+
+  DiscardDetail withRow(DiscardDetail row) => DiscardDetail(
+        date: date,
+        type: type,
+        subtype: subtype,
+        instrument: instrument,
+        unpriced: unpriced,
+        affectsPosition: affectsPosition,
+        rows: [...rows, row],
+      );
 }
 
 final class RowRef {
@@ -98,10 +111,30 @@ final class RowRef {
 }
 
 final class RowError {
-  const RowError(this.row, this.reason);
+  const RowError(this.row, this.reason, {this.rows = const []});
 
   final RowRef row;
   final RowErrorReason reason;
+  final List<RowError> rows;
+}
+
+enum RowType {
+  interest,
+  deposit,
+  withdrawal,
+  transferIn,
+  transferOut,
+  transfer,
+  directDebit,
+  saveback,
+  cardPayment,
+  cardPaymentAbroad,
+  reward,
+  earn,
+  earnWithdrawal,
+  spend,
+  receive,
+  trade,
 }
 
 sealed class IngestRejection implements Exception {

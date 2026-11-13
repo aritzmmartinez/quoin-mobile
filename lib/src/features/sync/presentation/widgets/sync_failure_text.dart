@@ -18,6 +18,9 @@ String syncFailureText(AppLocalizations l10n, Failure failure) =>
       DeviceIdentityFailure() => l10n.syncFailDeviceIdentity,
       SampleDataFailure() => l10n.syncFailSample,
       ConflictsChangedFailure() => l10n.syncFailConflictsChanged,
+      SharedIdentityFailure(:final otherPcName) => l10n.syncSharedIdentity(
+        otherPcName,
+      ),
       PcRefusedFailure(:final code) => l10n.syncFailRefused(code),
       UnsupportedResidenceFailure() => l10n.residenceUnsupported,
       StorageFailure() => l10n.syncFailStorage,
@@ -29,6 +32,9 @@ String syncFailureDetail(AppLocalizations l10n, Failure failure) {
     PcUnreachableFailure() => l10n.syncUnreachableHint,
     CertificateMismatchFailure() => l10n.syncCertificateHint,
     PairingRevokedFailure() => l10n.syncRevokedHint,
+    SharedIdentityFailure(:final otherPcName) => l10n.syncSharedIdentityHint(
+      otherPcName,
+    ),
     _ => null,
   };
   final title = syncFailureText(l10n, failure);

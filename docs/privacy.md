@@ -24,9 +24,11 @@ user put there.
 The ECB sees the phone's IP address, as any website does. Its own terms
 apply to what it logs.
 
-## The user's PC, over the local network
+## The user's PCs, over the local network
 
-Only once the user pairs the phone with Quoin on their own PC.
+Only once the user pairs the phone with Quoin on their own PC. The phone can
+be paired with several of the user's PCs; each one receives what is below,
+and the phone carries each PC's changes to the others.
 
 - **What:** the whole portfolio state that the PC needs to keep the same
   portfolio: the ledger, instruments, plan versions, fund compositions,
@@ -39,8 +41,10 @@ Only once the user pairs the phone with Quoin on their own PC.
   the home Wi‑Fi. Nothing goes through the internet or any third party.
 - **Why:** so the phone and the PC show the same portfolio without a server.
 - **When:** when the user pairs, pulls to refresh Inicio or Cartera, taps
-  «Sync now», and in the background each time the app opens, once the first
-  sync was confirmed.
+  «Sync now», and in the background each time the app opens, to each PC
+  whose first sync was confirmed. A PC set aside because it shares its sync
+  identity with another paired PC receives nothing. Prices are asked of one
+  PC per sync.
 - **How:** HTTPS with the PC's certificate pinned: the QR carries the
   certificate's SHA-256 and the phone talks only to a server presenting that
   certificate, with no other trusted root. If another computer answers at
@@ -49,8 +53,8 @@ Only once the user pairs the phone with Quoin on their own PC.
   accepts it. Each request carries the device token the PC issued; revoking
   the phone on the PC ends it.
 
-On the phone the pairing (the PC's address and certificate pin, the device
-token, the PC's name) is kept in Android's encrypted storage
+On the phone each pairing (the PC's address and certificate pin, the device
+token, the PC's name and sync identity) is kept in Android's encrypted storage
 (`flutter_secure_storage`, its key in the Android Keystore).
 
 ## The camera
@@ -95,4 +99,5 @@ filled in:
   user data.
 - Data encrypted in transit: yes (HTTPS to the ECB; pinned HTTPS to the PC).
 - Data deletion: everything is on the phone; uninstalling or clearing the
-  app's data deletes it. Unpairing deletes the pairing and its token.
+  app's data deletes it. Unpairing a PC deletes its pairing and its token on the
+  phone; the PC keeps listing the phone until it is revoked there.

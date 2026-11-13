@@ -153,7 +153,7 @@ void main() {
         );
         expect(requests, 1);
         expect(preview.ratesUnavailable, isEmpty);
-        expect(preview.imported, 1);
+        expect(preview.counts.imported, 1);
         final event = preview.batch.events.single;
         expect(event.fxSource, FxSource.ecb);
         expect(event.fxRate?.text, '1.0800');
@@ -172,7 +172,7 @@ void main() {
       expect(preview.ratesUnavailable, ['USD']);
       expect(preview.batch.discarded, {DiscardReason.fxUnavailable: 1});
       expect(preview.batch.ratesNeeded, {'USD': '2026-03-02'});
-      expect(preview.imported, 1);
+      expect(preview.counts.imported, 1);
     });
 
     test(
@@ -203,7 +203,7 @@ void main() {
       );
       expect(requests, 0);
       expect(preview.zone, 'Europe/Madrid');
-      expect(preview.imported, 1);
+      expect(preview.counts.imported, 1);
     });
   });
 }

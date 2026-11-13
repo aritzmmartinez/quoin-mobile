@@ -12,21 +12,35 @@ final pairingLocalDataSourceProvider = Provider(
 class PairingLocalDataSource {
   const PairingLocalDataSource(this._storage);
 
-  static const key = 'pairing';
+  static const key = 'pairings';
+  static const legacyKey = 'pairing';
 
   final FlutterSecureStorage _storage;
 
-  Future<Map<String, Object?>?> read() => _guard(() async {
+  Future<Map<String, Object?>> read() => _guard(() async {
     final text = await _storage.read(key: key);
-    if (text == null) return null;
-    final json = jsonDecode(text);
-    return json is Map<String, Object?> ? json : null;
+    final legacy = await _storage.read(key: legacyKey);
+    if (text != null) {
+      if (legacy != null) await _storage.delete(key: legacyKey);
+      return _object(text) ?? const {};
+    }
+    if (legacy == null) return const {};
+    final moved = {
+      'pcs': [?_object(legacy)],
+      'pricesFrom': null,
+    };
+    await _storage.write(key: key, value: jsonEncode(moved));
+    await _storage.delete(key: legacyKey);
+    return moved;
   });
 
-  Future<void> write(Map<String, Object?> pairing) =>
-      _guard(() => _storage.write(key: key, value: jsonEncode(pairing)));
+  Future<void> write(Map<String, Object?> pairings) =>
+      _guard(() => _storage.write(key: key, value: jsonEncode(pairings)));
 
-  Future<void> delete() => _guard(() => _storage.delete(key: key));
+  Map<String, Object?>? _object(String text) => switch (jsonDecode(text)) {
+    final Map<String, Object?> json => json,
+    _ => null,
+  };
 
   Future<T> _guard<T>(Future<T> Function() body) async {
     try {

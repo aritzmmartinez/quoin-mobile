@@ -621,7 +621,7 @@ MappedBatch planKraken(
       _detailOf(row, row.asset.isEmpty ? null : row.asset),
     );
   }
-  final batch = builder.build(groups.length);
+  final batch = builder.build();
   return batch.withInstruments([
     for (final instrument in batch.instruments)
       switch (names[instrument.id]) {

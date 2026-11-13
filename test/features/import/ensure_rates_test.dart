@@ -36,11 +36,21 @@ void main() {
   });
   tearDown(() => db.close());
 
-  Future<EnsuredRates> run(Map<String, String> needs) async =>
-      switch (await ensure(needs, now: now, zone: zone)) {
-        Ok(:final value) => value,
-        Err(:final failure) => throw StateError('$failure'),
-      };
+  final later = now.add(const Duration(minutes: 16));
+
+  Future<EnsuredRates> run(
+    Map<String, String> needs, {
+    DateTime? at,
+    bool withBook = true,
+  }) async => switch (await ensure(
+    needs,
+    now: at ?? now,
+    zone: zone,
+    withBook: withBook,
+  )) {
+    Ok(:final value) => value,
+    Err(:final failure) => throw StateError('$failure'),
+  };
 
   test('syncStart', () {
     const empty = (first: null, last: null);
@@ -83,7 +93,7 @@ void main() {
       ecbBody([ecbRow('2026-03-02', '1.08'), ecbRow('2026-03-04', '1.1')]),
       200,
     );
-    final ensured = await run({'USD': '2026-03-04'});
+    final ensured = await run({'USD': '2026-03-04'}, at: later);
     expect(asked.last.queryParameters['startPeriod'], '2026-03-02');
     expect(ensured.book['USD'], hasLength(2));
   });
@@ -107,9 +117,55 @@ void main() {
       ecbBody([ecbRow('2026-03-02', '1.07'), ecbRow('2026-03-03', '1.1')]),
       200,
     );
-    final ensured = await run({'USD': '2026-03-03'});
+    final ensured = await run({'USD': '2026-03-03'}, at: later);
     expect(ensured.book['USD']!.single.rate, Dec.parse('1.08'));
     expect(ensured.conflicts, [(currency: 'USD', day: '2026-03-02')]);
     expect(ensured.unavailable, isEmpty);
+  });
+
+  test('a series that holds the newest published day asks nothing', () async {
+    answers['USD'] = () => http.Response(
+      ecbBody([ecbRow('2026-03-19', '1.08'), ecbRow('2026-03-20', '1.09')]),
+      200,
+    );
+    await run({'USD': '2026-03-19'}, at: DateTime.utc(2026, 3, 20, 17));
+    asked.clear();
+
+    final ensured = await run({
+      'USD': '2026-03-19',
+    }, at: DateTime.utc(2026, 3, 21, 10));
+    expect(asked, isEmpty, reason: 'a Saturday: the Friday rate is the newest');
+    expect(ensured.book['USD'], hasLength(2));
+  });
+
+  test('an answer without the expected day is not asked again for 15 '
+      'minutes', () async {
+    answers['USD'] = () =>
+        http.Response(ecbBody([ecbRow('2026-03-18', '1.08')]), 200);
+    await run({'USD': '2026-03-19'});
+    expect(asked, hasLength(1));
+
+    await run({'USD': '2026-03-19'}, at: now.add(const Duration(minutes: 14)));
+    expect(asked, hasLength(1));
+
+    await run({'USD': '2026-03-19'}, at: now.add(const Duration(minutes: 15)));
+    expect(asked, hasLength(2));
+  });
+
+  test('a first use before the stored series asks even while held', () async {
+    answers['USD'] = () =>
+        http.Response(ecbBody([ecbRow('2026-03-18', '1.08')]), 200);
+    await run({'USD': '2026-03-19'});
+    await run({'USD': '2026-01-15'});
+    expect(asked, hasLength(2));
+    expect(asked.last.queryParameters['startPeriod'], '2026-01-08');
+  });
+
+  test('without the book, the stored series is not read back', () async {
+    answers['USD'] = () =>
+        http.Response(ecbBody([ecbRow('2026-03-19', '1.08')]), 200);
+    final ensured = await run({'USD': '2026-03-19'}, withBook: false);
+    expect(ensured.book, isEmpty);
+    expect(await db.select(db.fxRate).get(), hasLength(1));
   });
 }

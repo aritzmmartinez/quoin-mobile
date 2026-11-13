@@ -418,9 +418,7 @@ MappedBatch planTradeRepublic(String csv, BatchBuilder builder) {
       }
     } on Object catch (error) {
       final reason = rowErrorReason(error);
-      for (final failed in [if (saveback != null) saveback, row]) {
-        builder.addError(
-          RowError(
+      RowError named(TradeRepublicRow failed) => RowError(
             RowRef.of(
               failed.transactionId,
               failed.position,
@@ -428,10 +426,9 @@ MappedBatch planTradeRepublic(String csv, BatchBuilder builder) {
               failed.type,
             ),
             reason,
-          ),
-        );
-      }
+          );
+      builder.addError(named(row), [if (saveback != null) named(saveback)]);
     }
   }
-  return builder.build(rows.length + errors.length);
+  return builder.build();
 }

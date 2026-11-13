@@ -180,10 +180,38 @@
   "importChange": "Cambiar",
   "importProcessing": "Procesando movimientos…",
   "importReviewTitle": "Revisa antes de importar",
-  "importNew": "Nuevos",
-  "importExisting": "Ya existentes",
+  "importNew": "Nuevas",
+  "importCompleted": "Completadas",
+  "importCompletedHelp": "Ya estaban importadas; se ha añadido la parte que faltaba",
+  "importExisting": "Duplicadas",
   "importWarnings": "Advertencias",
-  "importExistingSkipped": "Los movimientos ya existentes se omitirán",
+  "importExistingSkipped": "Las operaciones duplicadas ya estaban en el registro y se omitirán",
+  "importNothingNew": "Nada nuevo que importar: todas las operaciones de este fichero ya estaban en el registro.",
+  "importNothingToSave": "Nada que importar: ninguna operación de este fichero se puede guardar. Arriba se explica por qué.",
+  "importSameOperation": "misma operación: {type}",
+  "@importSameOperation": {
+    "placeholders": {
+      "type": {
+        "type": "String"
+      }
+    }
+  },
+  "rowTypeInterest": "Intereses",
+  "rowTypeDeposit": "Ingreso",
+  "rowTypeWithdrawal": "Retirada",
+  "rowTypeTransferIn": "Transferencia recibida",
+  "rowTypeTransferOut": "Transferencia enviada",
+  "rowTypeTransfer": "Transferencia",
+  "rowTypeDirectDebit": "Adeudo domiciliado",
+  "rowTypeSaveback": "Saveback",
+  "rowTypeCardPayment": "Pago con tarjeta",
+  "rowTypeCardPaymentAbroad": "Pago con tarjeta en el extranjero",
+  "rowTypeReward": "Recompensa",
+  "rowTypeEarn": "Earn",
+  "rowTypeEarnWithdrawal": "Retirada de Earn",
+  "rowTypeSpend": "Entrega",
+  "rowTypeReceive": "Recepción",
+  "rowTypeTrade": "Operación",
   "importSeeDetail": "Ver detalle",
   "importDetailCount": "{count} mov.",
   "@importDetailCount": {
@@ -193,7 +221,7 @@
       }
     }
   },
-  "importConfirm": "{count, plural, =0{Nada nuevo que importar} =1{Importar 1 movimiento} other{Importar {count} movimientos}}",
+  "importConfirm": "{count, plural, =0{Nada que importar} =1{Importar 1 operación} other{Importar {count} operaciones}}",
   "@importConfirm": {
     "placeholders": {
       "count": {
@@ -203,7 +231,7 @@
   },
   "importCancel": "Cancelar",
   "importDoneTitle": "Importación completada",
-  "importDoneBody": "{count, plural, =0{No había movimientos nuevos} =1{Se ha añadido 1 movimiento a tu cartera} other{Se han añadido {count} movimientos a tu cartera}}",
+  "importDoneBody": "{count, plural, =0{No había operaciones que guardar} =1{Se ha guardado 1 operación en tu cartera} other{Se han guardado {count} operaciones en tu cartera}}",
   "@importDoneBody": {
     "placeholders": {
       "count": {
@@ -670,7 +698,7 @@
       }
     }
   },
-  "syncUnpairBody": "Este móvil dejará de sincronizar con tu PC. La cartera se queda en el móvil.",
+  "syncUnpairBody": "Este móvil dejará de sincronizar con este PC y borrará su clave; la cartera se queda en el móvil. El PC seguirá viendo este móvil como vinculado: revócalo también en Ajustes → Dispositivos del PC.",
   "syncCancel": "Cancelar",
   "syncUnreachable": "No encuentro tu Quoin",
   "syncUnreachableHint": "El móvil no llega a tu PC. Comprueba que el móvil está conectado a la misma Wi‑Fi que el PC (no a los datos móviles), que el PC está encendido con Quoin abierto y que el cortafuegos de Windows permite la conexión. Si el PC ha cambiado de dirección, vuelve a escanear el código.",
@@ -773,6 +801,7 @@
   "syncDone": "Sincronizado",
   "syncUpToDate": "Ya estaba todo al día",
   "syncReceived": "Recibido del PC",
+  "syncPricesRunning": "Actualizando precios y tipos de cambio…",
   "syncPricesPending": "Precios pendientes; se completarán en la próxima sincronización",
   "syncPricesFailed": "No se han podido traer los precios; se intentará en la próxima sincronización.",
   "syncRatesUnavailable": "Sin tipos de cambio del BCE para {currencies}.",
@@ -818,5 +847,70 @@
   "syncReview": "Revisar",
   "syncDoneSnack": "Sincronizado con tu PC",
   "syncYes": "Sí",
+  "syncAddPc": "Añadir otro PC",
+  "syncPcStep": "{pc} · {step} de {total}",
+  "@syncPcStep": {
+    "placeholders": {
+      "pc": {
+        "type": "String"
+      },
+      "step": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "syncSharedIdentity": "Comparte identidad con {other}",
+  "@syncSharedIdentity": {
+    "placeholders": {
+      "other": {
+        "type": "String"
+      }
+    }
+  },
+  "syncSharedIdentityHint": "Este PC y {other} tienen la misma identidad de sincronización: la base de uno se restauró en el otro. Mientras sea así solo se sincroniza con {other}; sincronizar con los dos haría que sus datos se separaran sin avisar.",
+  "@syncSharedIdentityHint": {
+    "placeholders": {
+      "other": {
+        "type": "String"
+      }
+    }
+  },
+  "syncCheckAgain": "Comprobar de nuevo",
+  "syncSameIdentityTitle": "{pc} tiene la misma identidad que {other}, que ahora no responde.",
+  "@syncSameIdentityTitle": {
+    "placeholders": {
+      "pc": {
+        "type": "String"
+      },
+      "other": {
+        "type": "String"
+      }
+    }
+  },
+  "syncSameIdentityQuestion": "¿Es el mismo PC con un certificado nuevo?",
+  "syncSamePc": "Sí, es el mismo PC",
+  "syncOtherPc": "No, es otro PC",
+  "syncPcFailure": "{pc}: {failure}",
+  "@syncPcFailure": {
+    "placeholders": {
+      "pc": {
+        "type": "String"
+      },
+      "failure": {
+        "type": "String"
+      }
+    }
+  },
+  "pairAddressUpdated": "Ya estaba vinculado con {pc}. Se ha guardado su nueva dirección; no hace falta volver a vincular.",
+  "@pairAddressUpdated": {
+    "placeholders": {
+      "pc": {
+        "type": "String"
+      }
+    }
+  },
   "syncNo": "No"
 }

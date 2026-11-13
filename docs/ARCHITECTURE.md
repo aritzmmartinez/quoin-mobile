@@ -132,7 +132,12 @@ currency the service cannot give is listed, not an error: its rows stay
 `fx-unavailable` and the review says so; so does a fetched series that
 contradicts a stored rate, which is then not updated. Both rate books, for
 booking and for valuation, read only the ECB's series (`ecbSource`), as in
-Quoin. Tests answer for the ECB with
+Quoin. It asks the ECB only for what may be new (`ecbFetchFrom` in
+quoin_core): a series that already holds the newest day out (16:30 on
+Frankfurt clocks, on TARGET business days) asks nothing; an answer that
+lacks the expected day (a late publication, a closing outside the calendar)
+holds that currency for 15 minutes, in memory only (`EcbHold`). The sync
+reads no rate book back (`withBook: false`). Tests answer for the ECB with
 `MockClient`. Public data in, nothing out but the currency code and the days;
 the only other traffic is the sync with the user's PC (`docs/privacy.md`).
 Kraken rewards and swaps without Kraken's own USD figure are valued from
@@ -225,30 +230,69 @@ a one-time token and the PC's name (`parsePairingQr`). The phone checks the
 PC answers (`hello`), shows the six-digit `pairingCode` of the token and its
 device id for the user to compare with the PC's, and posts both with its
 name; the PC answers with a device token once the user accepts there. The
-pairing is kept in `flutter_secure_storage` (left out of backups: a restored
-phone pairs again). The camera is used only here: `qrscan` (ZXing in Java,
+pairings are a list in `flutter_secure_storage` under `pairings` (left out of
+backups: a restored phone pairs again); the single `pairing` of earlier
+versions moves into it on first read, so a paired phone never pairs again. A
+PC is its certificate's SHA-256; host and port are where it was last seen,
+and scanning the QR of a PC already paired only saves its new address
+(`PairingStart.known`). «Vincular de nuevo» after a revocation pairs again
+(`repair`). The camera is used only here: `qrscan` (ZXing in Java,
 its own camera screen) behind `scanQr` in `qr_scanner_view.dart`, the only file that
 imports it, swapped for a fake in tests (`qrScannerProvider`).
 
-**A sync** (`SyncNow`): claim the device id; `hello` for a common exchange
-version; `GET /v1/sync` for the PC's state and ETag; `importExchange` here;
-`POST /v1/sync` with the merged state and `If-Match`, starting again once
-from the GET on 409; then the effects and the prices. The first sync with a
-pairing is a dry run that previews both directions (`SyncPreview`) until the
-user confirms. Open conflicts return `SyncConflicts` and write nothing; the
-screen resolves them with keep or take and runs again.
+**A sync** (`SyncNow`) is a pass over every paired PC: claim the device id;
+`hello` to every PC at once, with a three-second wait; then, one PC after
+another, `GET /v1/sync` for its state and ETag, its identity, `importExchange`
+here, and `POST /v1/sync` with the merged state and `If-Match` (starting
+that PC again once on 409). When a later PC brought changes, the PCs
+synced before it get one more sync, so one pass carries each PC's changes to
+the others. One PC's failure never stops the rest; «No encuentro tu Quoin»
+only when none answered (`SyncPass.noneAnswered`). A PC's first sync is a dry
+run that previews both directions (`SyncPreview`) until the user confirms
+that PC. Open conflicts return `SyncConflicts` and write nothing; the screen
+shows the PCs that wait one at a time and runs the pass again after each
+answer, so the next PC's conflicts are worked out against what was just
+written. The pass ends with the exchanges, and so do the pull and the result
+screen; its follow-up (`FinishSync`: the merges' effects, then the price
+histories and their rates) runs in the background with its own state
+(`SyncStatus.finishing`, `followUp`) and reloads the ledger, so every
+valuation updates without another pull. `SyncController` runs one pass at a
+time: a plain sync asked during one joins it; one carrying a decision waits
+and then runs; and no pass starts before the last one's follow-up is over,
+so the two never write at once.
 
-**Prices** (`PullPrices`). After the sync the phone posts, per instrument it
+**Identity** (`PcIdentity`). Two PCs with one sync identity (a database
+restored from one onto the other) must never both sync: their marks look
+like one device's and values diverge silently. A PC's identity is learnt from
+its exchange, before anything is merged. A new one under the same
+certificate is the PC rotating its own, taken as it is. If another paired PC
+has it, that PC is asked (`GET /v1/sync` with its own token; `hello` carries
+no identity): answering with it makes the new PC a clone, set aside
+(`shared`, `SharedIdentityFailure`) without asking; not answering asks the
+user (`SyncSameIdentity`): the same PC with a new certificate replaces the
+other entry, another PC is set aside. «Comprobar de nuevo» lets a set-aside
+PC sync again once its identity is its own.
+
+**Prices** (`PullPrices`). From one PC per pass: the one in
+`Pairings.pricesFrom` while it syncs, else the first that did, which becomes
+the source (never a shared or unpaired PC). Series versions are each PC's
+own, so a new source is one full download (about 0.4 MB gzipped for 35
+instruments and five years of closes). After the sync the phone posts, per instrument it
 holds, the series version and last day it has (`holdingOf`); the PC answers
 with a full series, the rows after that day, or `pending` while it is still
-downloading. `PricesLocalDataSource` applies them (`applyPriceAnswer`), and
+downloading. `PricesLocalDataSource` applies them (`applyPriceAnswer`): a
+row's id is its instrument and instant, ordered and unique as the series
+key is, and while whole series are written the two plain indexes are off and
+rebuilt once after. Then
 `EnsureRates` brings any new currency's rates. Pending instruments are asked
 again a few times, three seconds apart; what is still pending is shown.
 
-**When.** The Sync section in Settings pairs, shows the PC and the last sync,
-syncs, unpairs, and names what stopped the last sync with its way out. Inicio
-and Cartera sync on pull to refresh; the app syncs silently when it opens,
-once the first sync was confirmed.
+**When.** The Sync section in Settings lists each PC (`pcRow`: its name and
+what it is doing, what stopped it or when it last synced); a PC's sheet
+explains what stopped it and offers its way out and unpairing, which deletes
+only the phone's token, so the PC must revoke it too. Inicio and Cartera
+sync on pull to refresh; the app syncs silently when it opens, with the PCs
+already confirmed.
 
 **Failures.** Each refusal of the API is its own `Failure`: unreachable,
 certificate mismatch, revoked, invalid or used or expired QR, rejected

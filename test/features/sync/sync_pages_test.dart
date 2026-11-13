@@ -2,11 +2,15 @@ import 'dart:convert';
 
 import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:quoin/src/features/portfolio/data/database/quoin_database.dart';
+import 'package:quoin/src/features/portfolio/data/database/quoin_database.dart'
+    hide SettingsRow;
 import 'package:quoin/src/features/sync/data/datasources/sync_remote_datasource.dart';
 import 'package:quoin/src/features/sync/domain/usecases/pull_prices.dart';
 import 'package:quoin/src/features/sync/presentation/providers/sync_providers.dart';
+import 'package:quoin/src/ui/molecules/settings_row.dart';
 import 'package:quoin/src/ui/organisms/quoin_bottom_bar.dart';
 import 'package:quoin/src/ui/templates/quoin_page.dart';
 import 'package:quoin_core/quoin_core.dart';
@@ -81,7 +85,9 @@ void main() {
         () => Future<void>.delayed(const Duration(milliseconds: 10)),
       );
       await tester.pump();
-      if (i > 5 && find.byType(CircularProgressIndicator).evaluate().isEmpty) {
+      if (i > 5 &&
+          find.byType(CircularProgressIndicator).evaluate().isEmpty &&
+          find.textContaining('Actualizando precios').evaluate().isEmpty) {
         break;
       }
     }
@@ -101,6 +107,18 @@ void main() {
     );
     await tester.tap(finder);
     await settle(tester);
+  }
+
+  Future<void> openRow(WidgetTester tester, String label) async {
+    tester
+        .widget<SettingsRow>(
+          find.ancestor(
+            of: find.text(label),
+            matching: find.byType(SettingsRow),
+          ),
+        )
+        .onTap!();
+    await tester.pumpAndSettle();
   }
 
   Future<void> pairFromSettings(WidgetTester tester) async {
@@ -235,6 +253,65 @@ void main() {
     expect(settled.ter, '0.0030');
   });
 
+  testWidgets('a PC that shares its identity says so, at 200 % too, and '
+      'unpairing says to revoke on the PC as well', (tester) async {
+    tester.platformDispatcher.textScaleFactorTestValue = 2;
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+    await pumpApp(tester, prefs: {'locale': 'es'}, database: db);
+    Map<String, Object?> pc(String sha, String name, {bool shared = false}) => {
+      'host': 'pc.test',
+      'port': 3443,
+      'sha256': sha,
+      'token': FakePc.deviceToken,
+      'pcName': name,
+      'pairedAt': '2026-11-01T09:00:00.000Z',
+      'lastSyncAt': null,
+      'confirmed': true,
+      'pcDeviceId': 'dev-pc',
+      'shared': shared,
+    };
+    await const FlutterSecureStorage().write(
+      key: 'pairings',
+      value: jsonEncode({
+        'pcs': [
+          pc('ab' * 32, 'Test PC'),
+          pc('cd' * 32, 'Copia PC', shared: true),
+        ],
+        'pricesFrom': null,
+      }),
+    );
+    ProviderScope.containerOf(tester.element(find.byType(QuoinBottomBar)))
+        .invalidate(pairingsProvider);
+    await tester.tap(
+      find.descendant(
+        of: find.byType(QuoinBottomBar),
+        matching: find.text('Ajustes'),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.text('Copia PC'),
+      200,
+      scrollable: find
+          .descendant(
+            of: find.byType(QuoinPage),
+            matching: find.byType(Scrollable),
+          )
+          .last,
+    );
+    expect(find.text('Comparte identidad con Test PC'), findsOneWidget);
+    await openRow(tester, 'Copia PC');
+    expect(
+      find.textContaining('la misma identidad de sincronización'),
+      findsOneWidget,
+    );
+    expect(find.text('Comprobar de nuevo'), findsOneWidget);
+
+    await openRow(tester, 'Desvincular');
+    expect(find.textContaining('revócalo también'), findsOneWidget);
+  });
+
   testWidgets('a PC that cannot be found is shown in Settings with the way '
       'out', (tester) async {
     await open(tester);
@@ -253,6 +330,8 @@ void main() {
     await tester.tap(find.byTooltip('Atrás'));
     await settle(tester);
     expect(find.text('No encuentro tu Quoin'), findsOneWidget);
+    await openRow(tester, 'Test PC');
     expect(find.text('Volver a escanear'), findsOneWidget);
+    expect(find.text('Desvincular'), findsOneWidget);
   });
 }

@@ -113,7 +113,7 @@ void main() {
       'answers with the currencies the ECB could not be reached for',
       () async {
         final ask = ratesForSync(
-          const EnsureRates(_Offline()),
+          EnsureRates(_Offline()),
           now: () => DateTime.utc(2026, 5, 1, 12),
         );
 
