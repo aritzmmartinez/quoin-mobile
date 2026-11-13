@@ -6,13 +6,13 @@ The first build that reaches anyone outside development, closed testing
 included, ships these. Production needs them too.
 
 - **Third-party licences.** Settings → Licencias de terceros shows the pub
-  packages (`qrscan`'s MIT included) and the fonts, but not the Java
-  libraries `qrscan` brings from Maven, all Apache-2.0: ZXing core 3.5.3,
-  Guava 33.3.1 and CameraX 1.4.1. Add them as the fonts are: bundle the
-  Apache-2.0 text in `assets/licenses/Apache-2.0.txt` and register one entry
-  in `main.dart` with `LicenseRegistry.addLicense` for `ZXing`, `Guava` and
-  `CameraX`. Check the list again whenever an Android dependency changes
-  (`./gradlew app:dependencies`).
+  packages and, from `lib/src/app/licenses.dart`, the fonts and the Android
+  libraries that come from Maven: Apache-2.0 for most (ZXing, Guava,
+  CameraX, AndroidX, Kotlin, Tink, Gson, Okio…), MIT for checker-qual and
+  BSD-3-Clause for the Protocol Buffers inside DataStore; the texts are in
+  `assets/licenses/`. Whenever an Android dependency changes, list them
+  again with `./gradlew :app:dependencies --configuration
+  releaseRuntimeClasspath` (from `android/`) and add what is new.
 - **Data safety form and privacy policy:** from `docs/privacy.md`; Play asks
   for both before any testing track goes out.
 
