@@ -23,6 +23,7 @@ import 'package:quoin/src/ui/molecules/icon_tile.dart';
 import 'package:quoin/src/ui/molecules/movement_row.dart';
 import 'package:quoin/src/ui/molecules/quoin_segmented.dart';
 import 'package:quoin/src/ui/organisms/quoin_segmented_pages.dart';
+import 'package:quoin/src/ui/organisms/quoin_toast.dart';
 import 'package:quoin/src/ui/molecules/quoin_text_field.dart';
 import 'package:quoin/src/ui/molecules/sale_row.dart';
 import 'package:quoin/src/ui/molecules/position_row.dart';
@@ -131,6 +132,51 @@ class _ComponentGalleryPageState extends State<ComponentGalleryPage> {
                   [QuoinCard(child: Text('Vista de $view'))],
               ],
             ),
+          ),
+          label('Avisos'),
+          Wrap(
+            spacing: QuoinSpace.s,
+            runSpacing: QuoinSpace.s,
+            children: [
+              for (final (name, show) in <(String, VoidCallback)>[
+                (
+                  'Éxito',
+                  () => showQuoinToast(
+                    context,
+                    tone: QuoinToastTone.positive,
+                    title: 'Cambios guardados',
+                  ),
+                ),
+                (
+                  'Error',
+                  () => showQuoinToast(
+                    context,
+                    tone: QuoinToastTone.negative,
+                    title: 'No se ha podido sincronizar',
+                    body: 'El PC de ejemplo no responde en la red.',
+                  ),
+                ),
+                (
+                  'Aviso',
+                  () => showQuoinToast(
+                    context,
+                    tone: QuoinToastTone.neutral,
+                    title: 'Precios pendientes',
+                    body: 'Se completarán en la próxima sincronización.',
+                  ),
+                ),
+                (
+                  'Con acción',
+                  () => showQuoinToast(
+                    context,
+                    tone: QuoinToastTone.neutral,
+                    title: 'Tu PC tiene cambios por revisar',
+                    action: (label: 'Revisar', onPressed: () {}),
+                  ),
+                ),
+              ])
+                OutlinedButton(onPressed: show, child: Text(name)),
+            ],
           ),
           label('Campos de texto'),
           const QuoinTextField(label: 'Nombre', hint: 'Plan 2027'),

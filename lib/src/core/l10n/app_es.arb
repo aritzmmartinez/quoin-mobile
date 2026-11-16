@@ -56,6 +56,7 @@
     }
   },
   "settingsSaveFailed": "No se ha podido guardar el ajuste",
+  "settingsSaveFailedBody": "Se aplica ahora, pero al volver a abrir la app estará como antes.",
   "@settingsSaveFailed": {
     "description": "SnackBar cuando falla guardar el tema o el idioma; el valor elegido se aplica igualmente."
   },
@@ -163,7 +164,7 @@
   "importSelectTitle": "Sube tu archivo CSV",
   "importSelectAction": "Toca para seleccionar archivo",
   "importSelectHint": "Trade Republic o Kraken, tal cual lo descargas",
-  "importFileSize": "{size}\u00a0KB",
+  "importFileSize": "{size} KB",
   "@importFileSize": {
     "placeholders": {
       "size": {
@@ -207,7 +208,7 @@
   "rowTypeReceive": "Recepción",
   "rowTypeTrade": "Operación",
   "importSeeDetail": "Ver detalle",
-  "importDetailCount": "{count}\u00a0mov.",
+  "importDetailCount": "{count} mov.",
   "@importDetailCount": {
     "placeholders": {
       "count": {
@@ -442,7 +443,7 @@
   "realizedSortDate": "Fecha",
   "realizedSortResult": "Resultado",
   "realizedSortName": "A–Z",
-  "realizedDays": "{count}\u00a0d",
+  "realizedDays": "{count} d",
   "@realizedDays": {
     "placeholders": {
       "count": {
@@ -490,7 +491,7 @@
   "taxWashSaleBadge": "Recompra",
   "taxUnlistedBadge": "Aviso",
   "taxLotsTitle": "Lotes FIFO consumidos",
-  "taxLotLine": "{quantity}\u00a0uds del {date} a {unitCost}",
+  "taxLotLine": "{quantity} uds del {date} a {unitCost}",
   "@taxLotLine": {
     "placeholders": {
       "quantity": {
@@ -504,7 +505,7 @@
       }
     }
   },
-  "taxWashSaleReason": "Se recompraron {repurchased} de las {sold}\u00a0uds vendidas.",
+  "taxWashSaleReason": "Se recompraron {repurchased} de las {sold} uds vendidas.",
   "@taxWashSaleReason": {
     "placeholders": {
       "repurchased": {
@@ -592,7 +593,7 @@
   "taxNonComputable": "Pérdida no computable",
   "taxCarriedOver": "Pérdida diferida heredada que pasa",
   "taxRecipientsTitle": "uds que reciben la pérdida diferida",
-  "taxRecipientLine": "{quantity}\u00a0uds del {date}",
+  "taxRecipientLine": "{quantity} uds del {date}",
   "@taxRecipientLine": {
     "placeholders": {
       "quantity": {
@@ -906,6 +907,13 @@
   "syncFieldResidence": "Residencia fiscal",
   "residenceBizkaia": "Bizkaia",
   "syncReviewSnack": "Tu PC tiene cambios por revisar",
+  "syncFailedTitle": "No se ha podido sincronizar",
+  "syncPricesPendingTitle": "Precios pendientes",
+  "syncPricesPendingBody": "Se completarán en la próxima sincronización.",
+  "syncPricesFailedTitle": "No se han podido traer los precios",
+  "syncPricesFailedBody": "Se intentará de nuevo en la próxima sincronización.",
+  "syncCheckFailedTitle": "No se ha podido comprobar el PC",
+  "syncUnpairFailedTitle": "No se ha podido desvincular el PC",
   "syncReview": "Revisar",
   "syncDoneSnack": "Sincronizado con tu PC",
   "syncYes": "Sí",

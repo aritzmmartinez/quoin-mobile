@@ -17,6 +17,7 @@ import 'package:quoin/src/features/sync/presentation/widgets/sync_actions.dart';
 import 'package:quoin/src/features/sync/presentation/widgets/sync_failure_text.dart';
 import 'package:quoin/src/ui/molecules/settings_row.dart';
 import 'package:quoin/src/ui/organisms/settings_section.dart';
+import 'package:quoin/src/ui/organisms/quoin_toast.dart';
 
 class SyncSettingsSection extends ConsumerWidget {
   const SyncSettingsSection({super.key});
@@ -113,9 +114,12 @@ class SyncSettingsSection extends ConsumerWidget {
     ref.read(syncControllerProvider.notifier).reset();
     if (!context.mounted) return;
     if (result case Err(:final failure)) {
-      ScaffoldMessenger.of(
+      showQuoinToast(
         context,
-      ).showSnackBar(SnackBar(content: Text(syncFailureText(l10n, failure))));
+        tone: QuoinToastTone.negative,
+        title: l10n.syncCheckFailedTitle,
+        body: syncFailureText(l10n, failure),
+      );
     }
   }
 
@@ -144,9 +148,12 @@ class SyncSettingsSection extends ConsumerWidget {
     ref.read(syncControllerProvider.notifier).reset();
     if (!context.mounted) return;
     if (result case Err(:final failure)) {
-      ScaffoldMessenger.of(
+      showQuoinToast(
         context,
-      ).showSnackBar(SnackBar(content: Text(syncFailureText(l10n, failure))));
+        tone: QuoinToastTone.negative,
+        title: l10n.syncUnpairFailedTitle,
+        body: syncFailureText(l10n, failure),
+      );
     }
   }
 }

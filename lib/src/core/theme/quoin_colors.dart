@@ -90,6 +90,10 @@ class QuoinColors extends ThemeExtension<QuoinColors> {
   Color fillOf(Color signal) => signal.withValues(alpha: 0.08);
   Color edgeOf(Color signal) => signal.withValues(alpha: 0.25);
 
+  Color get positiveSolid => dark.positive;
+  Color get negativeSolid => dark.negative;
+  Color get onSignal => dark.onAccent;
+
   static QuoinColors of(BuildContext context) =>
       Theme.of(context).extension<QuoinColors>()!;
 

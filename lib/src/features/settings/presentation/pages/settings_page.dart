@@ -15,6 +15,7 @@ import 'package:quoin/src/ui/molecules/settings_row.dart';
 import 'package:quoin/src/ui/organisms/quoin_sheet.dart';
 import 'package:quoin/src/ui/organisms/settings_section.dart';
 import 'package:quoin/src/ui/templates/quoin_page.dart';
+import 'package:quoin/src/ui/organisms/quoin_toast.dart';
 
 class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});
@@ -168,11 +169,12 @@ Future<void> _save(BuildContext context, Future<Result<void>> saving) async {
     case Ok():
       break;
     case Err():
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(AppLocalizations.of(context).settingsSaveFailed),
-          duration: const Duration(seconds: 3),
-        ),
+      final l10n = AppLocalizations.of(context);
+      showQuoinToast(
+        context,
+        tone: QuoinToastTone.negative,
+        title: l10n.settingsSaveFailed,
+        body: l10n.settingsSaveFailedBody,
       );
   }
 }
@@ -186,15 +188,16 @@ Future<void> _debugWrite(
   final result = await writing;
   ref.invalidate(ledgerProvider);
   if (!context.mounted) return;
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-      content: Text(switch (result) {
-        Ok() => 'Hecho',
-        Err() => 'No se ha podido escribir en la base',
-      }),
-      duration: const Duration(seconds: 2),
-    ),
-  );
+  switch (result) {
+    case Ok():
+      showQuoinToast(context, tone: QuoinToastTone.positive, title: 'Hecho');
+    case Err():
+      showQuoinToast(
+        context,
+        tone: QuoinToastTone.negative,
+        title: 'No se ha podido escribir en la base',
+      );
+  }
 }
 
 Future<void> _choose<T>(
