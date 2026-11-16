@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
+import 'package:quoin/src/core/theme/quoin_tokens.dart';
 import 'package:quoin/src/core/theme/quoin_colors.dart';
 import 'package:quoin/src/core/theme/quoin_type.dart';
+import 'package:quoin/src/ui/atoms/quoin_avatar.dart';
 
 class PositionRow extends StatelessWidget {
   const PositionRow({
@@ -26,30 +28,19 @@ class PositionRow extends StatelessWidget {
     final c = QuoinColors.of(context);
     final type = QuoinType.of(context);
     final row = Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(
+        horizontal: QuoinSpace.card,
+        vertical: QuoinSpace.m,
+      ),
       child: LayoutBuilder(
         builder: (context, constraints) => Row(
-          spacing: 12,
+          spacing: QuoinSpace.m,
           children: [
-            CircleAvatar(
-              radius: 18,
-              backgroundColor: c.accent.withValues(alpha: 0.12),
-              // A fixed circle: the initial shrinks rather than overflow it.
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                child: Text(
-                  name.isEmpty ? '?' : name.characters.first.toUpperCase(),
-                  style: type.row.copyWith(
-                    color: c.accent,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ),
+            QuoinAvatar(name),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                spacing: 4,
+                spacing: QuoinSpace.xs,
                 children: [
                   Text(name, style: type.row),
                   Text(
@@ -68,7 +59,7 @@ class PositionRow extends StatelessWidget {
                 alignment: AlignmentDirectional.centerEnd,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
-                  spacing: 4,
+                  spacing: QuoinSpace.xs,
                   children: [
                     Text(
                       value,

@@ -1,21 +1,26 @@
 import 'package:flutter/material.dart';
 
-import 'package:quoin/src/core/l10n/gen/app_localizations.dart';
 import 'package:quoin/src/core/theme/quoin_colors.dart';
 import 'package:quoin/src/core/theme/quoin_icons.dart';
+import 'package:quoin/src/core/theme/quoin_tokens.dart';
 import 'package:quoin/src/core/theme/quoin_type.dart';
 import 'package:quoin/src/ui/atoms/quoin_icon.dart';
 
-class HowCalculated extends StatefulWidget {
-  const HowCalculated({super.key, required this.paragraphs});
+class QuoinDisclosure extends StatefulWidget {
+  const QuoinDisclosure({
+    super.key,
+    required this.title,
+    required this.paragraphs,
+  });
 
+  final String title;
   final List<String> paragraphs;
 
   @override
-  State<HowCalculated> createState() => _HowCalculatedState();
+  State<QuoinDisclosure> createState() => _QuoinDisclosureState();
 }
 
-class _HowCalculatedState extends State<HowCalculated> {
+class _QuoinDisclosureState extends State<QuoinDisclosure> {
   var _open = false;
 
   @override
@@ -35,18 +40,22 @@ class _HowCalculatedState extends State<HowCalculated> {
                 minHeight: kMinInteractiveDimension,
               ),
               child: Row(
-                spacing: 8,
+                spacing: QuoinSpace.s,
                 children: [
-                  QuoinIcon(QuoinIcons.info, size: 18, color: c.accent),
+                  QuoinIcon(
+                    QuoinIcons.info,
+                    size: QuoinIconSize.row,
+                    color: c.accent,
+                  ),
                   Expanded(
                     child: Text(
-                      AppLocalizations.of(context).realizedHow,
+                      widget.title,
                       style: type.secondary.copyWith(color: c.accent),
                     ),
                   ),
                   QuoinIcon(
                     _open ? QuoinIcons.close : QuoinIcons.chevronDown,
-                    size: 16,
+                    size: QuoinIconSize.small,
                     color: c.faint,
                   ),
                 ],
@@ -57,7 +66,7 @@ class _HowCalculatedState extends State<HowCalculated> {
         if (_open)
           for (final paragraph in widget.paragraphs)
             Padding(
-              padding: const EdgeInsets.only(top: 8),
+              padding: const EdgeInsets.only(top: QuoinSpace.s),
               child: Text(
                 paragraph,
                 style: type.secondary.copyWith(color: c.body),

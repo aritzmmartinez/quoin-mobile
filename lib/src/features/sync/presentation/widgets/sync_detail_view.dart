@@ -4,10 +4,11 @@ import 'package:quoin_core/quoin_core.dart';
 
 import 'package:quoin/src/core/l10n/gen/app_localizations.dart';
 import 'package:quoin/src/core/theme/quoin_colors.dart';
+import 'package:quoin/src/core/theme/quoin_tokens.dart';
 import 'package:quoin/src/core/theme/quoin_type.dart';
-import 'package:quoin/src/features/portfolio/presentation/widgets/portfolio_view.dart';
 import 'package:quoin/src/features/sync/domain/entities/sync_outcome.dart';
 import 'package:quoin/src/ui/atoms/quoin_card.dart';
+import 'package:quoin/src/ui/atoms/quoin_section_label.dart';
 
 class SyncDetailView extends StatelessWidget {
   const SyncDetailView({
@@ -26,8 +27,7 @@ class SyncDetailView extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final type = QuoinType.of(context);
     final c = QuoinColors.of(context);
-    Widget title(String text) =>
-        Text(text, style: type.row.copyWith(fontWeight: FontWeight.w600));
+    Widget title(String text) => Text(text, style: type.rowStrong);
     Widget line(String text) =>
         Text(text, style: type.secondary.copyWith(color: c.body));
     List<Widget> names(String heading, Cut<String> cut) => [
@@ -74,7 +74,7 @@ class SyncDetailView extends StatelessWidget {
         QuoinCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            spacing: 6,
+            spacing: QuoinSpace.tight,
             children: parts.isEmpty
                 ? [Text(empty ?? l10n.syncNothing, style: type.row)]
                 : parts,
@@ -121,16 +121,16 @@ class SetAsideView extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        sectionLabel(context, l10n.syncSetAsideTitle),
+        QuoinSectionLabel(l10n.syncSetAsideTitle),
         Text(
           l10n.syncSetAsideHint,
           style: type.secondary.copyWith(color: c.muted),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: QuoinSpace.s),
         QuoinCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            spacing: 8,
+            spacing: QuoinSpace.s,
             children: [
               for (final row in rows.items)
                 Column(
@@ -174,9 +174,9 @@ List<Widget> syncDetailSections(
     if (upToDate)
       SyncDetailView(detail: toPhone, empty: l10n.syncUpToDate)
     else ...[
-      sectionLabel(context, l10n.syncToPhone),
+      QuoinSectionLabel(l10n.syncToPhone),
       SyncDetailView(detail: toPhone),
-      sectionLabel(context, l10n.syncToPc),
+      QuoinSectionLabel(l10n.syncToPc),
       SyncDetailView(detail: toPc, setAside: false),
     ],
   ];

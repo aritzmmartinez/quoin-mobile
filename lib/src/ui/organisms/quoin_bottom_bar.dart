@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
 import 'package:flutter/services.dart';
 
+import 'package:quoin/src/core/theme/quoin_tokens.dart';
 import 'package:quoin/src/core/theme/quoin_colors.dart';
 import 'package:quoin/src/core/theme/quoin_icons.dart';
 import 'package:quoin/src/core/theme/quoin_type.dart';
@@ -17,9 +18,6 @@ class QuoinBarItem {
   final String label;
 }
 
-/// Where the add button sits: inside the pill between the second and third
-/// tab ([center]), as its own glass circle beside the pill ([leading],
-/// [trailing]), or above the pill's end ([above]).
 enum QuoinBarActionPlacement { center, leading, trailing, above }
 
 class QuoinBottomBar extends StatelessWidget {
@@ -61,7 +59,7 @@ class QuoinBottomBar extends StatelessWidget {
 
     final pill = QuoinBarSurface(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12),
+        padding: const EdgeInsets.symmetric(horizontal: QuoinSpace.m),
         child: LayoutBuilder(
           builder: (context, box) {
             final inlineWidth = inline ? _InlineAddButton.size : 0.0;
@@ -100,7 +98,12 @@ class QuoinBottomBar extends StatelessWidget {
 
     return SafeArea(
       top: false,
-      minimum: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+      minimum: const EdgeInsets.fromLTRB(
+        QuoinSpace.card,
+        0,
+        QuoinSpace.card,
+        QuoinSpace.m,
+      ),
       // The bar keeps its height: text inside it scales only to 1.3.
       child: MediaQuery.withClampedTextScaling(
         maxScaleFactor: 1.3,
@@ -201,10 +204,13 @@ class _SlidingPillState extends State<_SlidingPill>
         );
       },
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 8),
+        padding: const EdgeInsets.symmetric(
+          horizontal: QuoinSpace.xxs,
+          vertical: QuoinSpace.s,
+        ),
         child: DecoratedBox(
           decoration: ShapeDecoration(
-            color: c.text.withValues(alpha: 0.08),
+            color: c.selected,
             shape: const StadiumBorder(),
           ),
         ),
@@ -237,7 +243,7 @@ class _BarButton extends StatelessWidget {
           height: double.infinity,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
-            spacing: 4,
+            spacing: QuoinSpace.xs,
             children: [
               QuoinIcon(item.icon, size: 22, color: color),
               Text(
@@ -284,7 +290,11 @@ class _InlineAddButton extends StatelessWidget {
             child: SizedBox.square(
               dimension: size,
               child: Center(
-                child: QuoinIcon(icon, size: 20, color: c.onAccent),
+                child: QuoinIcon(
+                  icon,
+                  size: QuoinIconSize.tile,
+                  color: c.onAccent,
+                ),
               ),
             ),
           ),
@@ -318,7 +328,7 @@ class _DetachedAddButton extends StatelessWidget {
             child: Center(
               child: QuoinIcon(
                 icon,
-                size: 24,
+                size: QuoinIconSize.large,
                 color: QuoinColors.of(context).text,
               ),
             ),

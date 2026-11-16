@@ -3,6 +3,7 @@ import 'package:quoin_core/quoin_core.dart';
 
 import 'package:quoin/src/core/l10n/gen/app_localizations.dart';
 import 'package:quoin/src/core/theme/quoin_colors.dart';
+import 'package:quoin/src/core/theme/quoin_tokens.dart';
 import 'package:quoin/src/core/theme/quoin_type.dart';
 import 'package:quoin/src/features/sync/presentation/widgets/sync_detail_view.dart';
 import 'package:quoin/src/ui/atoms/quoin_card.dart';
@@ -58,9 +59,9 @@ class ConflictCard extends StatelessWidget {
     return QuoinCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
-        spacing: 8,
+        spacing: QuoinSpace.s,
         children: [
-          Text(title, style: type.row.copyWith(fontWeight: FontWeight.w600)),
+          Text(title, style: type.rowStrong),
           if (subject != null)
             Text(subject, style: type.secondary.copyWith(color: c.muted)),
           if (phone != null && pc != null) ...[

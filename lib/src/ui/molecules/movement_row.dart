@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:quoin/src/core/theme/quoin_tokens.dart';
 import 'package:quoin/src/core/theme/quoin_colors.dart';
 import 'package:quoin/src/core/theme/quoin_type.dart';
 
@@ -26,15 +27,18 @@ class MovementRow extends StatelessWidget {
     final c = QuoinColors.of(context);
     final text = QuoinType.of(context);
     final row = Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(
+        horizontal: QuoinSpace.card,
+        vertical: QuoinSpace.m,
+      ),
       child: LayoutBuilder(
         builder: (context, constraints) => Row(
-          spacing: 12,
+          spacing: QuoinSpace.m,
           children: [
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                spacing: 4,
+                spacing: QuoinSpace.xs,
                 children: [
                   Text(type, style: text.row),
                   if (subject case final subject?)
@@ -43,8 +47,8 @@ class MovementRow extends StatelessWidget {
                       style: text.secondary.copyWith(color: c.body),
                     ),
                   Wrap(
-                    spacing: 8,
-                    runSpacing: 4,
+                    spacing: QuoinSpace.s,
+                    runSpacing: QuoinSpace.xs,
                     children: [
                       Text(
                         date,
@@ -58,7 +62,9 @@ class MovementRow extends StatelessWidget {
                             ),
                           ),
                           child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 6),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: QuoinSpace.tight,
+                            ),
                             child: Text(
                               mark,
                               style: text.small.copyWith(color: c.muted),

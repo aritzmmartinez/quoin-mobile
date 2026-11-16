@@ -12,8 +12,6 @@
   "@importCsv": {
     "description": "Botón central de la barra, botón del estado vacío y título de la importación."
   },
-  "homeEmpty": "Aún no has importado ningún movimiento",
-  "portfolioEmpty": "Aún no tienes posiciones",
   "toolProjection": "Proyección",
   "toolProjectionHint": "Evolución estimada de tu cartera a futuro",
   "toolOpportunityCost": "Coste de oportunidad",
@@ -111,10 +109,6 @@
         "type": "String"
       }
     }
-  },
-  "portfolioFilterAll": "Todas",
-  "@portfolioFilterAll": {
-    "description": "Chip de filtro: todas las categorías."
   },
   "portfolioSort": "Ordenar",
   "portfolioSortValue": "Por valor",
@@ -392,7 +386,6 @@
       }
     }
   },
-  "movementsFilterAll": "Todos",
   "movementsAllInstruments": "Todos los instrumentos",
   "movementsCount": "{count, plural, =1{1 movimiento} other{{count} movimientos}}",
   "@movementsCount": {
@@ -979,5 +972,22 @@
       }
     }
   },
-  "syncNo": "No"
+  "syncNo": "No",
+  "emptyPortfolioTitle": "Sin posiciones todavía",
+  "emptyPortfolioBody": "Importa el CSV de tu bróker (Trade Republic o Kraken) para empezar a seguir tu cartera.",
+  "emptyMovementsTitle": "Sin movimientos todavía",
+  "emptyMovementsBody": "Importa el CSV de tu bróker (Trade Republic o Kraken) para ver aquí el registro completo.",
+  "emptySalesTitle": "Sin ventas todavía",
+  "instrumentNotFoundTitle": "Instrumento no encontrado",
+  "loadFailedBody": "Vuelve a abrir esta pantalla. Si sigue sin cargarse, cierra Quoin y ábrelo de nuevo.",
+  "residenceUnsupportedTitle": "Actualiza Quoin",
+  "pairScanTitle": "Vincula este móvil con tu PC",
+  "pairFailedTitle": "No se ha podido vincular",
+  "pairMovedTitle": "Tu PC ha cambiado de dirección",
+  "syncFailedTitle": "No se ha podido sincronizar",
+  "portfolioFilterCategory": "Categoría",
+  "portfolioFilterAllCategories": "Todas las categorías",
+  "movementsFilterInstrument": "Instrumento",
+  "movementsFilterType": "Tipo",
+  "movementsAllTypes": "Todos los tipos"
 }

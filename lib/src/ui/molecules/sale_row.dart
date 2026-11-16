@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:quoin/src/core/theme/quoin_tokens.dart';
 import 'package:quoin/src/core/theme/quoin_colors.dart';
 import 'package:quoin/src/core/theme/quoin_icons.dart';
 import 'package:quoin/src/core/theme/quoin_type.dart';
@@ -49,36 +50,37 @@ class _SaleRowState extends State<SaleRow> {
     final expandable = widget.details.isNotEmpty || widget.more.isNotEmpty;
 
     final summary = Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(
+        horizontal: QuoinSpace.card,
+        vertical: QuoinSpace.m,
+      ),
       child: LayoutBuilder(
         builder: (context, constraints) => Row(
-          spacing: 12,
+          spacing: QuoinSpace.m,
           children: [
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                spacing: 4,
+                spacing: QuoinSpace.xs,
                 children: [
                   Wrap(
-                    spacing: 8,
-                    runSpacing: 4,
+                    spacing: QuoinSpace.s,
+                    runSpacing: QuoinSpace.xs,
                     crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       Text(widget.name, style: type.row),
                       if (badge != null)
                         DecoratedBox(
                           decoration: ShapeDecoration(
-                            color: c.negative.withValues(alpha: 0.08),
+                            color: c.fillOf(c.negative),
                             shape: StadiumBorder(
-                              side: BorderSide(
-                                color: c.negative.withValues(alpha: 0.25),
-                              ),
+                              side: BorderSide(color: c.edgeOf(c.negative)),
                             ),
                           ),
                           child: Padding(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 2,
+                              horizontal: QuoinSpace.s,
+                              vertical: QuoinSpace.xxs,
                             ),
                             child: Text(
                               badge,
@@ -106,7 +108,7 @@ class _SaleRowState extends State<SaleRow> {
                 alignment: AlignmentDirectional.centerEnd,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
-                  spacing: 4,
+                  spacing: QuoinSpace.xs,
                   children: [
                     Text(
                       widget.result,
@@ -126,7 +128,7 @@ class _SaleRowState extends State<SaleRow> {
                     : const Duration(milliseconds: 200),
                 child: QuoinIcon(
                   QuoinIcons.chevronDown,
-                  size: 16,
+                  size: QuoinIconSize.small,
                   color: c.faint,
                 ),
               ),
@@ -151,10 +153,15 @@ class _SaleRowState extends State<SaleRow> {
           summary,
         if (_open)
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
+            padding: const EdgeInsets.fromLTRB(
+              QuoinSpace.card,
+              0,
+              QuoinSpace.card,
+              14,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
-              spacing: 6,
+              spacing: QuoinSpace.tight,
               children: [
                 for (final (label, value) in widget.details)
                   DetailLine(label: label, value: value),
@@ -186,7 +193,7 @@ class DetailLine extends StatelessWidget {
     final type = QuoinType.of(context);
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
-      spacing: 12,
+      spacing: QuoinSpace.m,
       children: [
         Expanded(
           child: Text(label, style: type.secondary.copyWith(color: c.muted)),

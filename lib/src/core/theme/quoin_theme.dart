@@ -34,7 +34,7 @@ ThemeData _build(QuoinColors c, Brightness brightness) {
     fontFamily: 'Geist',
     scaffoldBackgroundColor: c.bg,
     splashFactory: NoSplash.splashFactory,
-    highlightColor: c.text.withValues(alpha: 0.06),
+    highlightColor: c.pressed,
     extensions: [c, QuoinType.standard],
   );
   const t = QuoinType.standard;
@@ -131,6 +131,12 @@ ThemeData _build(QuoinColors c, Brightness brightness) {
       ),
       showDragHandle: true,
       dragHandleColor: c.border,
+    ),
+    listTileTheme: ListTileThemeData(
+      titleTextStyle: t.row.copyWith(color: c.text),
+      subtitleTextStyle: t.secondary.copyWith(color: c.muted),
+      contentPadding: const EdgeInsets.symmetric(horizontal: QuoinSpace.gutter),
+      iconColor: c.muted,
     ),
     dividerTheme: DividerThemeData(color: c.borderSubtle, space: 1),
     appBarTheme: AppBarTheme(

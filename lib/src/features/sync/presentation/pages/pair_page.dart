@@ -6,6 +6,7 @@ import 'package:quoin/src/app/router.dart';
 import 'package:quoin/src/core/error/failures.dart';
 import 'package:quoin/src/core/error/result.dart';
 import 'package:quoin/src/core/l10n/gen/app_localizations.dart';
+import 'package:quoin/src/core/theme/quoin_icons.dart';
 import 'package:quoin/src/core/theme/quoin_colors.dart';
 import 'package:quoin/src/core/theme/quoin_tokens.dart';
 import 'package:quoin/src/core/theme/quoin_type.dart';
@@ -115,9 +116,12 @@ class _PairPageState extends ConsumerState<PairPage> {
       return QuoinPage(
         title: l10n.syncPair,
         body: EmptyState(
-          message: failure == null
+          icon: QuoinIcons.alert,
+          title: l10n.pairFailedTitle,
+          body: failure == null
               ? l10n.pairCameraDenied
               : syncFailureDetail(l10n, failure),
+          negative: true,
           actionLabel: l10n.syncRescan,
           onAction: _again,
         ),
@@ -128,7 +132,9 @@ class _PairPageState extends ConsumerState<PairPage> {
       _Step.scan => QuoinPage(
         title: l10n.syncPair,
         body: EmptyState(
-          message: l10n.pairScanHint,
+          icon: QuoinIcons.pair,
+          title: l10n.pairScanTitle,
+          body: l10n.pairScanHint,
           actionLabel: l10n.pairScan,
           onAction: _scan,
         ),
@@ -136,7 +142,9 @@ class _PairPageState extends ConsumerState<PairPage> {
       _Step.moved => QuoinPage(
         title: l10n.syncPair,
         body: EmptyState(
-          message: l10n.pairAddressUpdated(_start!.known!.pcName),
+          icon: QuoinIcons.computer,
+          title: l10n.pairMovedTitle,
+          body: l10n.pairAddressUpdated(_start!.known!.pcName),
           actionLabel: l10n.syncNow,
           onAction: () {
             ref.read(syncControllerProvider.notifier).reset();
@@ -152,7 +160,7 @@ class _PairPageState extends ConsumerState<PairPage> {
         title: l10n.syncPair,
         children: [
           Text(l10n.pairCodeTitle, style: type.row),
-          const SizedBox(height: 12),
+          const SizedBox(height: QuoinSpace.m),
           QuoinCard(
             child: FittedBox(
               fit: BoxFit.scaleDown,
@@ -197,7 +205,7 @@ class _Busy extends StatelessWidget {
     padding: const EdgeInsets.all(QuoinSpace.gutter),
     child: Column(
       mainAxisSize: MainAxisSize.min,
-      spacing: 16,
+      spacing: QuoinSpace.card,
       children: [
         const CircularProgressIndicator(),
         Text(

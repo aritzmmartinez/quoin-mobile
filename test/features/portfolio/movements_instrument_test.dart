@@ -72,7 +72,9 @@ void main() {
     expect(find.byType(MovementsPage), findsOneWidget);
     expect(find.text('22 movimientos'), findsOneWidget);
 
-    await tester.tap(find.text('Venta').first);
+    await tester.tap(find.text('Todos los tipos'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Venta').last);
     await tester.pumpAndSettle();
     expect(find.text('5 movimientos'), findsOneWidget);
 

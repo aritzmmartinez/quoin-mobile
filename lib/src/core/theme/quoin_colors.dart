@@ -84,6 +84,12 @@ class QuoinColors extends ThemeExtension<QuoinColors> {
   final Color dn4;
   final Color dn5;
 
+  Color get accentTint => accent.withValues(alpha: 0.12);
+  Color get pressed => text.withValues(alpha: 0.06);
+  Color get selected => text.withValues(alpha: 0.08);
+  Color fillOf(Color signal) => signal.withValues(alpha: 0.08);
+  Color edgeOf(Color signal) => signal.withValues(alpha: 0.25);
+
   static QuoinColors of(BuildContext context) =>
       Theme.of(context).extension<QuoinColors>()!;
 

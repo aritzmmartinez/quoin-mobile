@@ -6,6 +6,7 @@ import 'package:quoin/src/app/router.dart';
 import 'package:quoin/src/core/l10n/gen/app_localizations.dart';
 import 'package:quoin/src/core/theme/quoin_colors.dart';
 import 'package:quoin/src/core/theme/quoin_icons.dart';
+import 'package:quoin/src/core/theme/quoin_tokens.dart';
 import 'package:quoin/src/core/theme/quoin_type.dart';
 import 'package:quoin/src/ui/atoms/quoin_card.dart';
 import 'package:quoin/src/ui/atoms/quoin_icon.dart';
@@ -44,7 +45,7 @@ class AnalysisPage extends StatelessWidget {
       title: l10n.tabAnalysis,
       children: [
         for (final (i, (icon, title, hint, onTap)) in tools.indexed) ...[
-          if (i > 0) const SizedBox(height: 8),
+          if (i > 0) const SizedBox(height: QuoinSpace.s),
           _ToolCard(icon: icon, title: title, hint: hint, onTap: onTap),
         ],
       ],
@@ -71,18 +72,15 @@ class _ToolCard extends StatelessWidget {
     return QuoinCard(
       onTap: onTap,
       child: Row(
-        spacing: 14,
+        spacing: QuoinSpace.m,
         children: [
           IconTile(icon: icon),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              spacing: 5,
+              spacing: QuoinSpace.xs,
               children: [
-                Text(
-                  title,
-                  style: type.row.copyWith(fontWeight: FontWeight.w600),
-                ),
+                Text(title, style: type.rowStrong),
                 Text(
                   hint,
                   style: type.secondary.copyWith(
@@ -94,7 +92,7 @@ class _ToolCard extends StatelessWidget {
           ),
           QuoinIcon(
             QuoinIcons.chevronRight,
-            size: 16,
+            size: QuoinIconSize.small,
             color: QuoinColors.of(context).faint,
           ),
         ],

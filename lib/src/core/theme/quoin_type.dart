@@ -12,6 +12,7 @@ class QuoinType extends ThemeExtension<QuoinType> {
     required this.title,
     required this.field,
     required this.row,
+    required this.rowStrong,
     required this.control,
     required this.secondary,
     required this.small,
@@ -49,6 +50,14 @@ class QuoinType extends ThemeExtension<QuoinType> {
       fontFamily: 'Geist',
       fontSize: 15,
       fontWeight: FontWeight.w500,
+      height: 1.3,
+      letterSpacing: 0,
+    ),
+    // A card's title, a group's heading inside a card.
+    rowStrong: TextStyle(
+      fontFamily: 'Geist',
+      fontSize: 15,
+      fontWeight: FontWeight.w600,
       height: 1.3,
       letterSpacing: 0,
     ),
@@ -92,6 +101,7 @@ class QuoinType extends ThemeExtension<QuoinType> {
   final TextStyle title;
   final TextStyle field;
   final TextStyle row;
+  final TextStyle rowStrong;
   final TextStyle control;
   final TextStyle secondary;
   final TextStyle small;
@@ -106,6 +116,7 @@ class QuoinType extends ThemeExtension<QuoinType> {
     TextStyle? title,
     TextStyle? field,
     TextStyle? row,
+    TextStyle? rowStrong,
     TextStyle? control,
     TextStyle? secondary,
     TextStyle? small,
@@ -116,6 +127,7 @@ class QuoinType extends ThemeExtension<QuoinType> {
       title: title ?? this.title,
       field: field ?? this.field,
       row: row ?? this.row,
+      rowStrong: rowStrong ?? this.rowStrong,
       control: control ?? this.control,
       secondary: secondary ?? this.secondary,
       small: small ?? this.small,
@@ -132,6 +144,7 @@ class QuoinType extends ThemeExtension<QuoinType> {
       title: l(title, other.title),
       field: l(field, other.field),
       row: l(row, other.row),
+      rowStrong: l(rowStrong, other.rowStrong),
       control: l(control, other.control),
       secondary: l(secondary, other.secondary),
       small: l(small, other.small),

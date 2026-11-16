@@ -27,6 +27,7 @@ import 'package:quoin/src/ui/molecules/sale_row.dart';
 import 'package:quoin/src/ui/molecules/position_row.dart';
 import 'package:quoin/src/ui/molecules/settings_row.dart';
 import 'package:quoin/src/ui/organisms/quoin_bottom_bar.dart';
+import 'package:quoin/src/ui/organisms/quoin_dropdown.dart';
 import 'package:quoin/src/ui/organisms/settings_section.dart';
 import 'package:quoin/src/ui/templates/quoin_page.dart';
 
@@ -61,7 +62,10 @@ class _ComponentGalleryPageState extends State<ComponentGalleryPage> {
     final type = QuoinType.of(context);
     final c = QuoinColors.of(context);
     Widget label(String s) => Padding(
-      padding: const EdgeInsets.only(top: QuoinSpace.section, bottom: 10),
+      padding: const EdgeInsets.only(
+        top: QuoinSpace.section,
+        bottom: QuoinSpace.row,
+      ),
       child: Text(
         s.toUpperCase(),
         style: type.section.copyWith(color: c.muted),
@@ -74,15 +78,15 @@ class _ComponentGalleryPageState extends State<ComponentGalleryPage> {
         children: [
           label('Cifra grande'),
           const DisplayFigure('24.380,50 €'),
-          const SizedBox(height: 4),
+          const SizedBox(height: QuoinSpace.xs),
           Text(
             '+349,15 € (+1,41 %)',
             style: type.secondary.mono.copyWith(color: c.positive),
           ),
           label('Botones'),
           Wrap(
-            spacing: 8,
-            runSpacing: 8,
+            spacing: QuoinSpace.s,
+            runSpacing: QuoinSpace.s,
             children: [
               FilledButton(onPressed: () {}, child: const Text('Principal')),
               OutlinedButton(onPressed: () {}, child: const Text('Secundario')),
@@ -92,7 +96,7 @@ class _ComponentGalleryPageState extends State<ComponentGalleryPage> {
           ),
           label('Chips de rango (código)'),
           Wrap(
-            spacing: 8,
+            spacing: QuoinSpace.s,
             children: [
               for (final r in ['1D', '1S', '1M', '1A', 'Todo'])
                 QuoinChip.code(
@@ -104,8 +108,8 @@ class _ComponentGalleryPageState extends State<ComponentGalleryPage> {
           ),
           label('Chips de filtro'),
           Wrap(
-            spacing: 8,
-            runSpacing: 8,
+            spacing: QuoinSpace.s,
+            runSpacing: QuoinSpace.s,
             children: [
               for (final k in ['Todas', 'Fondo de renta variable', 'Cripto'])
                 QuoinChip.text(
@@ -123,7 +127,7 @@ class _ComponentGalleryPageState extends State<ComponentGalleryPage> {
           ),
           label('Campos de texto'),
           const QuoinTextField(label: 'Nombre', hint: 'Plan 2027'),
-          const SizedBox(height: 16),
+          const SizedBox(height: QuoinSpace.card),
           const QuoinTextField(
             label: 'Aportación mensual',
             hint: '500',
@@ -131,9 +135,9 @@ class _ComponentGalleryPageState extends State<ComponentGalleryPage> {
             help: 'Lo que aportas cada mes.',
             keyboardType: TextInputType.number,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: QuoinSpace.card),
           const QuoinTextField.search(label: 'Buscar por ISIN o nombre'),
-          const SizedBox(height: 16),
+          const SizedBox(height: QuoinSpace.card),
           const QuoinTextField(
             label: 'Horizonte',
             hint: '10',
@@ -141,9 +145,9 @@ class _ComponentGalleryPageState extends State<ComponentGalleryPage> {
             error: 'Entre 1 y 50 años.',
             keyboardType: TextInputType.number,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: QuoinSpace.card),
           const QuoinTextField(label: 'Moneda', hint: 'EUR', enabled: false),
-          const SizedBox(height: 16),
+          const SizedBox(height: QuoinSpace.card),
           const QuoinTextField(
             label: 'Nota',
             hint: 'Por qué cambia el plan',
@@ -160,12 +164,12 @@ class _ComponentGalleryPageState extends State<ComponentGalleryPage> {
             selected: _placement,
             onChanged: (v) => setState(() => _placement = v),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: QuoinSpace.m),
           _bar(context),
           label('Bloques de cifra'),
           const Wrap(
-            spacing: 24,
-            runSpacing: 16,
+            spacing: QuoinSpace.section,
+            runSpacing: QuoinSpace.card,
             children: [
               FigureBlock(label: 'Coste', value: '1.602,00 €'),
               FigureBlock(label: 'Resultado', value: '+45,00 €', sign: 1),
@@ -252,14 +256,11 @@ class _ComponentGalleryPageState extends State<ComponentGalleryPage> {
           QuoinCard(
             onTap: () {},
             child: Row(
-              spacing: 14,
+              spacing: QuoinSpace.m,
               children: [
                 const IconTile(icon: QuoinIcons.projection),
                 Expanded(
-                  child: Text(
-                    'Tarjeta con mosaico',
-                    style: type.row.copyWith(fontWeight: FontWeight.w600),
-                  ),
+                  child: Text('Tarjeta con mosaico', style: type.rowStrong),
                 ),
               ],
             ),
@@ -294,20 +295,57 @@ class _ComponentGalleryPageState extends State<ComponentGalleryPage> {
           ),
           label('Estado vacío'),
           QuoinCard(
-            child: SizedBox(
-              height: 160,
-              child: EmptyState(
-                message: 'Aún no hay nada aquí',
-                actionLabel: 'Acción',
-                onAction: () {},
-              ),
+            child: EmptyState(
+              icon: QuoinIcons.portfolio,
+              title: 'Aún no hay nada aquí',
+              body: 'Una explicación corta de qué hacer.',
+              actionLabel: 'Acción',
+              onAction: () {},
             ),
+          ),
+          label('Estado de error'),
+          const QuoinCard(
+            child: EmptyState(
+              icon: QuoinIcons.alert,
+              title: 'No se ha podido leer',
+              body: 'Qué ha pasado y qué hacer.',
+              negative: true,
+            ),
+          ),
+          label('Desplegables'),
+          Wrap(
+            spacing: QuoinSpace.s,
+            children: [
+              QuoinDropdown<String>(
+                label: 'Categoría',
+                value: _filter,
+                options: [
+                  for (final k in [
+                    'Todas',
+                    'Fondo de renta variable',
+                    'Cripto',
+                  ])
+                    (value: k, label: k),
+                ],
+                onChanged: (k) => setState(() => _filter = k),
+              ),
+              QuoinDropdown<int>(
+                label: 'Orden',
+                value: _segment,
+                options: const [
+                  (value: 0, label: 'Por valor'),
+                  (value: 1, label: 'Por plusvalía'),
+                  (value: 2, label: 'Alfabético'),
+                ],
+                onChanged: (v) => setState(() => _segment = v),
+              ),
+            ],
           ),
           ..._sync(context, label),
           label('Badge de plusvalía'),
           const Wrap(
-            spacing: 8,
-            runSpacing: 8,
+            spacing: QuoinSpace.s,
+            runSpacing: QuoinSpace.s,
             children: [
               GainBadge(text: '+349,15 € (+1,4 %)', sign: 1),
               GainBadge(text: '−80,00 € (−13,8 %)', sign: -1),
@@ -375,7 +413,7 @@ class _ComponentGalleryPageState extends State<ComponentGalleryPage> {
           ),
         ),
         child: Padding(
-          padding: const EdgeInsets.only(top: 24),
+          padding: const EdgeInsets.only(top: QuoinSpace.section),
           child: MediaQuery.removePadding(
             context: context,
             removeBottom: true,
@@ -463,7 +501,7 @@ class _ComponentGalleryPageState extends State<ComponentGalleryPage> {
           onChanged: (choice) =>
               setState(() => _choices[conflictKey(conflict)] = choice),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: QuoinSpace.m),
       ],
     ];
   }

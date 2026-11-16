@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:quoin/src/core/theme/quoin_tokens.dart';
 import 'package:quoin/src/core/theme/quoin_colors.dart';
 import 'package:quoin/src/core/theme/quoin_type.dart';
 
@@ -72,8 +73,8 @@ class QuoinSegmented<T> extends StatelessWidget {
                             minHeight: _minHeight - 2 * _inset,
                           ),
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 6,
+                            horizontal: QuoinSpace.s,
+                            vertical: QuoinSpace.tight,
                           ),
                           alignment: Alignment.center,
                           child: AnimatedDefaultTextStyle(

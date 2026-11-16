@@ -2,16 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:quoin/src/core/l10n/gen/app_localizations.dart';
+import 'package:quoin/src/core/theme/quoin_icons.dart';
 import 'package:quoin/src/core/l10n/quoin_format.dart';
 import 'package:quoin/src/core/theme/quoin_colors.dart';
 import 'package:quoin/src/core/theme/quoin_tokens.dart';
 import 'package:quoin/src/core/theme/quoin_type.dart';
 import 'package:quoin/src/features/portfolio/presentation/widgets/ledger_tiles.dart';
-import 'package:quoin/src/features/portfolio/presentation/widgets/portfolio_view.dart';
 import 'package:quoin/src/features/portfolio/presentation/widgets/result_view.dart';
 import 'package:quoin/src/features/tax/domain/entities/realized_report.dart';
 import 'package:quoin/src/features/tax/presentation/providers/tax_providers.dart';
-import 'package:quoin/src/features/tax/presentation/widgets/how_calculated.dart';
+import 'package:quoin/src/ui/molecules/quoin_disclosure.dart';
 import 'package:quoin/src/features/tax/presentation/widgets/tax_year_panel.dart';
 import 'package:quoin/src/ui/atoms/display_figure.dart';
 import 'package:quoin/src/ui/atoms/quoin_card.dart';
@@ -19,6 +19,7 @@ import 'package:quoin/src/ui/atoms/quoin_chip.dart';
 import 'package:quoin/src/ui/molecules/empty_state.dart';
 import 'package:quoin/src/ui/molecules/quoin_segmented.dart';
 import 'package:quoin/src/ui/templates/quoin_page.dart';
+import 'package:quoin/src/ui/atoms/quoin_section_label.dart';
 
 enum _Tab { sales, tax }
 
@@ -61,7 +62,11 @@ class _RealizedPageState extends ConsumerState<RealizedPage> {
             )
           : QuoinPage(
               title: l10n.realizedTitle,
-              body: EmptyState(message: l10n.homeEmpty),
+              body: EmptyState(
+                icon: QuoinIcons.realized,
+                title: l10n.emptySalesTitle,
+                body: l10n.realizedEmpty,
+              ),
             ),
     );
   }
@@ -87,11 +92,14 @@ class _RealizedPageState extends ConsumerState<RealizedPage> {
     };
 
     return [
-      HowCalculated(paragraphs: [l10n.realizedIntro, l10n.realizedAvcoWarning]),
-      const SizedBox(height: 12),
+      QuoinDisclosure(
+        title: l10n.realizedHow,
+        paragraphs: [l10n.realizedIntro, l10n.realizedAvcoWarning],
+      ),
+      const SizedBox(height: QuoinSpace.m),
       Wrap(
-        spacing: 8,
-        runSpacing: 8,
+        spacing: QuoinSpace.s,
+        runSpacing: QuoinSpace.s,
         children: [
           for (final MapEntry(:key, :value) in orders.entries)
             QuoinChip.text(
@@ -119,7 +127,7 @@ class _RealizedPageState extends ConsumerState<RealizedPage> {
     final realized = format.signedMoney(totals.realized);
     final pct = totals.returnPct;
     return [
-      sectionLabel(context, '$year'),
+      QuoinSectionLabel('$year'),
       DisplayFigure(
         pct == null
             ? realized.text
@@ -130,12 +138,12 @@ class _RealizedPageState extends ConsumerState<RealizedPage> {
             ? c.negative
             : null,
       ),
-      const SizedBox(height: 6),
+      const SizedBox(height: QuoinSpace.tight),
       Text(
         l10n.realizedYearSummary(totals.count, year, format.money(totals.cost)),
         style: type.secondary.copyWith(color: c.muted),
       ),
-      const SizedBox(height: 12),
+      const SizedBox(height: QuoinSpace.m),
       QuoinCard(
         padding: EdgeInsets.zero,
         child: Column(
@@ -164,18 +172,21 @@ class _RealizedPageState extends ConsumerState<RealizedPage> {
           l10n.taxUnclassified(report.unclassified.join(', ')),
       ]) ...[
         Text(notice, style: type.secondary.copyWith(color: c.muted)),
-        const SizedBox(height: 12),
+        const SizedBox(height: QuoinSpace.m),
       ],
-      HowCalculated(paragraphs: [l10n.taxHowRules, l10n.taxHowOwnRules]),
-      const SizedBox(height: 12),
+      QuoinDisclosure(
+        title: l10n.realizedHow,
+        paragraphs: [l10n.taxHowRules, l10n.taxHowOwnRules],
+      ),
+      const SizedBox(height: QuoinSpace.m),
       if (year == null)
         Text(l10n.taxNoYears, style: type.secondary.copyWith(color: c.muted))
       else ...[
         Text(l10n.taxYearLabel, style: type.small.copyWith(color: c.muted)),
-        const SizedBox(height: 8),
+        const SizedBox(height: QuoinSpace.s),
         Wrap(
-          spacing: 8,
-          runSpacing: 8,
+          spacing: QuoinSpace.s,
+          runSpacing: QuoinSpace.s,
           children: [
             for (final y in years)
               QuoinChip.code(

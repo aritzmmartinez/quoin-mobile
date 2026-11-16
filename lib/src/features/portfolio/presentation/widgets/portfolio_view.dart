@@ -7,6 +7,7 @@ import 'package:quoin/src/app/router.dart';
 import 'package:quoin/src/core/error/failures.dart';
 import 'package:quoin/src/core/error/result.dart';
 import 'package:quoin/src/core/l10n/gen/app_localizations.dart';
+import 'package:quoin/src/core/theme/quoin_icons.dart';
 import 'package:quoin/src/core/l10n/quoin_format.dart';
 import 'package:quoin/src/core/theme/quoin_colors.dart';
 import 'package:quoin/src/core/theme/quoin_tokens.dart';
@@ -48,39 +49,26 @@ class PortfolioView extends StatelessWidget {
       Err(:final failure) => QuoinPage(
         title: title,
         onRefresh: onRefresh,
-        body: EmptyState(
-          message: switch (failure) {
-            UnsupportedResidenceFailure() => l10n.residenceUnsupported,
-            StorageFailure() ||
-            NetworkFailure() ||
-            ImportFailure() ||
-            SyncFailure() => l10n.portfolioLoadFailed,
-          },
-        ),
+        body: switch (failure) {
+          UnsupportedResidenceFailure() => EmptyState(
+            icon: QuoinIcons.alert,
+            title: l10n.residenceUnsupportedTitle,
+            body: l10n.residenceUnsupported,
+            negative: true,
+          ),
+          StorageFailure() ||
+          NetworkFailure() ||
+          ImportFailure() ||
+          SyncFailure() => EmptyState(
+            icon: QuoinIcons.alert,
+            title: l10n.portfolioLoadFailed,
+            body: l10n.loadFailedBody,
+            negative: true,
+          ),
+        },
       ),
     };
   }
-}
-
-Widget sectionLabel(BuildContext context, String text, {Widget? action}) {
-  final c = QuoinColors.of(context);
-  return Padding(
-    padding: const EdgeInsets.only(top: QuoinSpace.section, bottom: 10),
-    child: Row(
-      children: [
-        Expanded(
-          child: Semantics(
-            header: true,
-            child: Text(
-              text.toUpperCase(),
-              style: QuoinType.of(context).section.copyWith(color: c.muted),
-            ),
-          ),
-        ),
-        ?action,
-      ],
-    ),
-  );
 }
 
 String _end(List<String> names) =>
@@ -92,11 +80,11 @@ List<Widget> valuationNotices(BuildContext context, PortfolioOverview o) {
       .copyWith(color: QuoinColors.of(context).muted);
   return [
     if (o.unrated.isNotEmpty) ...[
-      const SizedBox(height: 8),
+      const SizedBox(height: QuoinSpace.s),
       Text(l10n.fxUnrated(o.unrated.join(', '), _end(o.unrated)), style: style),
     ],
     if (o.unconvertible.isNotEmpty) ...[
-      const SizedBox(height: 8),
+      const SizedBox(height: QuoinSpace.s),
       Text(
         l10n.fxUnconvertible(o.unconvertible.join(', '), _end(o.unconvertible)),
         style: style,

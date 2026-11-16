@@ -8,12 +8,11 @@ import 'package:quoin/src/core/error/result.dart';
 import 'package:quoin/src/core/l10n/gen/app_localizations.dart';
 import 'package:quoin/src/core/theme/quoin_icons.dart';
 import 'package:quoin/src/core/theme/quoin_tokens.dart';
-import 'package:quoin/src/core/theme/quoin_type.dart';
 import 'package:quoin/src/features/portfolio/presentation/providers/portfolio_providers.dart';
 import 'package:quoin/src/features/settings/presentation/providers/settings_providers.dart';
 import 'package:quoin/src/features/sync/presentation/widgets/sync_settings_section.dart';
-import 'package:quoin/src/ui/atoms/quoin_icon.dart';
 import 'package:quoin/src/ui/molecules/settings_row.dart';
+import 'package:quoin/src/ui/organisms/quoin_sheet.dart';
 import 'package:quoin/src/ui/organisms/settings_section.dart';
 import 'package:quoin/src/ui/templates/quoin_page.dart';
 
@@ -210,35 +209,15 @@ Future<void> _choose<T>(
   required Map<T, String> options,
   required T current,
   required Future<void> Function(T) onSelected,
-}) {
-  return showModalBottomSheet<void>(
-    context: context,
-    useRootNavigator: true,
-    builder: (sheet) => SafeArea(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Text(
-              title,
-              style: QuoinType.of(sheet).row
-                  .copyWith(fontWeight: FontWeight.w600),
-            ),
-          ),
-          for (final MapEntry(:key, :value) in options.entries)
-            ListTile(
-              title: Text(value),
-              trailing: key == current
-                  ? const QuoinIcon(QuoinIcons.check, size: 18)
-                  : null,
-              onTap: () {
-                Navigator.of(sheet).pop();
-                onSelected(key);
-              },
-            ),
-        ],
-      ),
-    ),
+}) async {
+  final picked = await showQuoinChoice(
+    context,
+    title: title,
+    options: [
+      for (final MapEntry(:key, :value) in options.entries)
+        (value: key, label: value),
+    ],
+    selected: current,
   );
+  if (picked != null) await onSelected(picked.value);
 }

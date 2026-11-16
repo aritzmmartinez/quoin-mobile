@@ -15,9 +15,9 @@ import 'package:quoin/src/features/portfolio/presentation/providers/portfolio_pr
 import 'package:quoin/src/features/portfolio/presentation/widgets/portfolio_view.dart';
 import 'package:quoin/src/features/sync/presentation/widgets/sync_actions.dart';
 import 'package:quoin/src/ui/atoms/display_figure.dart';
-import 'package:quoin/src/ui/atoms/quoin_chip.dart';
 import 'package:quoin/src/ui/atoms/quoin_icon.dart';
 import 'package:quoin/src/ui/molecules/empty_state.dart';
+import 'package:quoin/src/ui/organisms/quoin_dropdown.dart';
 import 'package:quoin/src/ui/templates/quoin_page.dart';
 
 class PortfolioPage extends ConsumerStatefulWidget {
@@ -31,7 +31,6 @@ class _PortfolioPageState extends ConsumerState<PortfolioPage> {
   /// The category shown, or null for all of them.
   String? _category;
   var _order = HoldingOrder.value;
-  var _sortOpen = false;
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +39,13 @@ class _PortfolioPageState extends ConsumerState<PortfolioPage> {
       title: l10n.tabPortfolio,
       overview: ref.watch(portfolioOverviewProvider),
       onRefresh: () => refreshFromPc(context, ref),
-      empty: EmptyState(message: l10n.portfolioEmpty),
+      empty: EmptyState(
+        icon: QuoinIcons.portfolio,
+        title: l10n.emptyPortfolioTitle,
+        body: l10n.emptyPortfolioBody,
+        actionLabel: l10n.importCsv,
+        onAction: () => context.push(Routes.import),
+      ),
       builder: (overview) => QuoinPage.list(
         title: l10n.tabPortfolio,
         onRefresh: () => refreshFromPc(context, ref),
@@ -76,7 +81,7 @@ class _PortfolioPageState extends ConsumerState<PortfolioPage> {
 
     return [
       DisplayFigure(format.money(summary.totalValue)),
-      const SizedBox(height: 6),
+      const SizedBox(height: QuoinSpace.tight),
       Text(
         l10n.portfolioSummary(
           summary.pricedCount + summary.unpricedCount,
@@ -86,52 +91,31 @@ class _PortfolioPageState extends ConsumerState<PortfolioPage> {
       ),
       ...valuationNotices(context, overview),
       const SizedBox(height: QuoinSpace.section),
-      Row(
-        spacing: 8,
+      Wrap(
+        spacing: QuoinSpace.s,
         children: [
-          Expanded(
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                spacing: 8,
-                children: [
-                  QuoinChip.text(
-                    label: l10n.portfolioFilterAll,
-                    selected: category == null,
-                    onTap: () => setState(() => _category = null),
-                  ),
-                  for (final key in categories)
-                    QuoinChip.text(
-                      label: categoryLabel(l10n, key),
-                      selected: key == category,
-                      onTap: () => setState(() => _category = key),
-                    ),
-                ],
-              ),
-            ),
-          ),
-          PopupMenuButton<HoldingOrder>(
-            tooltip: l10n.portfolioSort,
-            initialValue: _order,
-            onOpened: () => setState(() => _sortOpen = true),
-            onCanceled: () => setState(() => _sortOpen = false),
-            onSelected: (order) => setState(() {
-              _order = order;
-              _sortOpen = false;
-            }),
-            itemBuilder: (context) => [
-              for (final MapEntry(:key, :value) in orders.entries)
-                CheckedPopupMenuItem(
-                  value: key,
-                  checked: key == _order,
-                  child: Text(value),
-                ),
+          QuoinDropdown<String?>(
+            label: l10n.portfolioFilterCategory,
+            value: category,
+            options: [
+              (value: null, label: l10n.portfolioFilterAllCategories),
+              for (final key in categories)
+                (value: key, label: categoryLabel(l10n, key)),
             ],
-            child: _SortButton(open: _sortOpen),
+            onChanged: (key) => setState(() => _category = key),
+          ),
+          QuoinDropdown<HoldingOrder>(
+            label: l10n.portfolioSort,
+            value: _order,
+            options: [
+              for (final MapEntry(:key, :value) in orders.entries)
+                (value: key, label: value),
+            ],
+            onChanged: (order) => setState(() => _order = order),
           ),
         ],
       ),
-      const SizedBox(height: 12),
+      const SizedBox(height: QuoinSpace.m),
       if (shown.isEmpty)
         Text(
           l10n.portfolioNoneInCategory,
@@ -145,42 +129,5 @@ class _PortfolioPageState extends ConsumerState<PortfolioPage> {
         ),
       const SizedBox(height: QuoinSpace.section),
     ];
-  }
-}
-
-/// The sort control, drawn as a control: an outlined circle near the chips'
-/// height, tinted with the accent while its menu is open. The touch target
-/// around it is the minimum 48.
-class _SortButton extends StatelessWidget {
-  const _SortButton({required this.open});
-
-  final bool open;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = QuoinColors.of(context);
-    return SizedBox.square(
-      dimension: kMinInteractiveDimension,
-      child: Center(
-        child: SizedBox.square(
-          dimension: 36,
-          child: DecoratedBox(
-            decoration: ShapeDecoration(
-              color: open ? c.accent.withValues(alpha: 0.15) : c.surface,
-              shape: CircleBorder(
-                side: BorderSide(color: open ? c.accent : c.border),
-              ),
-            ),
-            child: Center(
-              child: QuoinIcon(
-                QuoinIcons.sort,
-                size: 18,
-                color: open ? c.accent : c.body,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
   }
 }

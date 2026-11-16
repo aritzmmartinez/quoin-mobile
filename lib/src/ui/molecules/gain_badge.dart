@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 
+import 'package:quoin/src/core/theme/quoin_tokens.dart';
 import 'package:quoin/src/core/theme/quoin_colors.dart';
 import 'package:quoin/src/core/theme/quoin_type.dart';
 
-/// A gain or a loss, already formatted: green when [sign] is positive, red
-/// when negative, muted at zero. The sign is in the text too, so the colour is
-/// never the only signal.
 class GainBadge extends StatelessWidget {
   const GainBadge({super.key, required this.text, required this.sign});
 
@@ -22,13 +20,14 @@ class GainBadge extends StatelessWidget {
         : c.muted;
     return DecoratedBox(
       decoration: ShapeDecoration(
-        color: color.withValues(alpha: 0.08),
-        shape: StadiumBorder(
-          side: BorderSide(color: color.withValues(alpha: 0.25)),
-        ),
+        color: c.fillOf(color),
+        shape: StadiumBorder(side: BorderSide(color: c.edgeOf(color))),
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        padding: const EdgeInsets.symmetric(
+          horizontal: QuoinSpace.s,
+          vertical: 3,
+        ),
         child: Text(
           text,
           maxLines: 1,

@@ -129,7 +129,7 @@ void main() {
     await tester.tap(find.text('Cancelar'));
     await tester.pumpAndSettle();
     expect(find.text('Cómo exportar tus movimientos'), findsNothing);
-    expect(find.text('Aún no has importado ningún movimiento'), findsOneWidget);
+    expect(find.text('Sin posiciones todavía'), findsOneWidget);
   });
 
   testWidgets('a saveback pair that cannot be read is one failed operation, '

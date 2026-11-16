@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import 'package:quoin/src/core/theme/quoin_tokens.dart';
 import 'package:quoin/src/core/theme/quoin_colors.dart';
 import 'package:quoin/src/core/theme/quoin_type.dart';
 
@@ -13,15 +14,10 @@ class DonutSlice {
   });
 
   final String label;
-
-  /// Share of the ring, 0 to 1. A chart coordinate: the figure shown is
-  /// [percent], formatted from the decimal.
   final double fraction;
   final String percent;
 }
 
-/// A ring split by share, largest first, with its legend beside it. The
-/// colours are the neutral donut scale: categories never take green or red.
 class AllocationDonut extends StatelessWidget {
   const AllocationDonut({super.key, required this.slices});
 
@@ -33,8 +29,6 @@ class AllocationDonut extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = QuoinColors.of(context);
     final type = QuoinType.of(context);
-    // One tone per slice, spread from dn1 to dn4: never repeated, and never
-    // dn5, which is the card's border and vanishes against it.
     final ramp = [c.dn1, c.dn2, c.dn3, c.dn4];
     Color colorOf(int i) {
       if (slices.length < 2) return ramp.first;
@@ -44,7 +38,7 @@ class AllocationDonut extends StatelessWidget {
     }
 
     return Row(
-      spacing: 20,
+      spacing: QuoinSpace.gutter,
       children: [
         ExcludeSemantics(
           child: SizedBox.square(
@@ -61,11 +55,11 @@ class AllocationDonut extends StatelessWidget {
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
-            spacing: 8,
+            spacing: QuoinSpace.s,
             children: [
               for (final (i, slice) in slices.indexed)
                 Row(
-                  spacing: 8,
+                  spacing: QuoinSpace.s,
                   children: [
                     DecoratedBox(
                       decoration: BoxDecoration(

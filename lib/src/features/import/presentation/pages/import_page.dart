@@ -5,10 +5,10 @@ import 'package:go_router/go_router.dart';
 import 'package:quoin/src/app/router.dart';
 import 'package:quoin/src/core/l10n/gen/app_localizations.dart';
 import 'package:quoin/src/core/theme/quoin_icons.dart';
-import 'package:quoin/src/core/theme/quoin_tokens.dart';
 import 'package:quoin/src/features/import/presentation/providers/import_providers.dart';
 import 'package:quoin/src/features/import/presentation/widgets/import_steps.dart';
 import 'package:quoin/src/ui/atoms/quoin_icon.dart';
+import 'package:quoin/src/ui/templates/quoin_page.dart';
 
 class ImportPage extends ConsumerStatefulWidget {
   const ImportPage({super.key, this.sample = false});
@@ -98,53 +98,16 @@ class _ImportPageState extends ConsumerState<ImportPage> {
     ];
 
     return Scaffold(
-      appBar: AppBar(
+      body: QuoinPage.list(
+        title: l10n.importCsv,
         leading: IconButton(
           icon: const QuoinIcon(QuoinIcons.close),
           tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: Text(l10n.importCsv),
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(16),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(
-              QuoinSpace.gutter,
-              0,
-              QuoinSpace.gutter,
-              12,
-            ),
-            child: ImportProgress(step: step, total: 4),
-          ),
-        ),
-      ),
-      body: SafeArea(
-        top: false,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.all(QuoinSpace.gutter),
-                children: [body],
-              ),
-            ),
-            if (actions.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  QuoinSpace.gutter,
-                  0,
-                  QuoinSpace.gutter,
-                  QuoinSpace.gutter,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  spacing: 8,
-                  children: actions,
-                ),
-              ),
-          ],
-        ),
+        subheader: ImportProgress(step: step, total: 4),
+        actions: actions,
+        children: [body],
       ),
     );
   }
