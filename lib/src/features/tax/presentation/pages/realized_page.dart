@@ -17,11 +17,9 @@ import 'package:quoin/src/ui/atoms/display_figure.dart';
 import 'package:quoin/src/ui/atoms/quoin_card.dart';
 import 'package:quoin/src/ui/atoms/quoin_chip.dart';
 import 'package:quoin/src/ui/molecules/empty_state.dart';
-import 'package:quoin/src/ui/molecules/quoin_segmented.dart';
+import 'package:quoin/src/ui/organisms/quoin_segmented_pages.dart';
 import 'package:quoin/src/ui/templates/quoin_page.dart';
 import 'package:quoin/src/ui/atoms/quoin_section_label.dart';
-
-enum _Tab { sales, tax }
 
 class RealizedPage extends ConsumerStatefulWidget {
   const RealizedPage({super.key});
@@ -31,7 +29,6 @@ class RealizedPage extends ConsumerStatefulWidget {
 }
 
 class _RealizedPageState extends ConsumerState<RealizedPage> {
-  var _tab = _Tab.sales;
   var _order = SaleOrder.date;
   int? _taxYear;
 
@@ -42,23 +39,15 @@ class _RealizedPageState extends ConsumerState<RealizedPage> {
       title: l10n.realizedTitle,
       value: ref.watch(realizedReportProvider),
       builder: (report) => report.hasLedger
-          ? QuoinPage.list(
+          ? QuoinPage(
               title: l10n.realizedTitle,
-              children: [
-                QuoinSegmented<_Tab>(
-                  segments: [
-                    (_Tab.sales, l10n.realizedTabSales),
-                    (_Tab.tax, l10n.realizedTabTax),
-                  ],
-                  selected: _tab,
-                  onChanged: (tab) => setState(() => _tab = tab),
-                ),
-                const SizedBox(height: QuoinSpace.section),
-                ...switch (_tab) {
-                  _Tab.sales => _sales(context, report),
-                  _Tab.tax => _tax(context, report),
-                },
-              ],
+              body: QuoinSegmentedPages(
+                segments: [
+                  (0, l10n.realizedTabSales),
+                  (1, l10n.realizedTabTax),
+                ],
+                pages: [_sales(context, report), _tax(context, report)],
+              ),
             )
           : QuoinPage(
               title: l10n.realizedTitle,

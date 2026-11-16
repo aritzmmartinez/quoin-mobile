@@ -1,4 +1,3 @@
-import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:quoin/src/features/tax/presentation/pages/realized_page.dart';
 import 'package:quoin/src/ui/molecules/sale_row.dart';
@@ -25,7 +24,7 @@ void main() {
     await tester.scrollUntilVisible(
       find.text('Realizado en 2026'),
       200,
-      scrollable: find.byType(Scrollable).first,
+      scrollable: verticalLists.first,
     );
     await tester.tap(find.text('Realizado en 2026'));
     await tester.pumpAndSettle();
@@ -81,7 +80,7 @@ void main() {
     await tester.scrollUntilVisible(
       repurchased,
       200,
-      scrollable: find.byType(Scrollable).first,
+      scrollable: verticalLists.first,
     );
     expect(tester.widget<SaleRow>(repurchased).badge, 'Recompra');
     expect(
@@ -93,7 +92,7 @@ void main() {
     await tester.scrollUntilVisible(
       find.text('INGRESOS EN ESPECIE'),
       200,
-      scrollable: find.byType(Scrollable).first,
+      scrollable: verticalLists.first,
     );
   });
 }

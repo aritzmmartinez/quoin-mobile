@@ -22,6 +22,7 @@ import 'package:quoin/src/ui/molecules/gain_badge.dart';
 import 'package:quoin/src/ui/molecules/icon_tile.dart';
 import 'package:quoin/src/ui/molecules/movement_row.dart';
 import 'package:quoin/src/ui/molecules/quoin_segmented.dart';
+import 'package:quoin/src/ui/organisms/quoin_segmented_pages.dart';
 import 'package:quoin/src/ui/molecules/quoin_text_field.dart';
 import 'package:quoin/src/ui/molecules/sale_row.dart';
 import 'package:quoin/src/ui/molecules/position_row.dart';
@@ -120,10 +121,16 @@ class _ComponentGalleryPageState extends State<ComponentGalleryPage> {
             ],
           ),
           label('Segmentado'),
-          QuoinSegmented<int>(
-            segments: const [(0, 'Ventas'), (1, 'Fiscal'), (2, 'Resumen')],
-            selected: _segment,
-            onChanged: (v) => setState(() => _segment = v),
+          SizedBox(
+            height: 220,
+            child: QuoinSegmentedPages<int>(
+              padding: EdgeInsets.zero,
+              segments: const [(0, 'Ventas'), (1, 'Fiscal'), (2, 'Resumen')],
+              pages: [
+                for (final view in ['ventas', 'fiscal', 'resumen'])
+                  [QuoinCard(child: Text('Vista de $view'))],
+              ],
+            ),
           ),
           label('Campos de texto'),
           const QuoinTextField(label: 'Nombre', hint: 'Plan 2027'),

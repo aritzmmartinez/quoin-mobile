@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:quoin/src/app/router.dart';
 import 'package:quoin/src/ui/organisms/quoin_bottom_bar.dart';
+import 'package:quoin/src/ui/organisms/quoin_segmented_pages.dart';
 import 'package:quoin/src/ui/templates/quoin_page.dart';
 
 import 'helpers.dart';
@@ -22,7 +23,7 @@ void main() {
     Future<void> scrollToEnd() async {
       final list = find.descendant(
         of: find.byType(QuoinPage),
-        matching: find.byType(Scrollable),
+        matching: verticalLists,
       );
       if (list.evaluate().isEmpty) return;
       for (var i = 0; i < 30; i++) {
@@ -71,6 +72,16 @@ void main() {
     }
 
     await visit(Routes.realized);
+    final views = find
+        .descendant(
+          of: find.byType(QuoinSegmentedPages<int>),
+          matching: find.byType(PageView),
+        )
+        .first;
+    await tester.drag(views, const Offset(-500, 0));
+    await tester.pumpAndSettle();
+    await tester.drag(views, const Offset(500, 0));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Fiscal (Bizkaia)'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Cómo se ha calculado'));
@@ -80,10 +91,7 @@ void main() {
       repurchased,
       300,
       scrollable: find
-          .descendant(
-            of: find.byType(QuoinPage),
-            matching: find.byType(Scrollable),
-          )
+          .descendant(of: find.byType(QuoinPage), matching: verticalLists)
           .first,
     );
     await tester.ensureVisible(repurchased);
@@ -96,11 +104,11 @@ void main() {
     await tester.pumpAndSettle();
 
     for (var i = 0; i < 3; i++) {
-      await tester.drag(find.byType(PageView), const Offset(-500, 0));
+      await tester.drag(find.byType(PageView).first, const Offset(-500, 0));
       await tester.pumpAndSettle();
     }
     for (var i = 0; i < 3; i++) {
-      await tester.drag(find.byType(PageView), const Offset(500, 0));
+      await tester.drag(find.byType(PageView).first, const Offset(500, 0));
       await tester.pumpAndSettle();
     }
 

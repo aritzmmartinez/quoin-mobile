@@ -1,3 +1,5 @@
+import 'package:flutter/widgets.dart';
+
 import 'dart:io';
 
 import 'package:drift/drift.dart' show driftRuntimeOptions;
@@ -93,3 +95,8 @@ Future<({QuoinDatabase database, PricesDatabase prices})> sampleStores() async {
   ).replaceWithSample(testNow);
   return stores;
 }
+
+final verticalLists = find.byWidgetPredicate(
+  (w) =>
+      w is Scrollable && axisDirectionToAxis(w.axisDirection) == Axis.vertical,
+);

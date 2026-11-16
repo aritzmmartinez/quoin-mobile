@@ -29,12 +29,12 @@ Future<void> _openPortfolio(WidgetTester tester) async {
 }
 
 Future<void> _swipe(WidgetTester tester, Offset by) async {
-  await tester.drag(find.byType(PageView), by);
+  await tester.drag(find.byType(PageView).first, by);
   await tester.pumpAndSettle();
 }
 
 double _page(WidgetTester tester) =>
-    tester.widget<PageView>(find.byType(PageView)).controller!.page!;
+    tester.widget<PageView>(find.byType(PageView).first).controller!.page!;
 
 void main() {
   testWidgets('a swipe skips the «+»: Cartera, then Análisis, never import', (
@@ -53,7 +53,7 @@ void main() {
     await _swipe(tester, _left);
     expect(_title('Ajustes'), findsOneWidget, reason: 'the last tab');
 
-    await tester.fling(find.byType(PageView), _right, 4000);
+    await tester.fling(find.byType(PageView).first, _right, 4000);
     await tester.pumpAndSettle();
     expect(_title('Análisis'), findsOneWidget, reason: 'one tab per fling');
     expect(find.byType(ImportPage), findsNothing);
@@ -172,7 +172,7 @@ void main() {
     );
     addTearDown(tester.view.resetSystemGestureInsets);
     await _openPortfolio(tester);
-    final width = tester.getSize(find.byType(PageView)).width;
+    final width = tester.getSize(find.byType(PageView).first).width;
 
     await tester.dragFrom(Offset(width - 10, 300), _left);
     await tester.pumpAndSettle();
