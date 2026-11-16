@@ -4,6 +4,7 @@ import 'package:quoin/src/features/portfolio/domain/entities/portfolio_ledger.da
 import 'package:quoin/src/features/portfolio/domain/usecases/movements_of.dart';
 import 'package:quoin/src/features/portfolio/presentation/pages/instrument_page.dart';
 import 'package:quoin/src/features/portfolio/presentation/pages/movements_page.dart';
+import 'package:quoin/src/ui/molecules/gain_badge.dart';
 import 'package:quoin/src/ui/molecules/movement_row.dart';
 import 'package:quoin/src/ui/organisms/quoin_bottom_bar.dart';
 import 'package:quoin_core/quoin_core.dart';
@@ -67,7 +68,7 @@ void main() {
 
   testWidgets('movements filter by type and instrument', (tester) async {
     await openPortfolio(tester);
-    await tester.tap(find.byTooltip('Movimientos'));
+    await tester.tap(find.text('Movimientos'));
     await tester.pumpAndSettle();
     expect(find.byType(MovementsPage), findsOneWidget);
     expect(find.text('22 movimientos'), findsOneWidget);
@@ -95,6 +96,11 @@ void main() {
     expect(find.byType(InstrumentPage), findsOneWidget);
     expect(find.textContaining('8131,50'), findsOneWidget);
     expect(find.text('Precio medio'), findsOneWidget);
+    expect(
+      tester.widget<GainBadge>(find.byType(GainBadge)).text,
+      allOf(contains('€ ('), endsWith('%)')),
+      reason: 'the badge shows the amount and the return',
+    );
 
     await tester.scrollUntilVisible(
       find.text('Ver movimientos'),

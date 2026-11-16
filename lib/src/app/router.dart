@@ -11,6 +11,7 @@ import 'package:quoin/src/features/portfolio/presentation/pages/instrument_page.
 import 'package:quoin/src/features/portfolio/presentation/pages/movements_page.dart';
 import 'package:quoin/src/features/portfolio/presentation/pages/portfolio_page.dart';
 import 'package:quoin/src/features/settings/presentation/pages/component_gallery_page.dart';
+import 'package:quoin/src/features/settings/presentation/pages/licenses_page.dart';
 import 'package:quoin/src/features/settings/presentation/pages/settings_page.dart';
 import 'package:quoin/src/features/sync/presentation/pages/pair_page.dart';
 import 'package:quoin/src/features/sync/presentation/pages/sync_page.dart';
@@ -27,6 +28,10 @@ abstract final class Routes {
   static const pair = '/pair';
   static const repair = '/pair?repair=1';
   static const sync = '/sync';
+  static const licenses = '/licenses';
+
+  static String license(String package) =>
+      '$licenses/${Uri.encodeComponent(package)}';
 
   static String instrument(String id) =>
       '/instrument/${Uri.encodeComponent(id)}';
@@ -96,6 +101,20 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: Routes.sync,
         builder: (context, state) => const Scaffold(body: SyncPage()),
+      ),
+      GoRoute(
+        path: Routes.licenses,
+        builder: (context, state) => const Scaffold(body: LicensesPage()),
+        routes: [
+          GoRoute(
+            path: ':package',
+            builder: (context, state) => Scaffold(
+              body: LicensePackagePage(
+                package: state.pathParameters['package']!,
+              ),
+            ),
+          ),
+        ],
       ),
       GoRoute(
         path: Routes.import,

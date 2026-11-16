@@ -10,7 +10,7 @@ import 'package:quoin/src/ui/atoms/quoin_icon.dart';
 class SettingsRow extends StatelessWidget {
   const SettingsRow({
     super.key,
-    required this.icon,
+    this.icon,
     required this.label,
     this.subtitle,
     this.value,
@@ -19,7 +19,7 @@ class SettingsRow extends StatelessWidget {
     this.valueIsFigure = false,
   }) : assert(!comingSoon || onTap == null);
 
-  final QuoinIconData icon;
+  final QuoinIconData? icon;
   final String label;
   final String? subtitle;
   final String? value;
@@ -32,9 +32,7 @@ class SettingsRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = QuoinColors.of(context);
     final type = QuoinType.of(context);
-    final rowSize = type.row.fontSize!;
-    final stacked =
-        MediaQuery.textScalerOf(context).scale(rowSize) >= rowSize * 1.5;
+    final stacked = QuoinType.largeText(context);
     final valueText = value == null
         ? null
         : Text(
@@ -74,11 +72,12 @@ class SettingsRow extends StatelessWidget {
               child: Row(
                 spacing: QuoinSpace.m,
                 children: [
-                  QuoinIcon(
-                    icon,
-                    size: QuoinIconSize.row,
-                    color: comingSoon ? c.faint : c.muted,
-                  ),
+                  if (icon case final icon?)
+                    QuoinIcon(
+                      icon,
+                      size: QuoinIconSize.row,
+                      color: comingSoon ? c.faint : c.muted,
+                    ),
                   if (stacked)
                     Expanded(
                       child: Column(

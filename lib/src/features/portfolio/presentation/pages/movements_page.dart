@@ -14,6 +14,7 @@ import 'package:quoin/src/features/portfolio/presentation/providers/portfolio_pr
 import 'package:quoin/src/features/portfolio/presentation/widgets/ledger_tiles.dart';
 import 'package:quoin/src/features/portfolio/presentation/widgets/result_view.dart';
 import 'package:quoin/src/ui/molecules/empty_state.dart';
+import 'package:quoin/src/ui/molecules/quoin_disclosure.dart';
 import 'package:quoin/src/ui/organisms/quoin_dropdown.dart';
 import 'package:quoin/src/ui/templates/quoin_page.dart';
 
@@ -105,10 +106,9 @@ class _MovementsPageState extends ConsumerState<MovementsPage> {
           l10n.movementsCount(shown.length),
           style: type.secondary.copyWith(color: c.muted),
         ),
-        const SizedBox(height: QuoinSpace.xs),
-        Text(
-          l10n.movementsAmountHint,
-          style: type.small.copyWith(color: c.muted),
+        QuoinDisclosure(
+          title: l10n.movementsAmountTitle,
+          paragraphs: [l10n.movementsAmountHint],
         ),
         const SizedBox(height: QuoinSpace.s),
         if (shown.isEmpty)
@@ -124,20 +124,18 @@ class _MovementsPageState extends ConsumerState<MovementsPage> {
       itemBuilder: (context, i) {
         final m = shown[i];
         final id = m.instrumentId;
-        return DecoratedBox(
-          decoration: BoxDecoration(
-            border: i == 0
-                ? null
-                : Border(top: BorderSide(color: c.borderSubtle)),
-          ),
-          child: movementTile(
-            context,
-            m,
-            zone,
-            onTap: id == null || id == widget.instrumentId
-                ? null
-                : () => context.push(Routes.instrument(id)),
-          ),
+        return Column(
+          children: [
+            if (i > 0) const Divider(height: 1),
+            movementTile(
+              context,
+              m,
+              zone,
+              onTap: id == null || id == widget.instrumentId
+                  ? null
+                  : () => context.push(Routes.instrument(id)),
+            ),
+          ],
         );
       },
     );

@@ -49,9 +49,7 @@ abstract final class QuoinIcons {
   );
   static const clearData = QuoinIconData._(HugeIcons.strokeRoundedDelete02);
 
-  static const movements = QuoinIconData._(
-    HugeIcons.strokeRoundedArrowDataTransferHorizontal,
-  );
+  static const movements = QuoinIconData._(HugeIcons.strokeRoundedHistory);
   static const realized = QuoinIconData._(HugeIcons.strokeRoundedReceiptDollar);
 
   // Import.

@@ -47,7 +47,14 @@
   "settingsLicense": "Licencia",
   "licenseName": "AGPL-3.0",
   "settingsThirdPartyLicenses": "Licencias de terceros",
-  "aboutLegalese": "Software libre bajo la licencia GNU AGPL-3.0.",
+  "licenseCount": "{count, plural, =1{1 licencia} other{{count} licencias}}",
+  "@licenseCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "settingsSaveFailed": "No se ha podido guardar el ajuste",
   "@settingsSaveFailed": {
     "description": "SnackBar cuando falla guardar el tema o el idioma; el valor elegido se aplica igualmente."
@@ -119,14 +126,7 @@
   "@positionUnpriced": {
     "description": "Una posición sin precio: se nombra, no se suma."
   },
-  "positionCost": "{cost} de coste",
-  "@positionCost": {
-    "placeholders": {
-      "cost": {
-        "type": "String"
-      }
-    }
-  },
+  "positionCostSuffix": "de coste",
   "portfolioLoadFailed": "No se ha podido leer la cartera",
   "residenceUnsupported": "Tu PC usa un territorio fiscal que esta versión de la app no conoce. Actualiza la app.",
   "categoryCompany": "Acción",
@@ -163,7 +163,7 @@
   "importSelectTitle": "Sube tu archivo CSV",
   "importSelectAction": "Toca para seleccionar archivo",
   "importSelectHint": "Trade Republic o Kraken, tal cual lo descargas",
-  "importFileSize": "{size} KB",
+  "importFileSize": "{size}\u00a0KB",
   "@importFileSize": {
     "placeholders": {
       "size": {
@@ -207,7 +207,7 @@
   "rowTypeReceive": "Recepción",
   "rowTypeTrade": "Operación",
   "importSeeDetail": "Ver detalle",
-  "importDetailCount": "{count} mov.",
+  "importDetailCount": "{count}\u00a0mov.",
   "@importDetailCount": {
     "placeholders": {
       "count": {
@@ -312,7 +312,7 @@
       }
     }
   },
-  "importRowNumber": "fila {position}",
+  "importRowNumber": "Fila {position}",
   "@importRowNumber": {
     "placeholders": {
       "position": {
@@ -352,7 +352,7 @@
   "helpEarnReturnUnverified": "Dinero que vuelve de Earn a tu monedero de spot. Puede incluir el rendimiento además de lo que pusiste, y Quoin aún no ha comprobado cómo lo informa Kraken, así que no se ha registrado: tratarlo como un paso entre tus propios monederos perdería el rendimiento sin avisar. Tu posición de ese activo puede no cuadrar con la del bróker.",
   "helpInternalMove": "Pasos entre tus propios monederos de Kraken, como asignar a Earn o retirar de ahí. No cambian lo que tienes, así que no se registran.",
   "helpSavebackUnpaired": "No se ha encontrado la compra que pagó este saveback (una compra del mismo importe en los 7 días siguientes, y solo una). Si esa compra está en el fichero, cuenta como aportación tuya. Si está en otro export, importa uno que cubra las dos fechas.",
-  "helpUnsupportedAssetClass": "Filas con una clase de activo (la columna asset_class del export) que Quoin todavía no lee, como bonos o derivados. No se han importado. Si son compras o ventas, la posición de ese activo no las incluye y puede no cuadrar con la del bróker.",
+  "helpUnsupportedAssetClass": "Filas con una clase de activo (la columna asset_class del export) que Quoin todavía no lee, como bonos o derivados. No se han importado.",
   "helpAccountTransfer": "Efectivo que sale de esta cuenta de Kraken hacia otra cuenta, o que llega de ella. Se registra como retirada o como ingreso.",
   "helpInternalBookedAsReward": "Una versión anterior de Quoin registró estos pasos entre tus monederos de Kraken como recompensas, y siguen en el registro como compras en especie. No cambian lo que tienes, así que esa posición incluye unidades de más.",
   "importRateConflict": "El BCE publica para {currency} un tipo del {date} distinto del guardado, así que la serie no se ha actualizado y las operaciones en esa divisa siguen sin tipo de cambio.",
@@ -396,6 +396,7 @@
     }
   },
   "movementsNoneMatch": "Ningún movimiento con estos filtros",
+  "movementsAmountTitle": "Qué es el importe",
   "movementsAmountHint": "El importe es el flujo de caja real: comisiones incluidas y retenciones descontadas. En una permuta es el valor de mercado de lo entregado o de lo recibido, porque no ha entrado ni salido dinero.",
   "movementInKind": "en especie",
   "movementNoRate": "sin tipo",
@@ -441,7 +442,7 @@
   "realizedSortDate": "Fecha",
   "realizedSortResult": "Resultado",
   "realizedSortName": "A–Z",
-  "realizedDays": "{count} d",
+  "realizedDays": "{count}\u00a0d",
   "@realizedDays": {
     "placeholders": {
       "count": {
@@ -450,7 +451,7 @@
     }
   },
   "realizedEmpty": "Cuando vendas algo, aquí aparecerá el resultado de cada operación.",
-  "saleUnits": "Uds",
+  "saleUnits": "uds",
   "salePrice": "Precio",
   "saleGross": "Bruto",
   "saleFees": "Comisiones",
@@ -489,7 +490,7 @@
   "taxWashSaleBadge": "Recompra",
   "taxUnlistedBadge": "Aviso",
   "taxLotsTitle": "Lotes FIFO consumidos",
-  "taxLotLine": "{quantity} uds del {date} a {unitCost}",
+  "taxLotLine": "{quantity}\u00a0uds del {date} a {unitCost}",
   "@taxLotLine": {
     "placeholders": {
       "quantity": {
@@ -503,7 +504,7 @@
       }
     }
   },
-  "taxWashSaleReason": "Se recompraron {repurchased} de las {sold} uds vendidas.",
+  "taxWashSaleReason": "Se recompraron {repurchased} de las {sold}\u00a0uds vendidas.",
   "@taxWashSaleReason": {
     "placeholders": {
       "repurchased": {
@@ -586,12 +587,12 @@
       }
     }
   },
-  "taxRepurchased": "Uds recompradas",
+  "taxRepurchased": "uds recompradas",
   "taxShare": "Parte no computable",
   "taxNonComputable": "Pérdida no computable",
   "taxCarriedOver": "Pérdida diferida heredada que pasa",
-  "taxRecipientsTitle": "Uds que reciben la pérdida diferida",
-  "taxRecipientLine": "{quantity} uds del {date}",
+  "taxRecipientsTitle": "uds que reciben la pérdida diferida",
+  "taxRecipientLine": "{quantity}\u00a0uds del {date}",
   "@taxRecipientLine": {
     "placeholders": {
       "quantity": {
@@ -624,7 +625,7 @@
     }
   },
   "taxPendingBody": "Siguen ligadas a uds en cartera. No cuentan en ningún año hasta que esas uds se vendan sin nueva recompra.",
-  "taxPendingLine": "Uds adquiridas el {date}",
+  "taxPendingLine": "uds adquiridas el {date}",
   "@taxPendingLine": {
     "placeholders": {
       "date": {
@@ -694,7 +695,7 @@
   "syncUnpairBody": "Este móvil dejará de sincronizar con este PC y borrará su clave; la cartera se queda en el móvil. El PC seguirá viendo este móvil como vinculado: revócalo también en Ajustes → Dispositivos del PC.",
   "syncCancel": "Cancelar",
   "syncUnreachable": "No encuentro tu Quoin",
-  "syncUnreachableHint": "El móvil no llega a tu PC. Comprueba que el móvil está conectado a la misma Wi‑Fi que el PC (no a los datos móviles), que el PC está encendido con Quoin abierto y que el cortafuegos de Windows permite la conexión. Si el PC ha cambiado de dirección, búscalo en la red o vuelve a escanear su código.",
+  "syncUnreachableHint": "El móvil no llega a tu PC. Comprueba que el móvil está conectado a la misma wifi que el PC (no a los datos móviles), que el PC está encendido con Quoin abierto y que el cortafuegos de Windows permite la conexión. Si el PC ha cambiado de dirección, búscalo en la red o vuelve a escanear su código.",
   "syncRescan": "Volver a escanear",
   "syncSearch": "Buscar en la red",
   "syncSearching": "Buscando en la red…",
@@ -707,9 +708,9 @@
     }
   },
   "syncNotFoundOnNetwork": "Tu PC no está en esta red",
-  "syncNotFoundOnNetworkHint": "He buscado tu PC en la Wi‑Fi del móvil y no responde. La búsqueda no funciona si el PC está en otra subred ni en redes de invitados aisladas: en ese caso, vuelve a escanear su código. Comprueba también que el PC está encendido con Quoin abierto.",
+  "syncNotFoundOnNetworkHint": "He buscado tu PC en la wifi del móvil y no responde. La búsqueda no funciona si el PC está en otra subred ni en redes de invitados aisladas: en ese caso, vuelve a escanear su código. Comprueba también que el PC está encendido con Quoin abierto.",
   "syncNoLocalNetwork": "El móvil no está en una red local",
-  "syncNoLocalNetworkHint": "Conecta el móvil a la misma Wi‑Fi que el PC (no a los datos móviles) y vuelve a intentarlo.",
+  "syncNoLocalNetworkHint": "Conecta el móvil a la misma wifi que el PC (no a los datos móviles) y vuelve a intentarlo.",
   "syncLocalNetworkDenied": "Quoin no tiene acceso a la red local",
   "syncLocalNetworkDeniedHint": "Android no deja a Quoin conectarse a equipos de tu red. Permite el acceso a la red local en los ajustes de la app y vuelve a intentarlo.",
   "syncCertificateChanged": "El certificado de tu PC ha cambiado",
@@ -903,6 +904,7 @@
   "syncFieldHedged": "Cubierto a euros",
   "syncFieldThesis": "Tesis",
   "syncFieldResidence": "Residencia fiscal",
+  "residenceBizkaia": "Bizkaia",
   "syncReviewSnack": "Tu PC tiene cambios por revisar",
   "syncReview": "Revisar",
   "syncDoneSnack": "Sincronizado con tu PC",

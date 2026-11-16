@@ -66,8 +66,7 @@ class HomePage extends ConsumerWidget {
     final c = QuoinColors.of(context);
     final type = QuoinType.of(context);
     final summary = overview.summary;
-    final gain = format.signedMoney(summary.unrealizedPnL);
-    final returnPct = summary.returnPct;
+    final gain = format.gain(summary.unrealizedPnL, summary.returnPct);
 
     return [
       Text(l10n.homeTotal, style: type.secondary.copyWith(color: c.muted)),
@@ -79,12 +78,7 @@ class HomePage extends ConsumerWidget {
         const SizedBox(height: QuoinSpace.row),
         Align(
           alignment: AlignmentDirectional.centerStart,
-          child: GainBadge(
-            text: returnPct == null
-                ? gain.text
-                : '${gain.text} (${format.percent(returnPct, signed: true)})',
-            sign: gain.sign,
-          ),
+          child: GainBadge(text: gain.text, sign: gain.sign),
         ),
       ],
       if (summary.unpricedCount > 0) ...[

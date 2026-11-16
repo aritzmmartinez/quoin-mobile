@@ -49,11 +49,23 @@ class _PortfolioPageState extends ConsumerState<PortfolioPage> {
       builder: (overview) => QuoinPage.list(
         title: l10n.tabPortfolio,
         onRefresh: () => refreshFromPc(context, ref),
-        trailing: IconButton(
-          icon: const QuoinIcon(QuoinIcons.movements),
-          tooltip: l10n.movementsTitle,
-          onPressed: () => context.push(Routes.movements),
-        ),
+        trailing: QuoinType.largeText(context)
+            ? IconButton(
+                icon: const QuoinIcon(QuoinIcons.movements),
+                tooltip: l10n.movementsTitle,
+                onPressed: () => context.push(Routes.movements),
+              )
+            : Padding(
+                padding: const EdgeInsetsDirectional.only(end: QuoinSpace.m),
+                child: OutlinedButton.icon(
+                  icon: const QuoinIcon(
+                    QuoinIcons.movements,
+                    size: QuoinIconSize.row,
+                  ),
+                  label: Text(l10n.movementsTitle),
+                  onPressed: () => context.push(Routes.movements),
+                ),
+              ),
         children: _content(context, overview),
       ),
     );

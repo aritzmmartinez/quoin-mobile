@@ -116,13 +116,13 @@ Widget holdingsCard(
   Widget row(Holding h) {
     void open() => context.push(Routes.instrument(h.instrumentId));
     final value = h.value.marketValue;
-    final pct = h.unrealizedPnLPct;
     final pnl = h.value.unrealizedPnL;
     if (value == null) {
       return PositionRow(
         name: h.name,
         detail: detail(h),
-        value: l10n.positionCost(format.money(h.position.costBasis)),
+        value: format.money(h.position.costBasis),
+        valueSuffix: l10n.positionCostSuffix,
         valueMuted: true,
         onTap: open,
         change: Text(
@@ -136,12 +136,9 @@ Widget holdingsCard(
       detail: detail(h),
       value: format.money(value),
       onTap: open,
-      change: GainBadge(
-        text: pct == null
-            ? format.signedMoney(pnl!).text
-            : format.percent(pct, signed: true),
-        sign: pnl!.amount.sign,
-      ),
+      change: switch (format.gain(pnl!, h.unrealizedPnLPct)) {
+        final gain => GainBadge(text: gain.text, sign: gain.sign),
+      },
     );
   }
 

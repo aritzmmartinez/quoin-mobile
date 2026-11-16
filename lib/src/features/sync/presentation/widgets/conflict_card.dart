@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:quoin_core/quoin_core.dart';
 
 import 'package:quoin/src/core/l10n/gen/app_localizations.dart';
+import 'package:quoin/src/core/l10n/quoin_format.dart';
+import 'package:quoin/src/core/l10n/residence_name.dart';
 import 'package:quoin/src/core/theme/quoin_colors.dart';
 import 'package:quoin/src/core/theme/quoin_tokens.dart';
 import 'package:quoin/src/core/theme/quoin_type.dart';
@@ -33,18 +35,23 @@ class ConflictCard extends StatelessWidget {
         : value is bool
         ? (value ? l10n.syncYes : l10n.syncNo)
         : '$value';
+    String residence(Object? value) => value is String && value.isNotEmpty
+        ? residenceName(l10n, value)
+        : shown(value);
     final (title, subject, phone, pc) = switch (conflict) {
       FieldConflict(entity: 'settings', :final local, :final incoming) => (
         l10n.syncFieldResidence,
         null,
-        shown(local),
-        shown(incoming),
+        residence(local),
+        residence(incoming),
       ),
       FieldConflict(:final key, :final field, :final local, :final incoming) =>
         (_field(l10n, field), names[key], shown(local), shown(incoming)),
       TargetConflict() => (l10n.syncConflictTarget, null, null, null),
       TargetDayConflict(:final day) => (
-        l10n.syncConflictTargetDay(day),
+        l10n.syncConflictTargetDay(
+          QuoinFormat.of(context).day(CalendarDate.parse(day)),
+        ),
         null,
         null,
         null,

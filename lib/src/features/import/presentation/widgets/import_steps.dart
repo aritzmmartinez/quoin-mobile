@@ -329,8 +329,11 @@ class _ImportReviewStepState extends State<ImportReviewStep> {
                     _DetailRow(
                       title:
                           names[event.instrumentId] ?? _typeLabel(l10n, event),
-                      subtitle:
-                          '${format.date(event.ts, preview.zone)} · ${_typeLabel(l10n, event)}',
+                      date: format.date(event.ts, preview.zone),
+                      subtitle: [
+                        if (names.containsKey(event.instrumentId))
+                          _typeLabel(l10n, event),
+                      ],
                       amount: _amount(format, event),
                     ),
               ],
@@ -346,11 +349,14 @@ class _ImportReviewStepState extends State<ImportReviewStep> {
                 _DetailRow(
                   title:
                       row.externalId ?? l10n.importRowNumber(row.position ?? 0),
+                  date: switch (row.date) {
+                    final text? => date(text),
+                    null => null,
+                  },
                   subtitle: [
-                    if (row.date case final text?) date(text),
                     if (row.type case final code?) typeOf(code),
                     rowErrorLabel(l10n, reason.code),
-                  ].join(' · '),
+                  ],
                   others: sameOperation([
                     for (final other in rows) (other.row.date, other.row.type),
                   ]),
@@ -371,13 +377,13 @@ class _ImportReviewStepState extends State<ImportReviewStep> {
                   in batch.discardedDetails[reason] ?? const <DiscardDetail>[])
                 _DetailRow(
                   title: detail.instrument ?? typeOf(detail.type),
+                  date: date(detail.date),
                   subtitle: [
-                    date(detail.date),
-                    typeOf(detail.type),
+                    if (detail.instrument != null) typeOf(detail.type),
                     ?detail.subtype,
                     if (detail.unpriced case final ids? when ids.isNotEmpty)
                       l10n.importUnpriced(ids.join(', ')),
-                  ].join(' · '),
+                  ],
                   others: sameOperation([
                     for (final other in detail.rows) (other.date, other.type),
                   ]),
@@ -394,11 +400,11 @@ class _ImportReviewStepState extends State<ImportReviewStep> {
               for (final detail in details)
                 _DetailRow(
                   title: detail.instrument ?? typeOf(detail.type),
+                  date: date(detail.date),
                   subtitle: [
-                    date(detail.date),
-                    typeOf(detail.type),
+                    if (detail.instrument != null) typeOf(detail.type),
                     ?detail.subtype,
-                  ].join(' · '),
+                  ],
                 ),
             ],
           ),
@@ -751,12 +757,14 @@ class _DetailRow extends StatelessWidget {
   const _DetailRow({
     required this.title,
     required this.subtitle,
+    this.date,
     this.amount,
     this.others = const [],
   });
 
   final String title;
-  final String subtitle;
+  final String? date;
+  final List<String> subtitle;
   final String? amount;
 
   /// The other rows of the same operation, nested under its main row.
@@ -784,7 +792,21 @@ class _DetailRow extends StatelessWidget {
                 spacing: QuoinSpace.xxs,
                 children: [
                   Text(title, style: type.control),
-                  Text(subtitle, style: type.small.copyWith(color: c.muted)),
+                  Text.rich(
+                    TextSpan(
+                      children: [
+                        if (date case final date?)
+                          TextSpan(text: date, style: type.small.mono),
+                        TextSpan(
+                          text: [
+                            if (date != null && subtitle.isNotEmpty) '',
+                            ...subtitle,
+                          ].join(' · '),
+                        ),
+                      ],
+                    ),
+                    style: type.small.copyWith(color: c.muted),
+                  ),
                   for (final other in others)
                     Padding(
                       padding: const EdgeInsetsDirectional.only(

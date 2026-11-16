@@ -111,14 +111,14 @@ class QuoinPage extends StatelessWidget {
               ),
               child: subheader,
             ),
-          Expanded(child: _refreshable(_content(bottom))),
+          Expanded(child: _refreshable(_content(context, bottom))),
           if (actions.isNotEmpty) _Actions(actions: actions),
         ],
       ),
     );
   }
 
-  Widget _content(double bottom) {
+  Widget _content(BuildContext context, double bottom) {
     final children = this.children;
     final physics = onRefresh == null
         ? null
@@ -151,15 +151,51 @@ class QuoinPage extends StatelessWidget {
         padding: padding,
         children: children,
       ),
-      (final children?, final build?) => ListView.builder(
+      (final children?, final build?) => CustomScrollView(
         physics: physics,
-        padding: padding,
-        itemCount: children.length + itemCount,
-        itemBuilder: (context, i) => i < children.length
-            ? children[i]
-            : build(context, i - children.length),
+        slivers: [
+          SliverPadding(
+            padding: padding.copyWith(bottom: 0),
+            sliver: SliverList.list(children: children),
+          ),
+          SliverPadding(
+            padding: padding,
+            sliver: itemCount == 0
+                ? null
+                : DecoratedSliver(
+                    decoration: _cardDecoration(context),
+                    sliver: SliverList.builder(
+                      itemCount: itemCount,
+                      itemBuilder: (context, i) =>
+                          _cardRow(i, build(context, i)),
+                    ),
+                  ),
+          ),
+        ],
       ),
     };
+  }
+
+  ShapeDecoration _cardDecoration(BuildContext context) {
+    final c = QuoinColors.of(context);
+    return ShapeDecoration(
+      color: c.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(QuoinRadius.card),
+        side: BorderSide(color: c.borderSubtle),
+      ),
+    );
+  }
+
+  Widget _cardRow(int i, Widget row) {
+    const corner = Radius.circular(QuoinRadius.card);
+    return ClipRRect(
+      borderRadius: BorderRadius.vertical(
+        top: i == 0 ? corner : Radius.zero,
+        bottom: i == itemCount - 1 ? corner : Radius.zero,
+      ),
+      child: Material(type: MaterialType.transparency, child: row),
+    );
   }
 
   Widget _refreshable(Widget content) => switch (onRefresh) {

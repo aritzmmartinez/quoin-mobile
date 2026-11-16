@@ -51,9 +51,9 @@ void main() {
     expect(find.text('Pagos con tarjeta'), findsOneWidget);
     expect(find.text('Clase de activo sin soporte'), findsOneWidget);
     expect(find.text('Con error'), findsOneWidget);
-    expect(find.text('fila 12'), findsOneWidget);
+    expect(find.text('Fila 12'), findsOneWidget);
     expect(
-      find.textContaining('· Saveback'),
+      find.text('Saveback'),
       findsWidgets,
       reason: 'a broker row type is shown by name, never as its code',
     );

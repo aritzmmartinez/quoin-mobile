@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:quoin_core/quoin_core.dart';
 
 import 'package:quoin/src/core/l10n/gen/app_localizations.dart';
+import 'package:quoin/src/core/l10n/quoin_format.dart';
 import 'package:quoin/src/core/theme/quoin_colors.dart';
 import 'package:quoin/src/core/theme/quoin_tokens.dart';
 import 'package:quoin/src/core/theme/quoin_type.dart';
@@ -95,7 +95,7 @@ class SyncDetailView extends StatelessWidget {
       ResolvedKind.residence => l10n.syncFieldResidence,
       ResolvedKind.target => '${l10n.syncConflictTarget} · ${r.subject}',
       ResolvedKind.targetDay => l10n.syncConflictTargetDay(
-        _day(context, r.subject),
+        QuoinFormat.of(context).day(CalendarDate.parse(r.subject)),
       ),
       ResolvedKind.holdings => l10n.syncConflictHoldings(r.subject),
     };
@@ -136,12 +136,22 @@ class SetAsideView extends StatelessWidget {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      [
-                        _day(context, row.ts),
-                        ledgerTypeLabel(l10n, row.type),
-                        ?row.instrument,
-                      ].join(' · '),
+                    Text.rich(
+                      TextSpan(
+                        children: [
+                          TextSpan(
+                            text: _instantDay(context, row.ts),
+                            style: type.row.mono,
+                          ),
+                          TextSpan(
+                            text: [
+                              '',
+                              ledgerTypeLabel(l10n, row.type),
+                              ?row.instrument,
+                            ].join(' · '),
+                          ),
+                        ],
+                      ),
                       style: type.row,
                     ),
                     Text(
@@ -260,9 +270,8 @@ String _column(AppLocalizations l10n, String column) => switch (column) {
   _ => l10n.syncColumnOther,
 };
 
-String _day(BuildContext context, String text) {
-  final at = DateTime.tryParse(text);
-  if (at == null) return text;
-  final locale = Localizations.localeOf(context).toLanguageTag();
-  return DateFormat.yMMMd(locale).format(at.toLocal());
+/// This view has no residence, so a row's day is read on the phone's clock.
+String _instantDay(BuildContext context, String ts) {
+  final at = DateTime.parse(ts).toLocal();
+  return QuoinFormat.of(context).day(CalendarDate(at.year, at.month, at.day));
 }

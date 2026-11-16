@@ -124,14 +124,11 @@ class _RealizedPageState extends ConsumerState<RealizedPage> {
         if (s.year == year) s,
     ];
     final totals = SalesTotals(lines);
-    final realized = format.signedMoney(totals.realized);
-    final pct = totals.returnPct;
+    final realized = format.gain(totals.realized, totals.returnPct);
     return [
       QuoinSectionLabel('$year'),
       DisplayFigure(
-        pct == null
-            ? realized.text
-            : '${realized.text} (${format.percent(pct, signed: true)})',
+        realized.text,
         color: realized.sign > 0
             ? c.positive
             : realized.sign < 0

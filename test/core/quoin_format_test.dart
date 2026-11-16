@@ -4,7 +4,7 @@ import 'package:quoin/src/core/l10n/quoin_format.dart';
 import 'package:quoin_core/quoin_core.dart';
 
 /// `~` stands for the no-break space Intl puts before «€» and «%» in Spanish,
-/// `_` for the minus sign (U+2212) of a signed amount.
+/// `_` for the minus sign (U+2212) of a signed amount or a percentage.
 String intl(String s) => s
     .replaceAll('~', String.fromCharCode(0x00A0))
     .replaceAll('_', String.fromCharCode(0x2212));
@@ -13,7 +13,8 @@ void main() {
   const es = QuoinFormat('es');
   const en = QuoinFormat('en');
 
-  // Expected strings are what Node's Intl (ICU 78) writes for es-ES and en-GB.
+  // Expected strings are what Node's Intl (ICU 78) writes for es-ES and en-GB,
+  // but for the minus sign of signed figures and percentages.
   test('money', () {
     final cases = {
       '0': ('0,00~€', '€0.00'),
@@ -44,19 +45,28 @@ void main() {
     expect(en.signedMoney(Money.zero), (text: '€0.00', sign: 0));
   });
 
+  test('gain', () {
+    expect(es.gain(Money.parse('-30'), Dec.parse('-0.123')), (
+      text: intl('_30,00~€ (_12,3~%)'),
+      sign: -1,
+    ));
+    expect(en.gain(Money.parse('6.8'), null), (text: '+€6.80', sign: 1));
+  });
+
   test('percent', () {
     final signed = {
       '0.1234': ('+12,3~%', '+12.3%'),
       '-0.0004': ('0,0~%', '0.0%'),
       '0': ('0,0~%', '0.0%'),
-      '-0.123': ('-12,3~%', '-12.3%'),
+      '-0.123': ('_12,3~%', '_12.3%'),
       '12.3456': ('+1234,6~%', '+1,234.6%'),
     };
     for (final MapEntry(key: value, value: (inEs, inEn)) in signed.entries) {
       expect(es.percent(Dec.parse(value), signed: true), intl(inEs));
-      expect(en.percent(Dec.parse(value), signed: true), inEn);
+      expect(en.percent(Dec.parse(value), signed: true), intl(inEn));
     }
-    expect(es.percent(Dec.parse('-0.0004')), intl('-0,0~%'));
+    expect(es.percent(Dec.parse('-0.0004')), intl('_0,0~%'));
+    expect(en.percent(Dec.parse('-0.25')), intl('_25.0%'));
     expect(es.percent(Dec.parse('0.0004'), floorNonZero: true), intl('<0,1~%'));
   });
 

@@ -93,10 +93,9 @@ class InstrumentPage extends ConsumerWidget {
           const SizedBox(height: QuoinSpace.row),
           Align(
             alignment: AlignmentDirectional.centerStart,
-            child: GainBadge(
-              text: format.signedMoney(pnl).text,
-              sign: pnl.amount.sign,
-            ),
+            child: switch (format.gain(pnl, d.unrealizedPnLPct)) {
+              final gain => GainBadge(text: gain.text, sign: gain.sign),
+            },
           ),
         ],
       ],

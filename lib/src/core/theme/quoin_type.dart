@@ -110,6 +110,11 @@ class QuoinType extends ThemeExtension<QuoinType> {
   static QuoinType of(BuildContext context) =>
       Theme.of(context).extension<QuoinType>()!;
 
+  static bool largeText(BuildContext context) {
+    final size = of(context).row.fontSize!;
+    return MediaQuery.textScalerOf(context).scale(size) >= size * 1.5;
+  }
+
   @override
   QuoinType copyWith({
     TextStyle? display,

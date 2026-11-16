@@ -63,6 +63,8 @@ void main() {
       Routes.realized,
       Routes.pair,
       Routes.sync,
+      Routes.licenses,
+      Routes.license('flutter'),
     ]) {
       await visit(location);
       await scrollToEnd();

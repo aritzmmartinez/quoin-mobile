@@ -90,11 +90,12 @@ class _ToolCard extends StatelessWidget {
               ],
             ),
           ),
-          QuoinIcon(
-            QuoinIcons.chevronRight,
-            size: QuoinIconSize.small,
-            color: QuoinColors.of(context).faint,
-          ),
+          if (onTap != null)
+            QuoinIcon(
+              QuoinIcons.chevronRight,
+              size: QuoinIconSize.small,
+              color: QuoinColors.of(context).faint,
+            ),
         ],
       ),
     );

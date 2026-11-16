@@ -116,13 +116,7 @@ class SettingsPage extends ConsumerWidget {
             SettingsRow(
               icon: QuoinIcons.thirdPartyLicenses,
               label: l10n.settingsThirdPartyLicenses,
-              onTap: () => showLicensePage(
-                context: context,
-                applicationName: l10n.appTitle,
-                applicationVersion: version,
-                applicationLegalese: l10n.aboutLegalese,
-                useRootNavigator: true,
-              ),
+              onTap: () => context.push(Routes.licenses),
             ),
           ],
         ),
