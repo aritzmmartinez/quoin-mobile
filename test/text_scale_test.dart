@@ -95,6 +95,15 @@ void main() {
     GoRouter.of(tester.element(find.byType(QuoinPage).first)).go(Routes.home);
     await tester.pumpAndSettle();
 
+    for (var i = 0; i < 3; i++) {
+      await tester.drag(find.byType(PageView), const Offset(-500, 0));
+      await tester.pumpAndSettle();
+    }
+    for (var i = 0; i < 3; i++) {
+      await tester.drag(find.byType(PageView), const Offset(500, 0));
+      await tester.pumpAndSettle();
+    }
+
     await tester.tap(find.byTooltip('Importar CSV'));
     await tester.pumpAndSettle();
   });

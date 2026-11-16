@@ -48,13 +48,16 @@ final routerProvider = Provider<GoRouter>((ref) {
   final router = GoRouter(
     initialLocation: Routes.home,
     routes: [
-      StatefulShellRoute.indexedStack(
-        builder: (context, state, shell) => AppShell(shell: shell),
+      StatefulShellRoute(
+        builder: (context, state, shell) => shell,
+        navigatorContainerBuilder: (context, shell, branches) =>
+            AppShell(shell: shell, branches: branches),
         branches: [
           _branch(Routes.home, const HomePage()),
           _branch(Routes.portfolio, const PortfolioPage()),
           _branch(Routes.analysis, const AnalysisPage()),
           StatefulShellBranch(
+            preload: true,
             routes: [
               GoRoute(
                 path: Routes.settings,
@@ -131,6 +134,9 @@ final routerProvider = Provider<GoRouter>((ref) {
   return router;
 });
 
+// Preloaded: a tab swiped into for the first time is already there under
+// the finger, not blank until it settles.
 StatefulShellBranch _branch(String path, Widget screen) => StatefulShellBranch(
+  preload: true,
   routes: [GoRoute(path: path, builder: (context, state) => screen)],
 );

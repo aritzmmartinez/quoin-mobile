@@ -25,6 +25,7 @@ class QuoinBottomBar extends StatelessWidget {
     super.key,
     required this.items,
     required this.currentIndex,
+    this.position,
     required this.onSelected,
     required this.addIcon,
     required this.addLabel,
@@ -32,11 +33,12 @@ class QuoinBottomBar extends StatelessWidget {
     this.placement = QuoinBarActionPlacement.trailing,
   }) : assert(items.length == 4);
 
-  /// Between the pill and a detached button.
   static const double gap = 10;
 
   final List<QuoinBarItem> items;
   final int currentIndex;
+
+  final ValueListenable<double>? position;
   final ValueChanged<int> onSelected;
   final QuoinIconData addIcon;
   final String addLabel;
@@ -67,6 +69,7 @@ class QuoinBottomBar extends StatelessWidget {
               children: [
                 _SlidingPill(
                   index: currentIndex,
+                  position: position,
                   tabWidth: (box.maxWidth - inlineWidth) / 4,
                   inlineWidth: inlineWidth,
                 ),
@@ -140,11 +143,13 @@ class QuoinBottomBar extends StatelessWidget {
 class _SlidingPill extends StatefulWidget {
   const _SlidingPill({
     required this.index,
+    required this.position,
     required this.tabWidth,
     required this.inlineWidth,
   });
 
   final int index;
+  final ValueListenable<double>? position;
   final double tabWidth;
 
   /// The add button's width when it sits between the second and third tab.
@@ -167,8 +172,20 @@ class _SlidingPillState extends State<_SlidingPill>
   );
 
   @override
+  void initState() {
+    super.initState();
+    widget.position?.addListener(_follow);
+  }
+
+  void _follow() => _position.value = widget.position!.value;
+
+  @override
   void didUpdateWidget(_SlidingPill old) {
     super.didUpdateWidget(old);
+    if (widget.position != old.position) {
+      old.position?.removeListener(_follow);
+      widget.position?.addListener(_follow);
+    }
     if (widget.index == old.index) return;
     final target = widget.index.toDouble();
     if (MediaQuery.disableAnimationsOf(context)) {
@@ -182,6 +199,7 @@ class _SlidingPillState extends State<_SlidingPill>
 
   @override
   void dispose() {
+    widget.position?.removeListener(_follow);
     _position.dispose();
     super.dispose();
   }
