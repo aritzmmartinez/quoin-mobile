@@ -123,13 +123,41 @@ class _ComponentGalleryPageState extends State<ComponentGalleryPage> {
           ),
           label('Segmentado'),
           SizedBox(
-            height: 220,
+            height: 280,
             child: QuoinSegmentedPages<int>(
               padding: EdgeInsets.zero,
               segments: const [(0, 'Ventas'), (1, 'Fiscal'), (2, 'Resumen')],
-              pages: [
-                for (final view in ['ventas', 'fiscal', 'resumen'])
-                  [QuoinCard(child: Text('Vista de $view'))],
+              pages: const [
+                [
+                  Wrap(
+                    spacing: QuoinSpace.section,
+                    runSpacing: QuoinSpace.card,
+                    children: [
+                      FigureBlock(label: 'Resultado', value: '+1.234,56 €', sign: 1),
+                      FigureBlock(label: 'Vendido', value: '12.345,00 €'),
+                    ],
+                  ),
+                ],
+                [
+                  Wrap(
+                    spacing: QuoinSpace.section,
+                    runSpacing: QuoinSpace.card,
+                    children: [
+                      FigureBlock(label: 'Base', value: '8.765,43 €'),
+                      FigureBlock(label: 'Cuota', value: '1.753,09 €'),
+                    ],
+                  ),
+                ],
+                [
+                  Wrap(
+                    spacing: QuoinSpace.section,
+                    runSpacing: QuoinSpace.card,
+                    children: [
+                      FigureBlock(label: 'Coste', value: '10.000,00 €'),
+                      FigureBlock(label: 'Valor', value: '11.234,56 €'),
+                    ],
+                  ),
+                ],
               ],
             ),
           ),
