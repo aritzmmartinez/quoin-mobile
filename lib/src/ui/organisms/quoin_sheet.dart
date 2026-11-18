@@ -10,6 +10,8 @@ Future<T?> showQuoinSheet<T>(
   BuildContext context, {
   required String title,
   required WidgetBuilder body,
+  String? subtitle,
+  Widget? leading,
 }) {
   return showModalBottomSheet<T>(
     context: context,
@@ -17,26 +19,55 @@ Future<T?> showQuoinSheet<T>(
     isScrollControlled: true,
     useSafeArea: true,
     builder: (sheet) {
-      return SingleChildScrollView(
-        padding: const EdgeInsets.only(bottom: QuoinSpace.gutter),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                QuoinSpace.gutter,
-                0,
-                QuoinSpace.gutter,
-                QuoinSpace.m,
+      final c = QuoinColors.of(sheet);
+      final type = QuoinType.of(sheet);
+      return Semantics(
+        scopesRoute: true,
+        namesRoute: true,
+        explicitChildNodes: true,
+        label: title,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.only(bottom: QuoinSpace.gutter),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  QuoinSpace.gutter,
+                  0,
+                  QuoinSpace.gutter,
+                  QuoinSpace.m,
+                ),
+                child: Row(
+                  spacing: QuoinSpace.m,
+                  children: [
+                    if (leading != null) ExcludeSemantics(child: leading),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        spacing: QuoinSpace.xs,
+                        children: [
+                          Semantics(
+                            header: true,
+                            child: Text(title, style: type.title),
+                          ),
+                          if (subtitle != null)
+                            Text(
+                              subtitle,
+                              style: type.secondary.tabular.copyWith(
+                                color: c.muted,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              child: Semantics(
-                header: true,
-                child: Text(title, style: QuoinType.of(sheet).title),
-              ),
-            ),
-            body(sheet),
-          ],
+              body(sheet),
+            ],
+          ),
         ),
       );
     },

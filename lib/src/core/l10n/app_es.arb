@@ -261,13 +261,28 @@
   },
   "importChange": "Cambiar",
   "importProcessing": "Procesando movimientos…",
-  "importReviewTitle": "Revisa antes de importar",
   "importNew": "Nuevas",
+  "importNewHeadline": "{count, plural, =1{operación nueva} other{operaciones nuevas}}",
+  "@importNewHeadline": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "importRestKnown": "El resto ya estaba en tu cartera o no son inversiones.",
+  "importCardSpendingNote": "No son inversiones: se ignoran",
+  "importUnsupportedTitle": "Sin soporte todavía",
+  "importUnsupportedNote": "No se importan.",
+  "importOtherDiscards": "Otros descartes",
+  "unsupportedRightsDistribution": "Reparto de derechos",
+  "unsupportedRightsDividend": "Liquidación de derechos: dividendo",
+  "unsupportedRightsProceeds": "Liquidación de derechos: importe",
+  "unsupportedPrivateMarketBuy": "Compra en mercado privado",
+  "unsupportedOther": "Operación sin soporte",
   "importCompleted": "Completadas",
   "importCompletedHelp": "Ya estaban importadas; se ha añadido la parte que faltaba",
-  "importExisting": "Duplicadas",
-  "importWarnings": "Advertencias",
-  "importExistingSkipped": "Las operaciones duplicadas ya estaban en el registro y se omitirán",
+  "importExisting": "Ya importadas",
   "importNothingNew": "Nada nuevo que importar: todas las operaciones de este fichero ya estaban en el registro.",
   "importNothingToSave": "Nada que importar: ninguna operación de este fichero se puede guardar. Arriba se explica por qué.",
   "importSameOperation": "misma operación: {type}",
@@ -363,7 +378,6 @@
   "warningInternalMove": "Movimientos entre tus monederos de Kraken",
   "warningCardSpending": "Pagos con tarjeta",
   "warningSavebackUnpaired": "Saveback sin compra emparejada",
-  "warningUnsupported": "Sin soporte",
   "warningAccountTransfer": "Transferencias con otra cuenta",
   "warningInternalBookedAsReward": "Movimientos internos registrados antes como recompensa",
   "importMissingColumn": "Al fichero le falta la columna {column}.",
@@ -485,6 +499,10 @@
   },
   "movementsNoneMatch": "Ningún movimiento con estos filtros",
   "movementsAmountTitle": "Qué es el importe",
+  "movementsCashTitle": "Flujo de caja real",
+  "movementsCashBody": "Lo que de verdad entra o sale: comisiones incluidas y retenciones descontadas.",
+  "movementsSwapTitle": "Permutas",
+  "movementsSwapBody": "No entra ni sale dinero: el importe es el valor de mercado de lo entregado o de lo recibido.",
   "movementsAmountHint": "El importe es el flujo de caja real: comisiones incluidas y retenciones descontadas. En una permuta es el valor de mercado de lo entregado o de lo recibido, porque no ha entrado ni salido dinero.",
   "movementInKind": "en especie",
   "movementNoRate": "sin tipo",
@@ -510,16 +528,20 @@
   "instrumentMovements": "Movimientos de este activo",
   "realizedTabSales": "Ventas",
   "realizedTabTax": "Fiscal (Bizkaia)",
-  "realizedHow": "Cómo se ha calculado",
-  "realizedIntro": "Cada venta cerrada, con el coste que consumió en el momento de venderla. Las comisiones de compra ya van dentro del coste y las de venta se restan del bruto.",
-  "realizedAvcoWarning": "Cálculo AVCO (coste medio ponderado), el mismo criterio que la cartera. No coincide con el criterio fiscal FIFO: en la declaración cada venta se empareja con las compras más antiguas, así que el resultado por operación será otro.",
-  "realizedYearSummary": "{count, plural, =1{1 venta} other{{count} ventas}} en {year} · coste {cost}",
+  "realizedHow": "Cómo se calcula",
+  "realizedHowDetail": "Los criterios en detalle",
+  "realizedYearHeader": "Resultado de {year}",
+  "@realizedYearHeader": {
+    "placeholders": {
+      "year": {
+        "type": "int"
+      }
+    }
+  },
+  "realizedYearSummary": "{count, plural, =1{1 venta} other{{count} ventas}} · coste {cost}",
   "@realizedYearSummary": {
     "placeholders": {
       "count": {
-        "type": "int"
-      },
-      "year": {
         "type": "int"
       },
       "cost": {
@@ -527,10 +549,30 @@
       }
     }
   },
+  "avcoCostTitle": "Precio medio",
+  "avcoCostBody": "Cada venta se lleva el coste medio ponderado de lo que tenías al venderla (AVCO), el mismo criterio que la cartera.",
+  "avcoFeesTitle": "Comisiones",
+  "avcoFeesBody": "Las de compra ya van dentro del coste; las de venta se restan de lo que recibes.",
+  "avcoNotTaxTitle": "No es el criterio fiscal",
+  "avcoNotTaxBody": "La declaración empareja cada venta con las compras más antiguas (FIFO), así que el resultado de cada venta será otro. Lo tienes en la pestaña Fiscal.",
+  "taxHowIntro": "Según la Norma Foral 13/2013 del IRPF de Bizkaia.",
+  "taxHowFifoTitle": "Primero lo más antiguo",
+  "taxHowFifoBody": "Cada venta sale de las compras más antiguas (FIFO). Por eso la cifra puede diferir de la pestaña Ventas, que usa el precio medio.",
+  "taxHowWashTitle": "Recompras en dos meses",
+  "taxHowWashBody": "Si vendes con pérdida y compras lo mismo en los dos meses anteriores o posteriores, esa pérdida se aplaza hasta que vendas lo recomprado.",
+  "taxHowWashSource": "Art. 43",
+  "taxHowSwapTitle": "Permutas de cripto",
+  "taxHowSwapBody": "Cambiar una cripto por otra cuenta como una venta y una compra, al mayor de los dos valores.",
+  "taxHowSwapSource": "Arts. 47.1.i y 47.1.p",
+  "taxHowCarryTitle": "Pérdidas de años anteriores",
+  "taxHowCarryBody": "Se compensan con las ganancias de este año, hasta cuatro años después de la pérdida.",
+  "taxHowCarrySource": "Art. 66",
+  "realizedIntro": "Cada venta cerrada, con el coste que consumió en el momento de venderla. Las comisiones de compra ya van dentro del coste y las de venta se restan del bruto.",
+  "realizedAvcoWarning": "Cálculo AVCO (coste medio ponderado), el mismo criterio que la cartera. No coincide con el criterio fiscal FIFO: en la declaración cada venta se empareja con las compras más antiguas, así que el resultado por operación será otro.",
   "realizedSortDate": "Fecha",
   "realizedSortResult": "Resultado",
   "realizedSortName": "A–Z",
-  "realizedDays": "{count} d",
+  "realizedDays": "{count, plural, =1{1 día} other{{count} días}}",
   "@realizedDays": {
     "placeholders": {
       "count": {
@@ -546,6 +588,36 @@
   "saleCost": "Coste",
   "saleResult": "Resultado",
   "saleShowDetail": "Ver detalle",
+  "saleOn": "Venta del {date}",
+  "@saleOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "saleHeld": "Mantenida {count, plural, =1{1 día} other{{count} días}}",
+  "@saleHeld": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "saleUnitsLabel": "Unidades",
+  "salePriceLabel": "Precio de venta",
+  "saleReceived": "Has recibido",
+  "saleCostLabel": "Te había costado",
+  "saleFeesIncluded": "Incluye {fees} de comisión.",
+  "@saleFeesIncluded": {
+    "placeholders": {
+      "fees": {
+        "type": "String"
+      }
+    }
+  },
+  "saleCostBasis": "El coste usa el precio medio de tus compras.",
+  "saleOpenInstrument": "Ver la ficha del instrumento",
   "taxYearLabel": "Año fiscal",
   "taxNoYears": "No hay ventas registradas todavía en ningún año.",
   "taxNetBase": "Base liquidable del ahorro",
@@ -850,10 +922,101 @@
       }
     }
   },
-  "syncPreviewIntro": "Es la primera sincronización con este PC. Revisa qué recibirá cada lado.",
   "syncToPhone": "Del PC a este móvil",
   "syncToPc": "De este móvil al PC",
-  "syncNothing": "Nada nuevo",
+  "syncFirstTitle": "Primera vez con {pc}",
+  "@syncFirstTitle": {
+    "placeholders": {
+      "pc": {
+        "type": "String"
+      }
+    }
+  },
+  "syncFirstIntro": "Revisa qué va a copiarse. Las próximas veces se hará solo.",
+  "syncStatMovements": "{count, plural, =1{movimiento} other{movimientos}}",
+  "@syncStatMovements": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncStatInstruments": "{count, plural, =1{instrumento} other{instrumentos}}",
+  "@syncStatInstruments": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncStatCompositions": "{count, plural, =1{composición} other{composiciones}}",
+  "@syncStatCompositions": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncByType": "Movimientos por tipo",
+  "syncTypeBuys": "{count, plural, =1{1 compra} other{{count} compras}}",
+  "@syncTypeBuys": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncTypeSells": "{count, plural, =1{1 venta} other{{count} ventas}}",
+  "@syncTypeSells": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncTypeDividends": "{count, plural, =1{1 dividendo} other{{count} dividendos}}",
+  "@syncTypeDividends": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncTypeDeposits": "{count, plural, =1{1 ingreso} other{{count} ingresos}}",
+  "@syncTypeDeposits": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncTypeWithdrawals": "{count, plural, =1{1 retirada} other{{count} retiradas}}",
+  "@syncTypeWithdrawals": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncTypeInterest": "{count, plural, =1{1 pago de intereses} other{{count} pagos de intereses}}",
+  "@syncTypeInterest": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncTypeOther": "{count, plural, =1{1 otro} other{{count} otros}}",
+  "@syncTypeOther": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncInKind": "Pasan a traspaso en especie",
+  "syncResidenceChanged": "Cambia",
+  "syncNothing": "Nada que enviar",
   "syncCountLedger": "{count, plural, =1{1 movimiento} other{{count} movimientos}}",
   "@syncCountLedger": {
     "placeholders": {
@@ -878,14 +1041,6 @@
   },
   "syncSetAsideTitle": "Movimientos apartados",
   "syncSetAsideHint": "Son distintos en el PC y en el móvil; cada lado conserva el suyo hasta que coincidan.",
-  "syncDetailInKind": "{count, plural, =1{1 movimiento pasa a traspaso en especie} other{{count} movimientos pasan a traspaso en especie}}",
-  "@syncDetailInKind": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
   "syncDetailNewInstruments": "Instrumentos nuevos",
   "syncDetailChangedInstruments": "Instrumentos cambiados",
   "syncDetailNewTargets": "Objetivos nuevos",
@@ -1081,7 +1236,6 @@
   "pairScanTitle": "Vincula este móvil con tu PC",
   "pairFailedTitle": "No se ha podido vincular",
   "pairMovedTitle": "Tu PC ha cambiado de dirección",
-  "syncFailedTitle": "No se ha podido sincronizar",
   "portfolioFilterCategory": "Categoría",
   "portfolioFilterAllCategories": "Todas las categorías",
   "movementsFilterInstrument": "Instrumento",

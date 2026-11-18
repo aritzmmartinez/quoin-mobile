@@ -107,14 +107,22 @@ String categoryLabel(AppLocalizations l10n, String category) =>
       null => l10n.categoryOther,
     };
 
-Widget instrumentIcon(Holding h) => switch (h.type) {
+Widget instrumentIcon(Holding h) => instrumentMark(
+  type: h.type,
+  name: h.name,
+  kind: ExposureKind.values.where((k) => k.code == h.category).firstOrNull,
+);
+
+Widget instrumentMark({
+  required String type,
+  required String name,
+  ExposureKind? kind,
+}) => switch (type) {
   'STOCK' => InstrumentIcon.circle(
-    h.name.isEmpty ? '?' : h.name.characters.first.toUpperCase(),
+    name.isEmpty ? '?' : name.characters.first.toUpperCase(),
   ),
   'CRYPTO' => const InstrumentIcon.coin(QuoinIcons.crypto),
-  _ => InstrumentIcon.tile(switch (ExposureKind.values
-      .where((k) => k.code == h.category)
-      .firstOrNull) {
+  _ => InstrumentIcon.tile(switch (kind) {
     ExposureKind.equityFund => QuoinIcons.equityFund,
     ExposureKind.bondFund => QuoinIcons.bondFund,
     ExposureKind.commodity => QuoinIcons.commodityFund,

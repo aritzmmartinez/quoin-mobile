@@ -14,7 +14,8 @@ import 'package:quoin/src/features/portfolio/presentation/providers/portfolio_pr
 import 'package:quoin/src/features/portfolio/presentation/widgets/ledger_tiles.dart';
 import 'package:quoin/src/features/portfolio/presentation/widgets/result_view.dart';
 import 'package:quoin/src/ui/molecules/empty_state.dart';
-import 'package:quoin/src/ui/molecules/quoin_disclosure.dart';
+import 'package:quoin/src/ui/molecules/info_row.dart';
+import 'package:quoin/src/ui/organisms/explain_sheet.dart';
 import 'package:quoin/src/ui/organisms/quoin_dropdown.dart';
 import 'package:quoin/src/ui/templates/quoin_page.dart';
 
@@ -106,9 +107,28 @@ class _MovementsPageState extends ConsumerState<MovementsPage> {
           l10n.movementsCount(shown.length),
           style: type.secondary.copyWith(color: c.muted),
         ),
-        QuoinDisclosure(
-          title: l10n.movementsAmountTitle,
-          paragraphs: [l10n.movementsAmountHint],
+        InfoRow(
+          label: l10n.movementsAmountTitle,
+          onTap: () => showExplainSheet(
+            context,
+            title: l10n.movementsAmountTitle,
+            points: [
+              (
+                icon: QuoinIcons.cashFlow,
+                title: l10n.movementsCashTitle,
+                body: l10n.movementsCashBody,
+                source: null,
+              ),
+              (
+                icon: QuoinIcons.swap,
+                title: l10n.movementsSwapTitle,
+                body: l10n.movementsSwapBody,
+                source: null,
+              ),
+            ],
+            detailTitle: l10n.realizedHowDetail,
+            detail: [l10n.movementsAmountHint],
+          ),
         ),
         const SizedBox(height: QuoinSpace.s),
         if (shown.isEmpty)

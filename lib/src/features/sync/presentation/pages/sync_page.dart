@@ -7,6 +7,7 @@ import 'package:quoin/src/app/router.dart';
 import 'package:quoin/src/core/error/failures.dart';
 import 'package:quoin/src/core/error/result.dart';
 import 'package:quoin/src/core/l10n/gen/app_localizations.dart';
+import 'package:quoin/src/core/theme/quoin_colors.dart';
 import 'package:quoin/src/core/theme/quoin_icons.dart';
 import 'package:quoin/src/core/theme/quoin_tokens.dart';
 import 'package:quoin/src/core/theme/quoin_type.dart';
@@ -134,6 +135,9 @@ class _SyncPageState extends ConsumerState<SyncPage> {
                   '$_waitingAtMost',
                 ),
               )
+            // The first sync names its PC in its own title.
+            else if (pc.result case Ok(value: SyncPreview()))
+              const SizedBox(height: QuoinSpace.s)
             else
               QuoinSectionLabel(pc.pairing.pcName),
             ..._waiting(context, pc),
@@ -185,11 +189,24 @@ class _SyncPageState extends ConsumerState<SyncPage> {
     final sha = pc.pairing.sha256;
     return switch (pc.result) {
       Ok(value: SyncPreview(:final toPhone, :final toPc)) => [
-        Text(l10n.syncPreviewIntro, style: type.row),
-        QuoinSectionLabel(l10n.syncToPhone),
-        SyncDetailView(detail: toPhone),
-        QuoinSectionLabel(l10n.syncToPc),
-        SyncDetailView(detail: toPc, setAside: false),
+        Semantics(
+          header: true,
+          child: Text(
+            l10n.syncFirstTitle(pc.pairing.pcName),
+            style: type.title,
+          ),
+        ),
+        const SizedBox(height: QuoinSpace.s),
+        Text(
+          l10n.syncFirstIntro,
+          style: type.secondary.copyWith(color: QuoinColors.of(context).body),
+        ),
+        SyncDetailView(detail: toPhone, direction: SyncDirection.toPhone),
+        SyncDetailView(
+          detail: toPc,
+          direction: SyncDirection.toPc,
+          setAside: false,
+        ),
         const SizedBox(height: QuoinSpace.gutter),
         FilledButton(
           onPressed: () {

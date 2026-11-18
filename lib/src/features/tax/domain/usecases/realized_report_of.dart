@@ -7,6 +7,7 @@ import 'package:quoin/src/features/tax/domain/entities/realized_report.dart';
 RealizedReport realizedReportOf(PortfolioLedger ledger, DateTime now) {
   final jurisdiction = jurisdictionOf(ledger.residence);
   final zone = jurisdiction.zone;
+  final instruments = {for (final i in ledger.instruments) i.id: i};
   final names = {for (final i in ledger.instruments) i.id: i.name};
   String nameOf(String id) => names[id] ?? id;
   final years = listTaxYears(ledger.events, zone);
@@ -19,6 +20,7 @@ RealizedReport realizedReportOf(PortfolioLedger ledger, DateTime now) {
           sale: sale,
           name: nameOf(sale.instrumentId),
           year: fiscalYearOf(sale.ts, zone),
+          instrument: instruments[sale.instrumentId],
         ),
     ],
     names: names,

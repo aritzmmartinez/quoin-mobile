@@ -67,6 +67,8 @@ abstract final class QuoinIcons {
   static const alert = QuoinIconData._(HugeIcons.strokeRoundedAlert02);
 
   // Sync.
+  static const toPhone = QuoinIconData._(HugeIcons.strokeRoundedArrowDown02);
+  static const toPc = QuoinIconData._(HugeIcons.strokeRoundedArrowUp02);
   static const computer = QuoinIconData._(HugeIcons.strokeRoundedComputer);
   static const sync = QuoinIconData._(
     HugeIcons.strokeRoundedArrowReloadHorizontal,
@@ -76,6 +78,28 @@ abstract final class QuoinIcons {
   static const offline = QuoinIconData._(HugeIcons.strokeRoundedWifiError01);
   static const certificate = QuoinIconData._(
     HugeIcons.strokeRoundedSecurityLock,
+  );
+
+  // How a figure is worked out.
+  static const averageCost = QuoinIconData._(
+    HugeIcons.strokeRoundedCalculator01,
+  );
+  static const fees = QuoinIconData._(HugeIcons.strokeRoundedTag01);
+  static const taxRule = QuoinIconData._(
+    HugeIcons.strokeRoundedLegalDocument01,
+  );
+  static const oldestFirst = QuoinIconData._(
+    HugeIcons.strokeRoundedSortByDown02,
+  );
+  static const buyBack = QuoinIconData._(HugeIcons.strokeRoundedRepeat);
+  static const swap = QuoinIconData._(
+    HugeIcons.strokeRoundedArrowDataTransferHorizontal,
+  );
+  static const earlierYears = QuoinIconData._(
+    HugeIcons.strokeRoundedCalendar03,
+  );
+  static const cashFlow = QuoinIconData._(
+    HugeIcons.strokeRoundedMoneyExchange01,
   );
 
   // Generic.

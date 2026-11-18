@@ -18,6 +18,8 @@ class SaleRow extends StatefulWidget {
     this.notes = const [],
     this.details = const [],
     this.more = const [],
+    this.onTap,
+    this.inset = true,
   });
 
   final String name;
@@ -29,6 +31,8 @@ class SaleRow extends StatefulWidget {
   final List<String> notes;
   final List<(String, String)> details;
   final List<Widget> more;
+  final VoidCallback? onTap;
+  final bool inset;
 
   @override
   State<SaleRow> createState() => _SaleRowState();
@@ -47,11 +51,13 @@ class _SaleRowState extends State<SaleRow> {
         ? c.negative
         : c.muted;
     final badge = widget.badge;
-    final expandable = widget.details.isNotEmpty || widget.more.isNotEmpty;
+    final onTap = widget.onTap;
+    final expandable =
+        onTap == null && (widget.details.isNotEmpty || widget.more.isNotEmpty);
 
     final summary = Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: QuoinSpace.card,
+      padding: EdgeInsets.symmetric(
+        horizontal: widget.inset ? QuoinSpace.card : 0,
         vertical: QuoinSpace.m,
       ),
       child: LayoutBuilder(
@@ -70,29 +76,15 @@ class _SaleRowState extends State<SaleRow> {
                     children: [
                       Text(widget.name, style: type.row),
                       if (badge != null)
-                        DecoratedBox(
-                          decoration: ShapeDecoration(
-                            color: c.fillOf(c.negative),
-                            shape: StadiumBorder(
-                              side: BorderSide(color: c.edgeOf(c.negative)),
-                            ),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: QuoinSpace.s,
-                              vertical: QuoinSpace.xxs,
-                            ),
-                            child: Text(
-                              badge,
-                              style: type.small.copyWith(color: c.negative),
-                            ),
-                          ),
+                        Text(
+                          badge,
+                          style: type.secondary.copyWith(color: c.negative),
                         ),
                     ],
                   ),
                   Text(
                     widget.when,
-                    style: type.secondary.mono.copyWith(color: c.muted),
+                    style: type.secondary.tabular.copyWith(color: c.muted),
                   ),
                   for (final note in widget.notes)
                     Text(note, style: type.small.copyWith(color: c.body)),
@@ -140,7 +132,12 @@ class _SaleRowState extends State<SaleRow> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (expandable)
+        if (onTap != null)
+          Semantics(
+            button: true,
+            child: InkWell(onTap: onTap, child: summary),
+          )
+        else if (expandable)
           Semantics(
             button: true,
             expanded: _open,

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import 'package:quoin/src/app/router.dart';
 import 'package:quoin/src/core/l10n/gen/app_localizations.dart';
 import 'package:quoin/src/core/theme/quoin_icons.dart';
 import 'package:quoin/src/core/l10n/quoin_format.dart';
@@ -8,18 +10,18 @@ import 'package:quoin/src/core/theme/quoin_colors.dart';
 import 'package:quoin/src/core/theme/quoin_tokens.dart';
 import 'package:quoin/src/core/theme/quoin_type.dart';
 import 'package:quoin/src/features/portfolio/presentation/widgets/ledger_tiles.dart';
+import 'package:quoin/src/features/portfolio/presentation/widgets/portfolio_view.dart';
 import 'package:quoin/src/features/portfolio/presentation/widgets/result_view.dart';
 import 'package:quoin/src/features/tax/domain/entities/realized_report.dart';
 import 'package:quoin/src/features/tax/presentation/providers/tax_providers.dart';
-import 'package:quoin/src/ui/molecules/quoin_disclosure.dart';
 import 'package:quoin/src/features/tax/presentation/widgets/tax_year_panel.dart';
 import 'package:quoin/src/ui/atoms/display_figure.dart';
-import 'package:quoin/src/ui/atoms/quoin_card.dart';
 import 'package:quoin/src/ui/atoms/quoin_chip.dart';
 import 'package:quoin/src/ui/molecules/empty_state.dart';
+import 'package:quoin/src/ui/molecules/info_row.dart';
+import 'package:quoin/src/ui/organisms/explain_sheet.dart';
 import 'package:quoin/src/ui/organisms/quoin_segmented_pages.dart';
 import 'package:quoin/src/ui/templates/quoin_page.dart';
-import 'package:quoin/src/ui/atoms/quoin_section_label.dart';
 
 class RealizedPage extends ConsumerStatefulWidget {
   const RealizedPage({super.key, this.tax = false});
@@ -84,9 +86,34 @@ class _RealizedPageState extends ConsumerState<RealizedPage> {
     };
 
     return [
-      QuoinDisclosure(
-        title: l10n.realizedHow,
-        paragraphs: [l10n.realizedIntro, l10n.realizedAvcoWarning],
+      InfoRow(
+        label: l10n.realizedHow,
+        onTap: () => showExplainSheet(
+          context,
+          title: l10n.realizedHow,
+          points: [
+            (
+              icon: QuoinIcons.averageCost,
+              title: l10n.avcoCostTitle,
+              body: l10n.avcoCostBody,
+              source: null,
+            ),
+            (
+              icon: QuoinIcons.fees,
+              title: l10n.avcoFeesTitle,
+              body: l10n.avcoFeesBody,
+              source: null,
+            ),
+            (
+              icon: QuoinIcons.taxRule,
+              title: l10n.avcoNotTaxTitle,
+              body: l10n.avcoNotTaxBody,
+              source: null,
+            ),
+          ],
+          detailTitle: l10n.realizedHowDetail,
+          detail: [l10n.realizedIntro, l10n.realizedAvcoWarning],
+        ),
       ),
       const SizedBox(height: QuoinSpace.m),
       Wrap(
@@ -116,34 +143,59 @@ class _RealizedPageState extends ConsumerState<RealizedPage> {
         if (s.year == year) s,
     ];
     final totals = SalesTotals(lines);
-    final realized = format.gain(totals.realized, totals.returnPct);
+    final realized = format.signedMoney(totals.realized);
+    final router = GoRouter.of(context);
     return [
-      QuoinSectionLabel('$year'),
-      DisplayFigure(
-        realized.text,
-        color: realized.sign > 0
-            ? c.positive
-            : realized.sign < 0
-            ? c.negative
-            : null,
-      ),
-      const SizedBox(height: QuoinSpace.tight),
-      Text(
-        l10n.realizedYearSummary(totals.count, year, format.money(totals.cost)),
-        style: type.secondary.copyWith(color: c.muted),
-      ),
-      const SizedBox(height: QuoinSpace.m),
-      QuoinCard(
-        padding: EdgeInsets.zero,
+      const SizedBox(height: QuoinSpace.section),
+      MergeSemantics(
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          spacing: QuoinSpace.xs,
           children: [
-            for (final (i, line) in sortSales(lines, _order).indexed) ...[
-              if (i > 0) const Divider(height: 1),
-              avcoSaleTile(context, line.sale, line.name, report.zone),
-            ],
+            Semantics(
+              header: true,
+              child: Text(
+                l10n.realizedYearHeader(year),
+                style: type.secondary.tabular.copyWith(color: c.muted),
+              ),
+            ),
+            DisplayFigure(
+              realized.text,
+              color: realized.sign > 0
+                  ? c.positive
+                  : realized.sign < 0
+                  ? c.negative
+                  : null,
+            ),
+            Text(
+              l10n.realizedYearSummary(totals.count, format.money(totals.cost)),
+              style: type.secondary.tabular.copyWith(color: c.muted),
+            ),
           ],
         ),
       ),
+      const SizedBox(height: QuoinSpace.m),
+      for (final line in sortSales(lines, _order))
+        DecoratedBox(
+          decoration: BoxDecoration(
+            border: Border(top: BorderSide(color: c.borderSubtle)),
+          ),
+          child: avcoSaleTile(
+            context,
+            line.sale,
+            line.name,
+            report.zone,
+            inset: false,
+            icon: instrumentMark(
+              type: line.instrument?.type ?? '',
+              name: line.name,
+              kind: line.instrument?.exposureKind,
+            ),
+            onOpenInstrument: line.instrument == null
+                ? null
+                : () => router.push(Routes.instrument(line.sale.instrumentId)),
+          ),
+        ),
     ];
   }
 
@@ -163,9 +215,41 @@ class _RealizedPageState extends ConsumerState<RealizedPage> {
         Text(notice, style: type.secondary.copyWith(color: c.muted)),
         const SizedBox(height: QuoinSpace.m),
       ],
-      QuoinDisclosure(
-        title: l10n.realizedHow,
-        paragraphs: [l10n.taxHowRules, l10n.taxHowOwnRules],
+      InfoRow(
+        label: l10n.realizedHow,
+        onTap: () => showExplainSheet(
+          context,
+          title: l10n.realizedHow,
+          intro: l10n.taxHowIntro,
+          points: [
+            (
+              icon: QuoinIcons.oldestFirst,
+              title: l10n.taxHowFifoTitle,
+              body: l10n.taxHowFifoBody,
+              source: null,
+            ),
+            (
+              icon: QuoinIcons.buyBack,
+              title: l10n.taxHowWashTitle,
+              body: l10n.taxHowWashBody,
+              source: l10n.taxHowWashSource,
+            ),
+            (
+              icon: QuoinIcons.swap,
+              title: l10n.taxHowSwapTitle,
+              body: l10n.taxHowSwapBody,
+              source: l10n.taxHowSwapSource,
+            ),
+            (
+              icon: QuoinIcons.earlierYears,
+              title: l10n.taxHowCarryTitle,
+              body: l10n.taxHowCarryBody,
+              source: l10n.taxHowCarrySource,
+            ),
+          ],
+          detailTitle: l10n.realizedHowDetail,
+          detail: [l10n.taxHowRules, l10n.taxHowOwnRules],
+        ),
       ),
       const SizedBox(height: QuoinSpace.m),
       if (year == null)

@@ -45,6 +45,9 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    await tester.tap(find.text('Conflictos resueltos'));
+    await tester.tap(find.text('Movimientos apartados'));
+    await tester.pumpAndSettle();
 
     expect(
       find.textContaining('1 mar 2026', findRichText: true),
@@ -54,5 +57,51 @@ void main() {
       find.textContaining('3 feb 2026', findRichText: true),
       findsOneWidget,
     );
+  });
+
+  testWidgets('compositions and targets fold their names as tags', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: quoinDarkTheme,
+        locale: const Locale('es'),
+        supportedLocales: AppLocalizations.supportedLocales,
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: SyncDetailView(
+              detail: SyncDetail(
+                compositions: Cut.of(const ['Fondo Uno']),
+                newTargets: Cut.of(const ['Objetivo Uno']),
+                deletedTargets: Cut.of([
+                  for (var i = 0; i < detailNames + 2; i++) 'Viejo $i',
+                ]),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Fondo Uno'), findsNothing, reason: 'folded');
+
+    for (final fold in [
+      'Composiciones de fondo',
+      'Objetivos nuevos',
+      'Objetivos borrados',
+    ]) {
+      await tester.tap(find.text(fold));
+    }
+    await tester.pumpAndSettle();
+    expect(find.text('Fondo Uno'), findsOneWidget);
+    expect(find.text('Objetivo Uno'), findsOneWidget);
+    expect(find.text('Viejo 0'), findsOneWidget);
+    expect(find.text('y 2 más'), findsOneWidget);
   });
 }

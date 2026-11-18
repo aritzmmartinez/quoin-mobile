@@ -4,7 +4,8 @@ import 'package:quoin_core/quoin_core.dart' show sampleMarker;
 /// goes through the real adapter: a deposit, fund and stock purchases (one in
 /// dollars, booked at the ECB rate of its day), a partial sale, a dividend, a
 /// saveback with its purchase, interest, and the rows an import sets aside or
-/// names (a card payment, a bond, a saveback with no purchase, a short row).
+/// names (a card payment, a bond, a rights distribution Quoin does not read
+/// yet, a saveback with no purchase, a short row).
 /// Every name, id and figure is made up; the ids are fixed, so importing it
 /// twice adds nothing.
 String sampleImportCsv(DateTime now) {
@@ -26,6 +27,7 @@ String sampleImportCsv(DateTime now) {
     '${ago(10)},TRADING,BUY,FUND,Fondo Ejemplo Mundial,$fund,0.142,105.6338,-15,,,EUR,$sampleMarker-7',
     '${ago(8)},CASH,INTEREST_PAYMENT,,,,,,2.31,,,EUR,$sampleMarker-8',
     '${ago(6)},CASH,CARD_TRANSACTION,,Tienda Ejemplo,,,,-24.90,,,EUR,$sampleMarker-9',
+    '${ago(7)},CORPORATE_ACTION,INTERMEDIATE_SECURITIES_DISTRIBUTION,STOCK,Ejemplo Industrial Corp. · derechos,XX00QSAMPLE4,4,,,,,EUR,$sampleMarker-12',
     '${ago(5)},TRADING,BUY,BOND,Bono Ejemplo 2030,$bond,1,99,-99,-1,,EUR,$sampleMarker-10',
     '${ago(4)},CASH,BENEFITS_SAVEBACK,,,,,,9,,,EUR,$sampleMarker-11',
     '${ago(3)},TRADING,BUY,FUND',

@@ -13,6 +13,8 @@ import 'package:quoin/src/ui/atoms/quoin_avatar.dart';
 import 'package:quoin/src/ui/molecules/icon_tile.dart';
 import 'package:quoin/src/ui/atoms/quoin_card.dart';
 import 'package:quoin/src/ui/atoms/quoin_icon.dart';
+import 'package:quoin/src/ui/molecules/count_list.dart';
+import 'package:quoin/src/ui/molecules/fold_section.dart';
 
 class ImportProgress extends StatelessWidget {
   const ImportProgress({super.key, required this.step, required this.total});
@@ -23,24 +25,40 @@ class ImportProgress extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = QuoinColors.of(context);
+    final label = AppLocalizations.of(context).quoinStepOf(step, total);
     return Semantics(
-      label: AppLocalizations.of(context).quoinStepOf(step, total),
+      label: label,
+      excludeSemantics: true,
       child: Row(
-        spacing: QuoinSpace.tight,
+        spacing: QuoinSpace.m,
         children: [
-          for (var i = 1; i <= total; i += 1)
-            Expanded(
-              child: AnimatedContainer(
-                duration: MediaQuery.disableAnimationsOf(context)
-                    ? Duration.zero
-                    : const Duration(milliseconds: 200),
+          Expanded(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(QuoinSpace.xxs),
+              child: SizedBox(
                 height: QuoinSpace.xs,
-                decoration: ShapeDecoration(
-                  color: i <= step ? c.accent : c.border,
-                  shape: const StadiumBorder(),
+                child: Stack(
+                  children: [
+                    Positioned.fill(child: ColoredBox(color: c.border)),
+                    AnimatedFractionallySizedBox(
+                      duration: MediaQuery.disableAnimationsOf(context)
+                          ? Duration.zero
+                          : const Duration(milliseconds: 200),
+                      widthFactor: step / total,
+                      heightFactor: 1,
+                      alignment: AlignmentDirectional.centerStart,
+                      child: ColoredBox(color: c.accent),
+                    ),
+                  ],
                 ),
               ),
             ),
+          ),
+          Text(
+            label,
+            style: QuoinType.of(context).secondary.tabular
+                .copyWith(color: c.muted),
+          ),
         ],
       ),
     );
@@ -207,19 +225,13 @@ class ImportBusyStep extends StatelessWidget {
   }
 }
 
-/// Step 3: what the import adds, what it skips and why, what it noticed and
-/// which rows it could not read.
-class ImportReviewStep extends StatefulWidget {
-  const ImportReviewStep({super.key, required this.preview});
+//// Step 3: what the import adds, what it leaves out and why, what it noticed
+/// and which rows it could not read.
+class ImportReviewStep extends StatelessWidget {
+  const ImportReviewStep({super.key, required this.preview, this.fileName});
 
   final ImportPreview preview;
-
-  @override
-  State<ImportReviewStep> createState() => _ImportReviewStepState();
-}
-
-class _ImportReviewStepState extends State<ImportReviewStep> {
-  var _open = false;
+  final String? fileName;
 
   @override
   Widget build(BuildContext context) {
@@ -227,7 +239,6 @@ class _ImportReviewStepState extends State<ImportReviewStep> {
     final c = QuoinColors.of(context);
     final type = QuoinType.of(context);
     final format = QuoinFormat.of(context);
-    final preview = widget.preview;
     final batch = preview.batch;
     final names = {for (final i in batch.instruments) i.id: i.name};
     String date(String text) => switch (DateTime.tryParse(text)) {
@@ -235,10 +246,9 @@ class _ImportReviewStepState extends State<ImportReviewStep> {
       null => text,
     };
     final counts = preview.counts;
-    final warnings =
-        batch.discarded.values.fold(0, (sum, n) => sum + n) +
-        batch.noticed.values.fold(0, (sum, rows) => sum + rows.length) +
-        batch.failed;
+    // Card payments are a count of their own, never a warning.
+    final cards = batch.discarded[DiscardReason.cardSpending] ?? 0;
+    final unsupported = batch.discarded[DiscardReason.unsupported] ?? 0;
     String typeOf(String type) => rowTypeLabel(l10n, preview.broker, type);
     List<String> sameOperation(List<(String?, String?)> rows) => [
       for (final (day, kind) in rows)
@@ -247,115 +257,159 @@ class _ImportReviewStepState extends State<ImportReviewStep> {
           if (day != null) date(day),
         ].join(' · '),
     ];
+    List<Widget> detailRows(
+      List<DiscardDetail> details, {
+      bool alert = false,
+    }) => [
+      for (final detail in details)
+        _IssueRow(
+          alert: alert,
+          title: detail.instrument ?? typeOf(detail.type),
+          lines: [
+            [
+              if (detail.instrument != null) typeOf(detail.type),
+              ?detail.subtype,
+              date(detail.date),
+            ].join(' · '),
+            if (detail.unpriced case final ids? when ids.isNotEmpty)
+              l10n.importUnpriced(ids.join(', ')),
+          ],
+          others: sameOperation([
+            for (final other in detail.rows) (other.date, other.type),
+          ]),
+        ),
+    ];
+
+    final discards = [
+      for (final MapEntry(key: reason, value: count) in batch.discarded.entries)
+        if (reason != DiscardReason.cardSpending &&
+            reason != DiscardReason.unsupported)
+          (
+            reason: reason,
+            count: count,
+            details: batch.discardedDetails[reason] ?? const <DiscardDetail>[],
+          ),
+    ];
+    bool affects(DiscardReason reason, List<DiscardDetail> details) =>
+        details.isEmpty
+        ? reason.affectsPosition
+        : details.any((d) => d.affectsPosition ?? reason.affectsPosition);
+    final folded = <Widget>[
+      for (final (:reason, :count, :details) in discards)
+        if (!affects(reason, details))
+          _IssueGroup(
+            title: _discardLabel(l10n, reason),
+            count: count,
+            help: _discardHelp(l10n, reason),
+            rows: detailRows(details),
+          ),
+      for (final MapEntry(key: reason, value: details) in batch.noticed.entries)
+        _IssueGroup(
+          title: _noticeLabel(l10n, reason),
+          count: details.length,
+          help: _noticeHelp(l10n, reason),
+          rows: detailRows(details),
+        ),
+      for (final (:currency, :day) in preview.rateConflicts)
+        _IssueGroup(
+          help: l10n.importRateConflict(
+            currency,
+            format.day(CalendarDate.parse(day)),
+          ),
+          rows: const [],
+        ),
+    ];
+    final file = [
+      switch (preview.broker) {
+        Broker.tradeRepublic => l10n.brokerTradeRepublic,
+        Broker.kraken => l10n.brokerKraken,
+      },
+      ?fileName,
+    ].join(' · ');
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
-      spacing: QuoinSpace.row,
       children: [
-        _StepTitle(l10n.importReviewTitle),
-        Row(
-          spacing: QuoinSpace.row,
-          children: [
-            _Count('${counts.imported}', l10n.importNew, color: c.text),
-            if (counts.completed > 0)
-              _Count(
-                '${counts.completed}',
-                l10n.importCompleted,
-                color: c.text,
-              ),
-            _Count('${counts.duplicates}', l10n.importExisting, color: c.muted),
-            _Count('$warnings', l10n.importWarnings, color: c.text),
-          ],
-        ),
-        if (counts.completed > 0)
-          Text(
-            l10n.importCompletedHelp,
-            style: type.secondary.copyWith(color: c.muted),
-          ),
-        if (counts.duplicates > 0)
-          Text(
-            l10n.importExistingSkipped,
-            style: type.secondary.copyWith(color: c.muted),
-          ),
-        if (preview.ratesUnavailable.isNotEmpty)
-          Text(
-            l10n.importRatesUnavailable(preview.ratesUnavailable.join(', ')),
-            style: type.secondary.copyWith(color: c.body),
-          ),
-        for (final (:currency, :day) in preview.rateConflicts)
-          Text(
-            l10n.importRateConflict(
-              currency,
-              format.day(CalendarDate.parse(day)),
-            ),
-            style: type.secondary.copyWith(color: c.body),
-          ),
-        if (batch.events.isNotEmpty)
-          QuoinCard(
-            padding: EdgeInsets.zero,
-            child: Column(
+        Text(file, style: type.secondary.copyWith(color: c.muted)),
+        const SizedBox(height: QuoinSpace.tight),
+        Semantics(
+          header: true,
+          child: Text.rich(
+            TextSpan(
               children: [
-                InkWell(
-                  onTap: () => setState(() => _open = !_open),
-                  child: Padding(
-                    padding: const EdgeInsets.all(QuoinSpace.card),
-                    child: Row(
-                      spacing: QuoinSpace.s,
-                      children: [
-                        Expanded(
-                          child: Text(l10n.importSeeDetail, style: type.row),
-                        ),
-                        Text(
-                          l10n.importDetailCount(batch.events.length),
-                          style: type.secondary.mono.copyWith(color: c.muted),
-                        ),
-                        AnimatedRotation(
-                          turns: _open ? 0.5 : 0,
-                          duration: MediaQuery.disableAnimationsOf(context)
-                              ? Duration.zero
-                              : const Duration(milliseconds: 150),
-                          child: QuoinIcon(
-                            QuoinIcons.chevronDown,
-                            size: QuoinIconSize.small,
-                            color: c.faint,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                if (_open)
-                  for (final event in batch.events)
-                    _DetailRow(
-                      title:
-                          names[event.instrumentId] ?? _typeLabel(l10n, event),
-                      date: format.date(event.ts, preview.zone),
-                      subtitle: [
-                        if (names.containsKey(event.instrumentId))
-                          _typeLabel(l10n, event),
-                      ],
-                      amount: _amount(format, event),
-                    ),
+                TextSpan(text: '${counts.imported}', style: type.display),
+                const TextSpan(text: ' '),
+                TextSpan(text: l10n.importNewHeadline(counts.imported)),
               ],
             ),
+            style: type.title,
+          ),
+        ),
+        if (preview.toWrite == 0)
+          _Lead(switch (nothingToImport(
+            total: batch.total,
+            duplicates: counts.duplicates,
+          )) {
+            NothingToImport.alreadyStored => l10n.importNothingNew,
+            NothingToImport.nothingToSave => l10n.importNothingToSave,
+          })
+        else if (counts.duplicates > 0 || cards > 0)
+          _Lead(l10n.importRestKnown),
+        const SizedBox(height: QuoinSpace.section),
+        CountList(
+          entries: [
+            CountEntry(l10n.importNew, '${counts.imported}'),
+            if (counts.completed > 0)
+              CountEntry(
+                l10n.importCompleted,
+                '${counts.completed}',
+                note: l10n.importCompletedHelp,
+              ),
+            CountEntry(
+              l10n.importExisting,
+              '${counts.duplicates}',
+              muted: true,
+            ),
+            if (cards > 0)
+              CountEntry(
+                l10n.warningCardSpending,
+                '$cards',
+                note: l10n.importCardSpendingNote,
+                muted: true,
+              ),
+            if (unsupported > 0)
+              CountEntry(
+                l10n.importUnsupportedTitle,
+                '$unsupported',
+                icon: QuoinIcons.alert,
+              ),
+          ],
+        ),
+        if (preview.ratesUnavailable.isNotEmpty)
+          _IssueGroup(
+            alert: true,
+            help: l10n.importRatesUnavailable(
+              preview.ratesUnavailable.join(', '),
+            ),
+            rows: const [],
           ),
         if (batch.errors.isNotEmpty)
-          _Group(
+          _IssueGroup(
             title: l10n.importRowErrors,
             count: batch.failed,
             help: l10n.importRowErrorsHelp,
             rows: [
               for (final RowError(:row, :reason, :rows) in batch.errors)
-                _DetailRow(
+                _IssueRow(
+                  alert: true,
                   title:
                       row.externalId ?? l10n.importRowNumber(row.position ?? 0),
-                  date: switch (row.date) {
-                    final text? => date(text),
-                    null => null,
-                  },
-                  subtitle: [
-                    if (row.type case final code?) typeOf(code),
-                    rowErrorLabel(l10n, reason.code),
+                  lines: [
+                    [
+                      if (row.type case final code?) typeOf(code),
+                      rowErrorLabel(l10n, reason.code),
+                      if (row.date case final text?) date(text),
+                    ].join(' · '),
                   ],
                   others: sameOperation([
                     for (final other in rows) (other.row.date, other.row.type),
@@ -363,69 +417,63 @@ class _ImportReviewStepState extends State<ImportReviewStep> {
                 ),
             ],
           ),
-        for (final MapEntry(key: reason, value: count)
-            in batch.discarded.entries)
-          _Group(
-            title: _discardLabel(l10n, reason),
-            count: count,
-            help: _discardHelp(l10n, reason),
-            warning: _affectsPosition(reason, batch.discardedDetails[reason])
-                ? l10n.importPositionWarning
-                : null,
+        for (final (:reason, :count, :details) in discards)
+          if (affects(reason, details))
+            _IssueGroup(
+              title: _discardLabel(l10n, reason),
+              count: count,
+              help: [
+                ?_discardHelp(l10n, reason),
+                l10n.importPositionWarning,
+              ].join(' '),
+              rows: detailRows(details, alert: true),
+            ),
+        if (unsupported > 0)
+          _IssueGroup(
+            title: l10n.importUnsupportedTitle,
+            help: l10n.importUnsupportedNote,
             rows: [
               for (final detail
-                  in batch.discardedDetails[reason] ?? const <DiscardDetail>[])
-                _DetailRow(
-                  title: detail.instrument ?? typeOf(detail.type),
-                  date: date(detail.date),
-                  subtitle: [
-                    if (detail.instrument != null) typeOf(detail.type),
-                    ?detail.subtype,
-                    if (detail.unpriced case final ids? when ids.isNotEmpty)
-                      l10n.importUnpriced(ids.join(', ')),
-                  ],
-                  others: sameOperation([
-                    for (final other in detail.rows) (other.date, other.type),
-                  ]),
-                ),
-            ],
-          ),
-        for (final MapEntry(key: reason, value: details)
-            in batch.noticed.entries)
-          _Group(
-            title: _noticeLabel(l10n, reason),
-            count: details.length,
-            help: _noticeHelp(l10n, reason),
-            rows: [
-              for (final detail in details)
-                _DetailRow(
-                  title: detail.instrument ?? typeOf(detail.type),
-                  date: date(detail.date),
-                  subtitle: [
-                    if (detail.instrument != null) typeOf(detail.type),
-                    ?detail.subtype,
+                  in batch.discardedDetails[DiscardReason.unsupported] ??
+                      const <DiscardDetail>[])
+                _IssueRow(
+                  title:
+                      detail.instrument ??
+                      unsupportedTypeLabel(l10n, preview.broker, detail.type),
+                  lines: [
+                    [
+                      if (detail.instrument != null)
+                        unsupportedTypeLabel(l10n, preview.broker, detail.type),
+                      date(detail.date),
+                    ].join(' · '),
                   ],
                 ),
             ],
           ),
-        if (preview.toWrite == 0)
-          Text(switch (nothingToImport(
-            total: batch.total,
-            duplicates: counts.duplicates,
-          )) {
-            NothingToImport.alreadyStored => l10n.importNothingNew,
-            NothingToImport.nothingToSave => l10n.importNothingToSave,
-          }, style: type.secondary.copyWith(color: c.muted)),
+        const SizedBox(height: QuoinSpace.section),
+        if (folded.isNotEmpty)
+          FoldSection(title: l10n.importOtherDiscards, children: folded),
+        if (batch.events.isNotEmpty)
+          FoldSection(
+            title: l10n.importSeeDetail,
+            summary: l10n.importDetailCount(batch.events.length),
+            children: [
+              for (final event in batch.events)
+                _IssueRow(
+                  title: names[event.instrumentId] ?? _typeLabel(l10n, event),
+                  lines: [
+                    [
+                      if (names.containsKey(event.instrumentId))
+                        _typeLabel(l10n, event),
+                      format.date(event.ts, preview.zone),
+                    ].join(' · '),
+                  ],
+                  amount: _amount(format, event),
+                ),
+            ],
+          ),
       ],
     );
-  }
-
-  static bool _affectsPosition(
-    DiscardReason reason,
-    List<DiscardDetail>? details,
-  ) {
-    if (details == null || details.isEmpty) return reason.affectsPosition;
-    return details.any((d) => d.affectsPosition ?? reason.affectsPosition);
   }
 
   static String _amount(QuoinFormat format, LedgerEvent event) {
@@ -441,66 +489,92 @@ class _ImportReviewStepState extends State<ImportReviewStep> {
   }
 }
 
-class _Group extends StatelessWidget {
-  const _Group({
-    required this.title,
-    required this.count,
+class _Lead extends StatelessWidget {
+  const _Lead(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(top: QuoinSpace.tight),
+    child: Text(
+      text,
+      style: QuoinType.of(context).secondary
+          .copyWith(color: QuoinColors.of(context).body),
+    ),
+  );
+}
+
+/// A kind of row the import leaves out or flags: its rows, then why.
+class _IssueGroup extends StatelessWidget {
+  const _IssueGroup({
     required this.rows,
+    this.title,
+    this.count,
     this.help,
-    this.warning,
+    this.alert = false,
   });
 
-  final String title;
-  final int count;
+  final String? title;
+  final int? count;
   final List<Widget> rows;
   final String? help;
-  final String? warning;
+
+  /// Marks a group with no rows to carry the warning.
+  final bool alert;
 
   @override
   Widget build(BuildContext context) {
     final c = QuoinColors.of(context);
     final type = QuoinType.of(context);
-    return QuoinCard(
-      padding: EdgeInsets.zero,
+    final title = this.title;
+    final help = this.help;
+    return Padding(
+      padding: const EdgeInsets.only(top: QuoinSpace.section),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Padding(
-            padding: const EdgeInsets.all(QuoinSpace.card),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              spacing: QuoinSpace.tight,
-              children: [
-                Row(
-                  spacing: QuoinSpace.s,
-                  children: [
+          if (title != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: QuoinSpace.xs),
+              child: Semantics(
+                header: true,
+                child: Text(
+                  [title, if (count case final n? when n > 1) '$n'].join(' · '),
+                  style: type.secondary.tabular.copyWith(color: c.muted),
+                ),
+              ),
+            ),
+          ...rows,
+          if (help != null)
+            Padding(
+              padding: const EdgeInsets.only(top: QuoinSpace.tight),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                spacing: QuoinSpace.m,
+                children: [
+                  if (alert)
                     QuoinIcon(
                       QuoinIcons.alert,
                       size: QuoinIconSize.small,
                       color: c.muted,
                     ),
-                    Expanded(child: Text(title, style: type.row)),
-                    Text(
-                      '$count',
-                      style: type.secondary.mono.copyWith(color: c.muted),
+                  Expanded(
+                    child: Text(
+                      help,
+                      style: type.secondary.copyWith(color: c.muted),
                     ),
-                  ],
-                ),
-                if (help case final text?)
-                  Text(text, style: type.small.copyWith(color: c.muted)),
-                if (warning case final text?)
-                  Text(text, style: type.small.copyWith(color: c.body)),
-              ],
+                  ),
+                ],
+              ),
             ),
-          ),
-          ...rows,
         ],
       ),
     );
   }
 }
 
-/// Step 4: done.
+// Step 4: done.
 class ImportDoneStep extends StatelessWidget {
   const ImportDoneStep({super.key, required this.written});
 
@@ -649,6 +723,23 @@ String rowTypeLabel(AppLocalizations l10n, Broker broker, String type) =>
       },
     };
 
+/// An unsupported row's type in words, never the broker's code.
+String unsupportedTypeLabel(
+  AppLocalizations l10n,
+  Broker broker,
+  String type,
+) => switch ((broker, type)) {
+  (Broker.tradeRepublic, 'INTERMEDIATE_SECURITIES_DISTRIBUTION') =>
+    l10n.unsupportedRightsDistribution,
+  (Broker.tradeRepublic, 'LIQUIDATION_DIVIDEND') =>
+    l10n.unsupportedRightsDividend,
+  (Broker.tradeRepublic, 'LIQUIDATION_PROCEEDS') =>
+    l10n.unsupportedRightsProceeds,
+  (Broker.tradeRepublic, 'PRIVATE_MARKET_BUY') =>
+    l10n.unsupportedPrivateMarketBuy,
+  _ => l10n.unsupportedOther,
+};
+
 /// A row error's label by its code; file errors on a row share them.
 String rowErrorLabel(AppLocalizations l10n, String code) => switch (code) {
   'invalid-date' => l10n.rowErrorInvalidDate,
@@ -670,7 +761,7 @@ String _discardLabel(AppLocalizations l10n, DiscardReason reason) =>
       DiscardReason.cardSpending => l10n.warningCardSpending,
       DiscardReason.savebackUnpaired => l10n.warningSavebackUnpaired,
       DiscardReason.unsupportedAssetClass => l10n.warningUnsupportedAssetClass,
-      DiscardReason.unsupported => l10n.warningUnsupported,
+      DiscardReason.unsupported => l10n.importUnsupportedTitle,
     };
 
 String? _discardHelp(AppLocalizations l10n, DiscardReason reason) =>
@@ -712,59 +803,18 @@ class _StepTitle extends StatelessWidget {
   );
 }
 
-class _Count extends StatelessWidget {
-  const _Count(this.figure, this.label, {required this.color});
-
-  final String figure;
-  final String label;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = QuoinColors.of(context);
-    final type = QuoinType.of(context);
-    return Expanded(
-      child: QuoinCard(
-        padding: const EdgeInsets.symmetric(
-          horizontal: QuoinSpace.s,
-          vertical: QuoinSpace.m,
-        ),
-        child: Column(
-          spacing: QuoinSpace.xs,
-          children: [
-            // Scaling exception: a row figure shrinks to one line.
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text(
-                figure,
-                maxLines: 1,
-                style: type.title.mono.copyWith(color: color),
-              ),
-            ),
-            Text(
-              label,
-              textAlign: TextAlign.center,
-              style: type.small.copyWith(color: c.muted),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _DetailRow extends StatelessWidget {
-  const _DetailRow({
+class _IssueRow extends StatelessWidget {
+  const _IssueRow({
     required this.title,
-    required this.subtitle,
-    this.date,
+    required this.lines,
+    this.alert = false,
     this.amount,
     this.others = const [],
   });
 
   final String title;
-  final String? date;
-  final List<String> subtitle;
+  final List<String> lines;
+  final bool alert;
   final String? amount;
 
   /// The other rows of the same operation, nested under its main row.
@@ -774,68 +824,68 @@ class _DetailRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = QuoinColors.of(context);
     final type = QuoinType.of(context);
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        border: Border(top: BorderSide(color: c.borderSubtle)),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: QuoinSpace.card,
-          vertical: QuoinSpace.row,
-        ),
-        child: Row(
-          spacing: QuoinSpace.m,
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                spacing: QuoinSpace.xxs,
-                children: [
-                  Text(title, style: type.control),
-                  Text.rich(
-                    TextSpan(
-                      children: [
-                        if (date case final date?)
-                          TextSpan(text: date, style: type.small.mono),
-                        TextSpan(
-                          text: [
-                            if (date != null && subtitle.isNotEmpty) '',
-                            ...subtitle,
-                          ].join(' · '),
-                        ),
-                      ],
-                    ),
-                    style: type.small.copyWith(color: c.muted),
+    final amount = this.amount;
+    return MergeSemantics(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: kMinInteractiveDimension),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: QuoinSpace.s),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            spacing: QuoinSpace.m,
+            children: [
+              if (alert)
+                Padding(
+                  padding: const EdgeInsets.only(top: QuoinSpace.xxs),
+                  child: QuoinIcon(
+                    QuoinIcons.alert,
+                    size: QuoinIconSize.small,
+                    color: c.muted,
                   ),
-                  for (final other in others)
-                    Padding(
-                      padding: const EdgeInsetsDirectional.only(
-                        start: QuoinSpace.m,
+                ),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  spacing: QuoinSpace.xxs,
+                  children: [
+                    Text(title, style: type.row),
+                    for (final line in lines)
+                      Text(
+                        line,
+                        style: type.secondary.tabular.copyWith(color: c.muted),
                       ),
-                      child: Text(
-                        other,
-                        style: type.small.copyWith(color: c.faint),
+                    for (final other in others)
+                      Padding(
+                        padding: const EdgeInsetsDirectional.only(
+                          start: QuoinSpace.m,
+                        ),
+                        child: Text(
+                          other,
+                          style: type.secondary.tabular.copyWith(
+                            color: c.faint,
+                          ),
+                        ),
                       ),
-                    ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            if (amount != null)
-              // Scaling exception: a row figure shrinks to one line.
-              Flexible(
-                child: Align(
-                  alignment: Alignment.centerRight,
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Text(
-                      amount!,
-                      maxLines: 1,
-                      style: type.control.mono.copyWith(color: c.text),
+              if (amount != null)
+                // Scaling exception: a row figure shrinks to one line.
+                Flexible(
+                  child: Align(
+                    alignment: AlignmentDirectional.centerEnd,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        amount,
+                        maxLines: 1,
+                        style: type.row.mono.copyWith(color: c.text),
+                      ),
                     ),
                   ),
                 ),
-              ),
-          ],
+            ],
+          ),
         ),
       ),
     );

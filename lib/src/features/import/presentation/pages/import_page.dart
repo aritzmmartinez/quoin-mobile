@@ -59,7 +59,10 @@ class _ImportPageState extends ConsumerState<ImportPage> {
         onClear: flow.clearFile,
       ),
       ImportStage.processing || ImportStage.writing => const ImportBusyStep(),
-      ImportStage.review => ImportReviewStep(preview: state.preview!),
+      ImportStage.review => ImportReviewStep(
+        preview: state.preview!,
+        fileName: state.file?.name,
+      ),
       ImportStage.done => ImportDoneStep(written: state.preview!.toWrite),
     };
 

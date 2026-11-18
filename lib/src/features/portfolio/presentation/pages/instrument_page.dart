@@ -12,6 +12,7 @@ import 'package:quoin/src/core/theme/quoin_type.dart';
 import 'package:quoin/src/features/portfolio/domain/entities/instrument_detail.dart';
 import 'package:quoin/src/features/portfolio/presentation/providers/portfolio_providers.dart';
 import 'package:quoin/src/features/portfolio/presentation/widgets/ledger_tiles.dart';
+import 'package:quoin/src/features/portfolio/presentation/widgets/portfolio_view.dart';
 import 'package:quoin/src/features/portfolio/presentation/widgets/result_view.dart';
 import 'package:quoin/src/ui/atoms/display_figure.dart';
 import 'package:quoin/src/ui/atoms/quoin_card.dart';
@@ -21,7 +22,6 @@ import 'package:quoin/src/ui/molecules/gain_badge.dart';
 import 'package:quoin/src/ui/templates/quoin_page.dart';
 import 'package:quoin/src/ui/atoms/quoin_section_label.dart';
 
-/// Movements shown on the page before «Ver movimientos».
 const _recentMovements = 5;
 
 class InstrumentPage extends ConsumerWidget {
@@ -148,7 +148,17 @@ class InstrumentPage extends ConsumerWidget {
             children: [
               for (final (i, sale) in d.sales.indexed) ...[
                 if (i > 0) const Divider(height: 1),
-                avcoSaleTile(context, sale, d.instrument.name, d.zone),
+                avcoSaleTile(
+                  context,
+                  sale,
+                  d.instrument.name,
+                  d.zone,
+                  icon: instrumentMark(
+                    type: d.instrument.type,
+                    name: d.instrument.name,
+                    kind: d.instrument.exposureKind,
+                  ),
+                ),
               ],
             ],
           ),

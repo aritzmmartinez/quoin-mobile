@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:quoin/src/app/router.dart';
 import 'package:quoin/src/ui/organisms/quoin_bottom_bar.dart';
 import 'package:quoin/src/ui/organisms/quoin_segmented_pages.dart';
+import 'package:quoin/src/ui/molecules/sale_row.dart';
 import 'package:quoin/src/ui/templates/quoin_page.dart';
 
 import 'helpers.dart';
@@ -82,10 +83,27 @@ void main() {
     await tester.pumpAndSettle();
     await tester.drag(views, const Offset(500, 0));
     await tester.pumpAndSettle();
+    Future<void> closeSheet(Finder inside) async {
+      Navigator.of(tester.element(inside)).pop();
+      await tester.pumpAndSettle();
+    }
+
+    final sale = find.byType(SaleRow).first;
+    await tester.ensureVisible(sale);
+    await tester.pumpAndSettle();
+    await tester.tap(sale);
+    await tester.pumpAndSettle();
+    await closeSheet(find.text('Has recibido'));
     await tester.tap(find.text('Fiscal (Bizkaia)'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Cómo se ha calculado'));
+    await tester.tap(find.text('Cómo se calcula').last);
     await tester.pumpAndSettle();
+    final detail = find.text('Los criterios en detalle');
+    await tester.ensureVisible(detail);
+    await tester.pumpAndSettle();
+    await tester.tap(detail);
+    await tester.pumpAndSettle();
+    await closeSheet(detail);
     final repurchased = find.text('Fondo Emergentes');
     await tester.scrollUntilVisible(
       repurchased,

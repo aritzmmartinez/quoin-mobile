@@ -4,83 +4,186 @@ import 'package:quoin_core/quoin_core.dart';
 import 'package:quoin/src/core/l10n/gen/app_localizations.dart';
 import 'package:quoin/src/core/l10n/quoin_format.dart';
 import 'package:quoin/src/core/theme/quoin_colors.dart';
+import 'package:quoin/src/core/theme/quoin_icons.dart';
 import 'package:quoin/src/core/theme/quoin_tokens.dart';
 import 'package:quoin/src/core/theme/quoin_type.dart';
 import 'package:quoin/src/features/sync/domain/entities/sync_outcome.dart';
-import 'package:quoin/src/ui/atoms/quoin_card.dart';
-import 'package:quoin/src/ui/atoms/quoin_section_label.dart';
+import 'package:quoin/src/ui/atoms/quoin_icon.dart';
+import 'package:quoin/src/ui/molecules/count_list.dart';
+import 'package:quoin/src/ui/molecules/fold_section.dart';
+import 'package:quoin/src/ui/molecules/stat_columns.dart';
+
+enum SyncDirection { toPhone, toPc }
 
 class SyncDetailView extends StatelessWidget {
   const SyncDetailView({
     super.key,
     required this.detail,
-    this.empty,
+    this.direction,
     this.setAside = true,
   });
 
   final SyncDetail detail;
-  final String? empty;
+  final SyncDirection? direction;
   final bool setAside;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final type = QuoinType.of(context);
     final c = QuoinColors.of(context);
-    Widget title(String text) => Text(text, style: type.rowStrong);
-    Widget line(String text) =>
-        Text(text, style: type.secondary.copyWith(color: c.body));
-    List<Widget> names(String heading, Cut<String> cut) => [
-      if (cut.total > 0) ...[
-        title(heading),
-        for (final name in cut.items) line(name),
-        if (cut.more > 0) line(l10n.syncDetailMore(cut.more)),
-      ],
-    ];
-
+    final type = QuoinType.of(context);
     final d = detail;
-    final parts = <Widget>[
-      if (d.ledgerRows > 0) ...[
-        title(l10n.syncCountLedger(d.ledgerRows)),
-        for (final MapEntry(:key, :value) in _byLabel(l10n, d.ledger))
-          line('$key: $value'),
-      ],
-      if (d.inKind > 0) title(l10n.syncDetailInKind(d.inKind)),
-      ...names(l10n.syncDetailNewInstruments, d.newInstruments),
-      if (d.changedInstruments.total > 0) ...[
-        title(l10n.syncDetailChangedInstruments),
-        for (final change in d.changedInstruments.items)
-          line(
-            '${change.name}: '
-            '${[for (final f in change.fields) detailFieldLabel(l10n, f)].join(', ')}',
-          ),
-        if (d.changedInstruments.more > 0)
-          line(l10n.syncDetailMore(d.changedInstruments.more)),
-      ],
-      ...names(l10n.syncDetailNewTargets, d.newTargets),
-      ...names(l10n.syncDetailDeletedTargets, d.deletedTargets),
-      ...names(l10n.syncDetailCompositions, d.compositions),
-      if (d.residence) title(l10n.syncFieldResidence),
-      if (d.resolved.total > 0) ...[
-        title(l10n.syncDetailResolved),
-        for (final r in d.resolved.items) line(_resolved(context, r)),
-        if (d.resolved.more > 0) line(l10n.syncDetailMore(d.resolved.more)),
-      ],
+    final setAside = this.setAside
+        ? d.setAside
+        : const Cut<SetAsideRow>.empty();
+    Widget line(String text) => Padding(
+      padding: const EdgeInsets.symmetric(vertical: QuoinSpace.xxs),
+      child: Text(text, style: type.secondary.copyWith(color: c.body)),
+    );
+    List<Widget> more(int count) => [
+      if (count > 0) line(l10n.syncDetailMore(count)),
     ];
 
+    final instruments = d.newInstruments.total + d.changedInstruments.total;
+    Widget tags(Cut<String> cut) => Wrap(
+      spacing: QuoinSpace.s,
+      runSpacing: QuoinSpace.s,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        for (final name in cut.items) _Tag(name),
+        if (cut.more > 0)
+          Text(
+            l10n.syncDetailMore(cut.more),
+            style: type.secondary.copyWith(color: c.muted),
+          ),
+      ],
+    );
+    List<Widget> namesFold(String title, Cut<String> cut) => [
+      if (cut.total > 0)
+        FoldSection(
+          title: title,
+          summary: '${cut.total}',
+          children: [tags(cut)],
+        ),
+    ];
+    final rows = [
+      if (d.inKind > 0) CountEntry(l10n.syncInKind, '${d.inKind}'),
+      if (d.residence)
+        CountEntry(l10n.syncFieldResidence, l10n.syncResidenceChanged),
+    ];
+    final byType = _typeCounts(l10n, d.ledger);
+    final folds = [
+      if (byType.isNotEmpty)
+        FoldSection(
+          title: l10n.syncByType,
+          summary: [...byType.take(2), if (byType.length > 2) '…'].join(' · '),
+          children: [for (final text in byType) line(text)],
+        ),
+      if (d.newInstruments.total > 0)
+        FoldSection(
+          title: l10n.syncDetailNewInstruments,
+          initiallyOpen: true,
+          children: [tags(d.newInstruments)],
+        ),
+      if (d.changedInstruments.total > 0)
+        FoldSection(
+          title: l10n.syncDetailChangedInstruments,
+          children: [
+            for (final change in d.changedInstruments.items)
+              line(
+                '${change.name}: '
+                '${[for (final f in change.fields) detailFieldLabel(l10n, f)].join(', ')}',
+              ),
+            ...more(d.changedInstruments.more),
+          ],
+        ),
+      ...namesFold(l10n.syncDetailCompositions, d.compositions),
+      ...namesFold(l10n.syncDetailNewTargets, d.newTargets),
+      ...namesFold(l10n.syncDetailDeletedTargets, d.deletedTargets),
+      if (d.resolved.total > 0)
+        FoldSection(
+          title: l10n.syncDetailResolved,
+          summary: '${d.resolved.total}',
+          children: [
+            for (final r in d.resolved.items) line(_resolved(context, r)),
+            ...more(d.resolved.more),
+          ],
+        ),
+      if (setAside.total > 0)
+        FoldSection(
+          title: l10n.syncSetAsideTitle,
+          summary: '${setAside.total}',
+          children: [
+            line(l10n.syncSetAsideHint),
+            ...setAsideRows(context, setAside),
+          ],
+        ),
+    ];
+
+    final direction = this.direction;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        QuoinCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            spacing: QuoinSpace.tight,
-            children: parts.isEmpty
-                ? [Text(empty ?? l10n.syncNothing, style: type.row)]
-                : parts,
+        if (direction != null)
+          Padding(
+            padding: const EdgeInsets.only(
+              top: QuoinSpace.section,
+              bottom: QuoinSpace.m,
+            ),
+            child: Semantics(
+              header: true,
+              child: Row(
+                spacing: QuoinSpace.s,
+                children: [
+                  QuoinIcon(
+                    switch (direction) {
+                      SyncDirection.toPhone => QuoinIcons.toPhone,
+                      SyncDirection.toPc => QuoinIcons.toPc,
+                    },
+                    size: QuoinIconSize.small,
+                    color: c.muted,
+                  ),
+                  Expanded(
+                    child: Text(switch (direction) {
+                      SyncDirection.toPhone => l10n.syncToPhone,
+                      SyncDirection.toPc => l10n.syncToPc,
+                    }, style: type.secondary.copyWith(color: c.muted)),
+                  ),
+                ],
+              ),
+            ),
           ),
-        ),
-        if (setAside) SetAsideView(rows: d.setAside),
+        if (d.writesNothing && folds.isEmpty)
+          RuledLine(l10n.syncNothing)
+        else ...[
+          _Ruled(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: QuoinSpace.card),
+              child: StatColumns.figures(
+                stats: [
+                  (
+                    label: l10n.syncStatMovements(d.ledgerRows),
+                    value: '${d.ledgerRows}',
+                    sign: 0,
+                  ),
+                  (
+                    label: l10n.syncStatInstruments(instruments),
+                    value: '$instruments',
+                    sign: 0,
+                  ),
+                  (
+                    label: l10n.syncStatCompositions(d.compositions.total),
+                    value: '${d.compositions.total}',
+                    sign: 0,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (rows.isNotEmpty) CountList(entries: rows, closed: false),
+          ...folds,
+          Divider(height: 1, thickness: 1, color: c.borderSubtle),
+        ],
       ],
     );
   }
@@ -107,6 +210,69 @@ class SyncDetailView extends StatelessWidget {
   }
 }
 
+class RuledLine extends StatelessWidget {
+  const RuledLine(this.text, {super.key});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = QuoinColors.of(context);
+    return Container(
+      constraints: const BoxConstraints(minHeight: kMinInteractiveDimension),
+      padding: const EdgeInsets.symmetric(vertical: QuoinSpace.m),
+      decoration: BoxDecoration(
+        border: Border.symmetric(horizontal: BorderSide(color: c.borderSubtle)),
+      ),
+      child: Text(
+        text,
+        style: QuoinType.of(context).row.copyWith(color: c.body),
+      ),
+    );
+  }
+}
+
+class _Ruled extends StatelessWidget {
+  const _Ruled({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => DecoratedBox(
+    decoration: BoxDecoration(
+      border: Border(
+        top: BorderSide(color: QuoinColors.of(context).borderSubtle),
+      ),
+    ),
+    child: child,
+  );
+}
+
+class _Tag extends StatelessWidget {
+  const _Tag(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = QuoinColors.of(context);
+    return Container(
+      constraints: const BoxConstraints(minHeight: QuoinSpace.block),
+      padding: const EdgeInsets.symmetric(
+        horizontal: QuoinSpace.m,
+        vertical: QuoinSpace.tight,
+      ),
+      decoration: ShapeDecoration(
+        shape: StadiumBorder(side: BorderSide(color: c.border)),
+      ),
+      child: Text(
+        text,
+        style: QuoinType.of(context).secondary.copyWith(color: c.body),
+      ),
+    );
+  }
+}
+
 class SetAsideView extends StatelessWidget {
   const SetAsideView({super.key, required this.rows});
 
@@ -118,59 +284,63 @@ class SetAsideView extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final type = QuoinType.of(context);
     final c = QuoinColors.of(context);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        QuoinSectionLabel(l10n.syncSetAsideTitle),
-        Text(
-          l10n.syncSetAsideHint,
-          style: type.secondary.copyWith(color: c.muted),
-        ),
-        const SizedBox(height: QuoinSpace.s),
-        QuoinCard(
+    return Padding(
+      padding: const EdgeInsets.only(top: QuoinSpace.section),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        spacing: QuoinSpace.xs,
+        children: [
+          Semantics(
+            header: true,
+            child: Text(l10n.syncSetAsideTitle, style: type.rowStrong),
+          ),
+          Text(
+            l10n.syncSetAsideHint,
+            style: type.secondary.copyWith(color: c.muted),
+          ),
+          ...setAsideRows(context, rows),
+        ],
+      ),
+    );
+  }
+}
+
+List<Widget> setAsideRows(BuildContext context, Cut<SetAsideRow> rows) {
+  final l10n = AppLocalizations.of(context);
+  final type = QuoinType.of(context);
+  final c = QuoinColors.of(context);
+  return [
+    for (final row in rows.items)
+      MergeSemantics(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: QuoinSpace.s),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            spacing: QuoinSpace.s,
+            spacing: QuoinSpace.xxs,
             children: [
-              for (final row in rows.items)
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text.rich(
-                      TextSpan(
-                        children: [
-                          TextSpan(
-                            text: _instantDay(context, row.ts),
-                            style: type.row.mono,
-                          ),
-                          TextSpan(
-                            text: [
-                              '',
-                              ledgerTypeLabel(l10n, row.type),
-                              ?row.instrument,
-                            ].join(' · '),
-                          ),
-                        ],
-                      ),
-                      style: type.row,
-                    ),
-                    Text(
-                      l10n.syncSetAsideDiffers(
-                        {for (final f in row.fields) _column(l10n, f)}
-                            .join(', '),
-                      ),
-                      style: type.secondary.copyWith(color: c.muted),
-                    ),
-                  ],
-                ),
-              if (rows.more > 0)
-                Text(l10n.syncDetailMore(rows.more), style: type.secondary),
+              Text(
+                [ledgerTypeLabel(l10n, row.type), ?row.instrument].join(' · '),
+                style: type.row,
+              ),
+              Text(
+                [
+                  _instantDay(context, row.ts),
+                  l10n.syncSetAsideDiffers(
+                    {for (final f in row.fields) _column(l10n, f)}.join(', '),
+                  ),
+                ].join(' · '),
+                style: type.secondary.tabular.copyWith(color: c.muted),
+              ),
             ],
           ),
         ),
-      ],
-    );
-  }
+      ),
+    if (rows.more > 0)
+      Text(
+        l10n.syncDetailMore(rows.more),
+        style: type.secondary.copyWith(color: c.muted),
+      ),
+  ];
 }
 
 List<Widget> syncDetailSections(
@@ -181,13 +351,15 @@ List<Widget> syncDetailSections(
   final l10n = AppLocalizations.of(context);
   final upToDate = toPhone.writesNothing && toPc.writesNothing;
   return [
-    if (upToDate)
-      SyncDetailView(detail: toPhone, empty: l10n.syncUpToDate)
+    if (upToDate && toPhone.setAside.total == 0)
+      RuledLine(l10n.syncUpToDate)
     else ...[
-      QuoinSectionLabel(l10n.syncToPhone),
-      SyncDetailView(detail: toPhone),
-      QuoinSectionLabel(l10n.syncToPc),
-      SyncDetailView(detail: toPc, setAside: false),
+      SyncDetailView(detail: toPhone, direction: SyncDirection.toPhone),
+      SyncDetailView(
+        detail: toPc,
+        direction: SyncDirection.toPc,
+        setAside: false,
+      ),
     ],
   ];
 }
@@ -235,26 +407,23 @@ String ledgerTypeLabel(AppLocalizations l10n, String type) => switch (type) {
   _ => l10n.syncDetailOtherRows,
 };
 
-List<MapEntry<String, int>> _byLabel(
-  AppLocalizations l10n,
-  Map<String, int> ledger,
-) {
-  const order = [
-    'BUY',
-    'SELL',
-    'DIVIDEND',
-    'DEPOSIT',
-    'WITHDRAWAL',
-    'INTEREST',
-  ];
-  final out = {
-    for (final type in order) ledgerTypeLabel(l10n, type): ?ledger[type],
+List<String> _typeCounts(AppLocalizations l10n, Map<String, int> ledger) {
+  final known = <String, String Function(int)>{
+    'BUY': l10n.syncTypeBuys,
+    'SELL': l10n.syncTypeSells,
+    'DIVIDEND': l10n.syncTypeDividends,
+    'DEPOSIT': l10n.syncTypeDeposits,
+    'WITHDRAWAL': l10n.syncTypeWithdrawals,
+    'INTEREST': l10n.syncTypeInterest,
   };
   final other = ledger.entries
-      .where((e) => !order.contains(e.key))
+      .where((e) => !known.containsKey(e.key))
       .fold(0, (n, e) => n + e.value);
-  if (other > 0) out[l10n.syncDetailOtherRows] = other;
-  return out.entries.toList();
+  return [
+    for (final MapEntry(:key, value: words) in known.entries)
+      if (ledger[key] case final count? when count > 0) words(count),
+    if (other > 0) l10n.syncTypeOther(other),
+  ];
 }
 
 String _column(AppLocalizations l10n, String column) => switch (column) {

@@ -52,7 +52,7 @@ class MovementRow extends StatelessWidget {
                     children: [
                       Text(
                         date,
-                        style: text.small.mono.copyWith(color: c.muted),
+                        style: text.small.tabular.copyWith(color: c.muted),
                       ),
                       for (final mark in marks)
                         DecoratedBox(

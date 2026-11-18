@@ -3,11 +3,17 @@ import 'package:quoin_core/quoin_core.dart';
 import 'package:quoin/src/features/portfolio/domain/entities/holding_order.dart';
 
 class SaleLine {
-  const SaleLine({required this.sale, required this.name, required this.year});
+  const SaleLine({
+    required this.sale,
+    required this.name,
+    required this.year,
+    this.instrument,
+  });
 
   final RealizedSale sale;
   final String name;
   final int year;
+  final Instrument? instrument;
 }
 
 enum SaleOrder { date, result, name }

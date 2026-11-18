@@ -41,24 +41,45 @@ void main() {
     await pumpApp(tester, prefs: {'locale': 'es'}, overrides: [offline]);
     await open(tester, Routes.importSample);
 
-    expect(find.text('Revisa antes de importar'), findsOneWidget);
-    expect(find.text('6'), findsOneWidget, reason: 'new operations');
-    expect(find.text('5'), findsOneWidget, reason: 'warnings and errors');
+    expect(find.text('Trade Republic · sample.csv'), findsOneWidget);
+    expect(
+      find.text('6 operaciones nuevas', findRichText: true),
+      findsOneWidget,
+    );
     expect(
       find.textContaining('No se ha podido consultar el BCE'),
       findsOneWidget,
     );
-    expect(find.text('Pagos con tarjeta'), findsOneWidget);
-    expect(find.text('Clase de activo sin soporte'), findsOneWidget);
-    expect(find.text('Con error'), findsOneWidget);
-    expect(find.text('Fila 12'), findsOneWidget);
     expect(
-      find.text('Saveback'),
+      find.text('No son inversiones: se ignoran'),
+      findsOneWidget,
+      reason: 'card payments are a count of their own, not a warning',
+    );
+    expect(find.text('Advertencias'), findsNothing);
+    expect(find.text('Clase de activo sin soporte'), findsOneWidget);
+    expect(find.text('Sin soporte todavía'), findsNWidgets(2));
+    expect(find.textContaining('Reparto de derechos'), findsOneWidget);
+    expect(
+      find.textContaining('INTERMEDIATE_SECURITIES'),
+      findsNothing,
+      reason: 'an unsupported row names its type in words',
+    );
+    expect(find.text('No se importan.'), findsOneWidget);
+    expect(find.text('Con error'), findsOneWidget);
+    expect(find.text('Fila 13'), findsOneWidget);
+    await tester.ensureVisible(find.text('Otros descartes'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Otros descartes'));
+    await tester.pumpAndSettle();
+    expect(
+      find.textContaining('Saveback'),
       findsWidgets,
       reason: 'a broker row type is shown by name, never as its code',
     );
     expect(find.textContaining('BENEFITS_SAVEBACK'), findsNothing);
 
+    await tester.ensureVisible(find.text('Ver detalle'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Ver detalle'));
     await tester.pumpAndSettle();
     expect(find.text('Fondo Ejemplo Mundial'), findsWidgets);
@@ -76,12 +97,7 @@ void main() {
     expect(find.text('Fondo Ejemplo Mundial'), findsOneWidget);
 
     await open(tester, Routes.importSample);
-    expect(
-      find.text(
-        'Las operaciones duplicadas ya estaban en el registro y se omitirán',
-      ),
-      findsOneWidget,
-    );
+    expect(find.text('Ya importadas'), findsOneWidget);
     expect(
       find.textContaining('Nada que importar: ninguna operación'),
       findsOneWidget,
@@ -158,6 +174,7 @@ void main() {
     await tester.tap(find.text('Continuar'));
     await tester.pumpAndSettle();
 
+    expect(find.text('Trade Republic · movimientos.csv'), findsOneWidget);
     expect(find.text('QSAMPLE-b2'), findsOneWidget);
     expect(find.text('QSAMPLE-s2'), findsNothing);
     expect(find.textContaining('misma operación: Saveback'), findsOneWidget);
@@ -218,8 +235,12 @@ void main() {
     await tester.pumpAndSettle();
 
     await open(tester, Routes.importSample);
-    await tester.tap(find.text('Ver detalle'));
-    await tester.pumpAndSettle();
+    for (final fold in ['Otros descartes', 'Ver detalle']) {
+      await tester.ensureVisible(find.text(fold));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(fold));
+      await tester.pumpAndSettle();
+    }
     await tester.drag(find.byType(Scrollable).last, const Offset(0, -3000));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Importar 6 operaciones'));

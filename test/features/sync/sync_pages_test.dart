@@ -166,12 +166,18 @@ void main() {
       (pc.bodies['POST /v1/pair']!.single! as Map<String, Object?>)['name'],
       'Móvil de prueba',
     );
-    expect(find.text('Del PC a este móvil'.toUpperCase()), findsOneWidget);
+    expect(find.text('Primera vez con Test PC'), findsOneWidget);
+    expect(find.text('Del PC a este móvil'), findsOneWidget);
     expect(find.text('Instrumentos nuevos'), findsNWidgets(2));
     expect(find.text('PC Fund'), findsOneWidget);
     expect(find.text('Phone Fund'), findsOneWidget);
     expect(pc.log, isNot(contains('POST /v1/sync')));
 
+    await tester.scrollUntilVisible(
+      find.text('Sincronizar'),
+      200,
+      scrollable: verticalLists.first,
+    );
     await tester.tap(find.text('Sincronizar'));
     await settle(tester);
 
@@ -303,6 +309,8 @@ void main() {
     await settle(tester);
 
     expect(find.text('Sincronizado'), findsOneWidget);
+    await tester.tap(find.text('Conflictos resueltos'));
+    await tester.pumpAndSettle();
     expect(find.text('PC Fund · TER → PC'), findsOneWidget);
     expect(find.textContaining(pcFund), findsNothing);
     final settled = await (db.select(

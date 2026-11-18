@@ -87,7 +87,11 @@ class ImportFlow extends Notifier<ImportState> {
     );
     if (!ref.mounted) return;
     state = switch (result) {
-      Ok(:final value) => ImportState(ImportStage.review, preview: value),
+      Ok(:final value) => ImportState(
+        ImportStage.review,
+        file: file,
+        preview: value,
+      ),
       Err(:final failure) => ImportState(ImportStage.select, failure: failure),
     };
   }
@@ -105,6 +109,7 @@ class ImportFlow extends Notifier<ImportState> {
       case Err(:final failure):
         state = ImportState(
           ImportStage.review,
+          file: state.file,
           preview: preview,
           failure: failure,
         );
