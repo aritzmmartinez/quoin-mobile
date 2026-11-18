@@ -23,25 +23,27 @@ void main() {
     await tester.pumpAndSettle();
     final demo = find.byType(QuoinSegmentedPages<int>);
     await tester.scrollUntilVisible(
-      find.text('Vista de ventas'),
+      demo,
       300,
       scrollable: verticalLists.first,
     );
     await tester.ensureVisible(demo);
     await tester.pumpAndSettle();
+    Finder inDemo(String text) =>
+        find.descendant(of: demo, matching: find.text(text));
+    expect(inDemo('Resultado'), findsOneWidget);
 
     final views = find
         .descendant(of: demo, matching: find.byType(PageView))
         .first;
     double view() => tester.widget<PageView>(views).controller!.page!;
-    final segment = find.descendant(of: demo, matching: find.text('Resumen'));
-    await tester.tap(segment);
+    await tester.tap(inDemo('Resumen'));
     do {
       await tester.pump(const Duration(milliseconds: 16));
-      expect(find.text('Vista de fiscal'), findsNothing);
+      expect(inDemo('Base'), findsNothing);
       expect(view(), anyOf(0, 2));
     } while (tester.binding.hasScheduledFrame);
     expect(view(), 2);
-    expect(find.text('Vista de resumen'), findsOneWidget);
+    expect(inDemo('Coste'), findsOneWidget);
   });
 }
