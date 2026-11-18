@@ -235,6 +235,9 @@
       }
     }
   },
+  "quoinStepDone": "hecho",
+  "quoinStepCurrent": "ahora",
+  "quoinStepPending": "pendiente",
   "importHelpTitle": "Cómo exportar tus movimientos",
   "importHelpBody": "Sube el CSV tal cual lo descargas, sin abrirlo ni guardarlo con otro programa. Quoin reconoce el bróker por las columnas del fichero: no hace falta elegirlo.",
   "brokerTradeRepublic": "Trade Republic",
@@ -878,7 +881,6 @@
   "syncRevoked": "Tu PC ya no acepta este móvil",
   "syncRevokedHint": "Este móvil se ha desvinculado desde el PC, o el PC ya no reconoce su clave. Vincúlalo de nuevo escaneando un código nuevo en Ajustes → Dispositivos.",
   "syncPairAgain": "Vincular de nuevo",
-  "pairScanHint": "En tu PC, abre Ajustes → Dispositivos y escanea el código.",
   "pairScan": "Escanear el código",
   "pairCameraDenied": "Sin acceso a la cámara no se puede leer el código. Permítelo en los ajustes del sistema.",
   "pairChecking": "Conectando con tu PC…",
@@ -889,9 +891,37 @@
     "description": "Nombre del móvil propuesto al vincular; editable."
   },
   "pairNameInvalid": "Escribe un nombre de 1 a 100 caracteres.",
-  "pairCodeTitle": "Comprueba que tu PC muestra este código",
-  "pairSend": "Vincular",
-  "pairWaiting": "Confirma la vinculación en tu PC…",
+  "pairWaiting": "Quoin en tu PC te pide que aceptes este móvil.",
+  "pairIntroTitle": "Conecta el móvil con Quoin en tu ordenador",
+  "pairIntroBody": "Se sincronizan por tu wifi, cifrado y sin pasar por internet. Tarda un minuto y solo se hace una vez.",
+  "pairStepOpen": "Abre Quoin en el PC",
+  "pairStepOpenDetail": "Ajustes → Dispositivos → Vincular un móvil",
+  "pairStepScan": "Escanea el código",
+  "pairStepScanDetail": "Apunta la cámara a la pantalla del PC",
+  "pairStepScanDone": "Conectado con {pc}",
+  "@pairStepScanDone": {
+    "placeholders": {
+      "pc": {
+        "type": "String"
+      }
+    }
+  },
+  "pairStepCompare": "Compara y confirma",
+  "pairStepCompareDetail": "Los dos mostrarán el mismo código",
+  "pairCompareBody": "Tu PC muestra ahora este mismo número. Si es distinto, pulsa «No coincide».",
+  "pairMatch": "Coincide, continuar",
+  "pairNoMatch": "No coincide",
+  "pairAccept": "Acepta en el PC",
+  "pairScannerTitle": "Escanea el código del PC",
+  "pairScannerHint": "Lo encuentras en Quoin, en Ajustes → Dispositivos",
+  "pairCodeLabel": "Código: {code}",
+  "@pairCodeLabel": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
   "syncFailInvalidQr": "Este código no es de Quoin.",
   "syncFailTokenUsed": "Este código ya se ha usado. Muestra uno nuevo en tu PC.",
   "syncFailExpired": "La vinculación ha caducado. Muestra un código nuevo en tu PC.",
@@ -1233,7 +1263,6 @@
   "instrumentNotFoundTitle": "Instrumento no encontrado",
   "loadFailedBody": "Vuelve a abrir esta pantalla. Si sigue sin cargarse, cierra Quoin y ábrelo de nuevo.",
   "residenceUnsupportedTitle": "Actualiza Quoin",
-  "pairScanTitle": "Vincula este móvil con tu PC",
   "pairFailedTitle": "No se ha podido vincular",
   "pairMovedTitle": "Tu PC ha cambiado de dirección",
   "portfolioFilterCategory": "Categoría",

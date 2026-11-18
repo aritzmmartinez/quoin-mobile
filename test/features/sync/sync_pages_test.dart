@@ -7,6 +7,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
+import 'package:quoin/src/app/router.dart';
 import 'package:quoin/src/features/portfolio/data/database/quoin_database.dart'
     hide SettingsRow;
 import 'package:http/testing.dart';
@@ -136,15 +138,65 @@ void main() {
 
   Future<void> pairFromSettings(WidgetTester tester) async {
     await tapVisible(tester, find.text('Vincular con tu PC'));
-    expect(
-      find.text('Comprueba que tu PC muestra este código'),
-      findsOneWidget,
-    );
+    expect(find.text('Paso 1 de 3'), findsOneWidget);
+    await tester.tap(find.text('Escanear el código'));
+    await settle(tester);
+    expect(find.text('Paso 3 de 3'), findsOneWidget);
+    expect(find.text('Conectado con Test PC'), findsOneWidget);
     expect(find.widgetWithText(TextField, 'Mi móvil'), findsOneWidget);
     await tester.enterText(find.byType(TextField), 'Móvil de prueba');
-    await tester.tap(find.text('Vincular'));
+    await tester.tap(find.text('Coincide, continuar'));
     await settle(tester);
   }
+
+  testWidgets('pairing walks the same three steps, at 200 % too, and '
+      '«No coincide» goes back to the start without pairing', (tester) async {
+    tester.platformDispatcher.textScaleFactorTestValue = 2;
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+    final semantics = tester.ensureSemantics();
+    await open(tester);
+    GoRouter.of(tester.element(find.byType(QuoinPage).first))
+        .push<void>(Routes.pair)
+        .ignore();
+    await settle(tester);
+
+    expect(find.text('Paso 1 de 3'), findsOneWidget);
+    expect(
+      find.text('Conecta el móvil con Quoin en tu ordenador'),
+      findsOneWidget,
+    );
+    for (final step in [
+      'Abre Quoin en el PC',
+      'Escanea el código',
+      'Compara y confirma',
+    ]) {
+      await tester.scrollUntilVisible(
+        find.text(step),
+        200,
+        scrollable: verticalLists.last,
+      );
+    }
+    expect(pc.log, isNot(contains('POST /v1/pair')));
+
+    await tester.tap(find.text('Escanear el código'));
+    await settle(tester);
+    expect(find.text('Paso 3 de 3'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('Compara y confirma'),
+      200,
+      scrollable: verticalLists.last,
+    );
+    final code = find.textContaining(RegExp(r'^\d{3} \d{3}$'));
+    await tester.scrollUntilVisible(code, 200, scrollable: verticalLists.last);
+    expect(find.bySemanticsLabel(RegExp(r'^Código: \d{3} \d{3}$')), findsOne);
+    expect(find.textContaining('segundos'), findsNothing);
+
+    await tester.tap(find.text('No coincide'));
+    await settle(tester);
+    expect(find.text('Paso 1 de 3'), findsOneWidget);
+    expect(pc.log, isNot(contains('POST /v1/pair')));
+    semantics.dispose();
+  });
 
   testWidgets('pairs, previews the first sync, then syncs on confirmation', (
     tester,

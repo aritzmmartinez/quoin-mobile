@@ -74,8 +74,11 @@ final testNow = DateTime.utc(2026, 10, 30, 10);
 
 var fakeQr = '';
 
-Future<QrScan> fakeScanner({required String hint}) async =>
-    (text: fakeQr, denied: false);
+Future<QrScan> fakeScanner({
+  required String title,
+  required String hint,
+  required Color color,
+}) async => (text: fakeQr, denied: false);
 
 QuoinDatabase memoryDatabase() {
   driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;

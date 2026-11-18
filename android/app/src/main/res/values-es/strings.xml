@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="scan_title">Escanear</string>
+    <string name="back">Volver</string>
+    <string name="torch">Linterna</string>
+</resources>

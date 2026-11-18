@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The qrscan scanner's own labels, under its names: the app's win the
+     resource merge, so the scanner speaks the app's languages. -->
+<resources>
+    <string name="scan_title">Scan</string>
+    <string name="back">Back</string>
+    <string name="torch">Torch</string>
+</resources>

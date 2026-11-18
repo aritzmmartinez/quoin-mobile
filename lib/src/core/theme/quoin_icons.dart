@@ -70,6 +70,7 @@ abstract final class QuoinIcons {
   static const toPhone = QuoinIconData._(HugeIcons.strokeRoundedArrowDown02);
   static const toPc = QuoinIconData._(HugeIcons.strokeRoundedArrowUp02);
   static const computer = QuoinIconData._(HugeIcons.strokeRoundedComputer);
+  static const phone = QuoinIconData._(HugeIcons.strokeRoundedSmartphoneWifi);
   static const sync = QuoinIconData._(
     HugeIcons.strokeRoundedArrowReloadHorizontal,
   );
