@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
 import 'package:flutter/services.dart';
 
+import 'package:quoin/src/core/theme/quoin_tokens.dart';
 import 'package:quoin/src/core/theme/quoin_colors.dart';
 import 'package:quoin/src/core/theme/quoin_icons.dart';
 import 'package:quoin/src/core/theme/quoin_type.dart';
@@ -17,9 +18,6 @@ class QuoinBarItem {
   final String label;
 }
 
-/// Where the add button sits: inside the pill between the second and third
-/// tab ([center]), as its own glass circle beside the pill ([leading],
-/// [trailing]), or above the pill's end ([above]).
 enum QuoinBarActionPlacement { center, leading, trailing, above }
 
 class QuoinBottomBar extends StatelessWidget {
@@ -27,6 +25,7 @@ class QuoinBottomBar extends StatelessWidget {
     super.key,
     required this.items,
     required this.currentIndex,
+    this.position,
     required this.onSelected,
     required this.addIcon,
     required this.addLabel,
@@ -34,11 +33,12 @@ class QuoinBottomBar extends StatelessWidget {
     this.placement = QuoinBarActionPlacement.trailing,
   }) : assert(items.length == 4);
 
-  /// Between the pill and a detached button.
   static const double gap = 10;
 
   final List<QuoinBarItem> items;
   final int currentIndex;
+
+  final ValueListenable<double>? position;
   final ValueChanged<int> onSelected;
   final QuoinIconData addIcon;
   final String addLabel;
@@ -61,7 +61,7 @@ class QuoinBottomBar extends StatelessWidget {
 
     final pill = QuoinBarSurface(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12),
+        padding: const EdgeInsets.symmetric(horizontal: QuoinSpace.m),
         child: LayoutBuilder(
           builder: (context, box) {
             final inlineWidth = inline ? _InlineAddButton.size : 0.0;
@@ -69,6 +69,7 @@ class QuoinBottomBar extends StatelessWidget {
               children: [
                 _SlidingPill(
                   index: currentIndex,
+                  position: position,
                   tabWidth: (box.maxWidth - inlineWidth) / 4,
                   inlineWidth: inlineWidth,
                 ),
@@ -100,7 +101,12 @@ class QuoinBottomBar extends StatelessWidget {
 
     return SafeArea(
       top: false,
-      minimum: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+      minimum: const EdgeInsets.fromLTRB(
+        QuoinSpace.card,
+        0,
+        QuoinSpace.card,
+        QuoinSpace.m,
+      ),
       // The bar keeps its height: text inside it scales only to 1.3.
       child: MediaQuery.withClampedTextScaling(
         maxScaleFactor: 1.3,
@@ -137,11 +143,13 @@ class QuoinBottomBar extends StatelessWidget {
 class _SlidingPill extends StatefulWidget {
   const _SlidingPill({
     required this.index,
+    required this.position,
     required this.tabWidth,
     required this.inlineWidth,
   });
 
   final int index;
+  final ValueListenable<double>? position;
   final double tabWidth;
 
   /// The add button's width when it sits between the second and third tab.
@@ -164,8 +172,20 @@ class _SlidingPillState extends State<_SlidingPill>
   );
 
   @override
+  void initState() {
+    super.initState();
+    widget.position?.addListener(_follow);
+  }
+
+  void _follow() => _position.value = widget.position!.value;
+
+  @override
   void didUpdateWidget(_SlidingPill old) {
     super.didUpdateWidget(old);
+    if (widget.position != old.position) {
+      old.position?.removeListener(_follow);
+      widget.position?.addListener(_follow);
+    }
     if (widget.index == old.index) return;
     final target = widget.index.toDouble();
     if (MediaQuery.disableAnimationsOf(context)) {
@@ -179,6 +199,7 @@ class _SlidingPillState extends State<_SlidingPill>
 
   @override
   void dispose() {
+    widget.position?.removeListener(_follow);
     _position.dispose();
     super.dispose();
   }
@@ -201,10 +222,13 @@ class _SlidingPillState extends State<_SlidingPill>
         );
       },
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 8),
+        padding: const EdgeInsets.symmetric(
+          horizontal: QuoinSpace.xxs,
+          vertical: QuoinSpace.s,
+        ),
         child: DecoratedBox(
           decoration: ShapeDecoration(
-            color: c.text.withValues(alpha: 0.08),
+            color: c.selected,
             shape: const StadiumBorder(),
           ),
         ),
@@ -237,7 +261,7 @@ class _BarButton extends StatelessWidget {
           height: double.infinity,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
-            spacing: 4,
+            spacing: QuoinSpace.xs,
             children: [
               QuoinIcon(item.icon, size: 22, color: color),
               Text(
@@ -284,7 +308,11 @@ class _InlineAddButton extends StatelessWidget {
             child: SizedBox.square(
               dimension: size,
               child: Center(
-                child: QuoinIcon(icon, size: 20, color: c.onAccent),
+                child: QuoinIcon(
+                  icon,
+                  size: QuoinIconSize.tile,
+                  color: c.onAccent,
+                ),
               ),
             ),
           ),
@@ -318,7 +346,7 @@ class _DetachedAddButton extends StatelessWidget {
             child: Center(
               child: QuoinIcon(
                 icon,
-                size: 24,
+                size: QuoinIconSize.large,
                 color: QuoinColors.of(context).text,
               ),
             ),

@@ -51,9 +51,9 @@ void main() {
     expect(find.text('Pagos con tarjeta'), findsOneWidget);
     expect(find.text('Clase de activo sin soporte'), findsOneWidget);
     expect(find.text('Con error'), findsOneWidget);
-    expect(find.text('fila 12'), findsOneWidget);
+    expect(find.text('Fila 12'), findsOneWidget);
     expect(
-      find.textContaining('· Saveback'),
+      find.text('Saveback'),
       findsWidgets,
       reason: 'a broker row type is shown by name, never as its code',
     );
@@ -129,7 +129,7 @@ void main() {
     await tester.tap(find.text('Cancelar'));
     await tester.pumpAndSettle();
     expect(find.text('Cómo exportar tus movimientos'), findsNothing);
-    expect(find.text('Aún no has importado ningún movimiento'), findsOneWidget);
+    expect(find.text('Sin posiciones todavía'), findsOneWidget);
   });
 
   testWidgets('a saveback pair that cannot be read is one failed operation, '

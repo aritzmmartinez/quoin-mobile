@@ -6,11 +6,11 @@ import 'package:quoin/src/core/l10n/quoin_format.dart';
 import 'package:quoin/src/core/theme/quoin_colors.dart';
 import 'package:quoin/src/core/theme/quoin_tokens.dart';
 import 'package:quoin/src/core/theme/quoin_type.dart';
-import 'package:quoin/src/features/portfolio/presentation/widgets/portfolio_view.dart';
 import 'package:quoin/src/features/tax/domain/entities/realized_report.dart';
 import 'package:quoin/src/ui/atoms/quoin_card.dart';
 import 'package:quoin/src/ui/molecules/figure_block.dart';
 import 'package:quoin/src/ui/molecules/sale_row.dart';
+import 'package:quoin/src/ui/atoms/quoin_section_label.dart';
 
 /// One fiscal year of the Bizkaia view, as the web's TaxYearPanel lays it
 /// out: the base and the tax, the year's net, its FIFO sales with their
@@ -50,7 +50,7 @@ class TaxYearPanel extends StatelessWidget {
     Widget card(List<Widget> children) => QuoinCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
-        spacing: 8,
+        spacing: QuoinSpace.s,
         children: children,
       ),
     );
@@ -73,7 +73,7 @@ class TaxYearPanel extends StatelessWidget {
             caption: view.scale == null ? null : l10n.taxScale(view.year),
           ),
         ]),
-        const SizedBox(height: 12),
+        const SizedBox(height: QuoinSpace.m),
         card([
           Text(
             l10n.taxCounts(view.sales.length, view.affectedCount),
@@ -94,7 +94,7 @@ class TaxYearPanel extends StatelessWidget {
             color: c.text,
           ),
         ]),
-        sectionLabel(context, l10n.taxSalesTitle),
+        QuoinSectionLabel(l10n.taxSalesTitle),
         if (view.sales.isEmpty)
           body(l10n.taxEmptyYear)
         else
@@ -110,7 +110,7 @@ class TaxYearPanel extends StatelessWidget {
             ),
           ),
         if (integrations.isNotEmpty) ...[
-          sectionLabel(context, l10n.taxIntegrationsTitle),
+          QuoinSectionLabel(l10n.taxIntegrationsTitle),
           card([
             body(l10n.taxIntegrationsBody),
             for (final i in integrations)
@@ -123,7 +123,7 @@ class TaxYearPanel extends StatelessWidget {
           ]),
         ],
         if (pending.isNotEmpty) ...[
-          sectionLabel(context, l10n.taxPendingTitle(view.year)),
+          QuoinSectionLabel(l10n.taxPendingTitle(view.year)),
           card([
             body(l10n.taxPendingBody),
             for (final p in pending)
@@ -140,7 +140,7 @@ class TaxYearPanel extends StatelessWidget {
             ),
           ]),
         ],
-        sectionLabel(context, l10n.taxCarryforwardTitle),
+        QuoinSectionLabel(l10n.taxCarryforwardTitle),
         card([
           for (final (i, s) in steps.indexed) ...[
             if (i > 0) const Divider(height: 1),
@@ -158,7 +158,7 @@ class TaxYearPanel extends StatelessWidget {
           ],
         ]),
         if (inKind.count > 0) ...[
-          sectionLabel(context, l10n.taxInKindTitle),
+          QuoinSectionLabel(l10n.taxInKindTitle),
           card([
             body(l10n.taxInKindBody),
             DetailLine(label: l10n.taxInKindCount, value: '${inKind.count}'),
@@ -295,7 +295,7 @@ class TaxYearPanel extends StatelessWidget {
   }
 
   Widget _subtitle(BuildContext context, String text) => Padding(
-    padding: const EdgeInsets.only(top: 8),
+    padding: const EdgeInsets.only(top: QuoinSpace.s),
     child: Text(
       text,
       style: QuoinType.of(context).secondary

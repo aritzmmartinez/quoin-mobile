@@ -25,9 +25,10 @@ void main() {
     );
     expect(find.byType(AllocationDonut), findsOneWidget);
     expect(find.text('Sin clasificar'), findsOneWidget);
-    expect(find.byType(PositionRow), findsNWidgets(5));
 
     await tester.ensureVisible(find.text('Ver todas'));
+    await tester.pumpAndSettle();
+    expect(find.byType(PositionRow), findsNWidgets(5));
     await tester.tap(find.text('Ver todas'));
     await tester.pumpAndSettle();
     expect(find.byType(PortfolioPage), findsOneWidget);
@@ -54,11 +55,13 @@ void main() {
     );
     expect(find.text('Sin precio'), findsWidgets);
 
+    await tester.tap(find.text('Todas las categorías'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Cripto'));
     await tester.pumpAndSettle();
     expect(find.byType(PositionRow), findsNWidgets(2));
 
-    await tester.tap(find.byTooltip('Ordenar'));
+    await tester.tap(find.text('Por valor'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Alfabético'));
     await tester.pumpAndSettle();
@@ -85,7 +88,7 @@ void main() {
     tester,
   ) async {
     await pumpApp(tester, prefs: {'locale': 'es'});
-    expect(find.text('Aún no has importado ningún movimiento'), findsOneWidget);
+    expect(find.text('Sin posiciones todavía'), findsOneWidget);
     expect(find.text('Patrimonio total'), findsNothing);
   });
 }

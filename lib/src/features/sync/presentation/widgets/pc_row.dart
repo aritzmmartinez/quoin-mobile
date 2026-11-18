@@ -26,7 +26,7 @@ SettingsRow pcRow(
     return SettingsRow(
       icon: QuoinIcons.search,
       label: pairing.pcName,
-      value: l10n.syncSearching,
+      subtitle: l10n.syncSearching,
       onTap: onTap,
     );
   }
@@ -42,7 +42,7 @@ SettingsRow pcRow(
       _ => QuoinIcons.alert,
     },
     label: pairing.pcName,
-    value: switch (shown) {
+    subtitle: switch (shown) {
       final failure? => syncFailureText(l10n, failure),
       null when running => l10n.syncRunning(pairing.pcName),
       null => switch (last) {

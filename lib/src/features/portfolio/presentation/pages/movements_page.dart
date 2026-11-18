@@ -13,9 +13,9 @@ import 'package:quoin/src/features/portfolio/domain/entities/movement.dart';
 import 'package:quoin/src/features/portfolio/presentation/providers/portfolio_providers.dart';
 import 'package:quoin/src/features/portfolio/presentation/widgets/ledger_tiles.dart';
 import 'package:quoin/src/features/portfolio/presentation/widgets/result_view.dart';
-import 'package:quoin/src/ui/atoms/quoin_chip.dart';
-import 'package:quoin/src/ui/atoms/quoin_icon.dart';
 import 'package:quoin/src/ui/molecules/empty_state.dart';
+import 'package:quoin/src/ui/molecules/quoin_disclosure.dart';
+import 'package:quoin/src/ui/organisms/quoin_dropdown.dart';
 import 'package:quoin/src/ui/templates/quoin_page.dart';
 
 class MovementsPage extends ConsumerStatefulWidget {
@@ -48,7 +48,13 @@ class _MovementsPageState extends ConsumerState<MovementsPage> {
     if (all.isEmpty) {
       return QuoinPage(
         title: l10n.movementsTitle,
-        body: EmptyState(message: l10n.homeEmpty),
+        body: EmptyState(
+          icon: QuoinIcons.movements,
+          title: l10n.emptyMovementsTitle,
+          body: l10n.emptyMovementsBody,
+          actionLabel: l10n.importCsv,
+          onAction: () => context.push(Routes.import),
+        ),
       );
     }
 
@@ -58,6 +64,8 @@ class _MovementsPageState extends ConsumerState<MovementsPage> {
           id: name,
     };
     final instrument = names.containsKey(_instrument) ? _instrument : null;
+    final ids = names.keys.toList()
+      ..sort((a, b) => compareNamesEs(names[a]!, names[b]!));
     final types = {for (final m in all) m.type};
     final shown = [
       for (final m in all)
@@ -69,43 +77,40 @@ class _MovementsPageState extends ConsumerState<MovementsPage> {
     return QuoinPage.lazy(
       title: l10n.movementsTitle,
       header: [
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            spacing: 8,
-            children: [
-              QuoinChip.text(
-                label: instrument == null
-                    ? l10n.movementsAllInstruments
-                    : names[instrument]!,
-                selected: instrument != null,
-                onTap: () => _pickInstrument(context, names),
-              ),
-              QuoinChip.text(
-                label: l10n.movementsFilterAll,
-                selected: _type == null,
-                onTap: () => setState(() => _type = null),
-              ),
-              for (final t in _typeOrder.where(types.contains))
-                QuoinChip.text(
-                  label: l10n.movementType(t),
-                  selected: t == _type,
-                  onTap: () => setState(() => _type = t),
-                ),
-            ],
-          ),
+        Wrap(
+          spacing: QuoinSpace.s,
+          children: [
+            QuoinDropdown<String?>(
+              label: l10n.movementsFilterInstrument,
+              value: instrument,
+              options: [
+                (value: null, label: l10n.movementsAllInstruments),
+                for (final id in ids) (value: id, label: names[id]!),
+              ],
+              onChanged: (id) => setState(() => _instrument = id),
+            ),
+            QuoinDropdown<String?>(
+              label: l10n.movementsFilterType,
+              value: _type,
+              options: [
+                (value: null, label: l10n.movementsAllTypes),
+                for (final t in _typeOrder.where(types.contains))
+                  (value: t, label: l10n.movementType(t)),
+              ],
+              onChanged: (t) => setState(() => _type = t),
+            ),
+          ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: QuoinSpace.m),
         Text(
           l10n.movementsCount(shown.length),
           style: type.secondary.copyWith(color: c.muted),
         ),
-        const SizedBox(height: 4),
-        Text(
-          l10n.movementsAmountHint,
-          style: type.small.copyWith(color: c.muted),
+        QuoinDisclosure(
+          title: l10n.movementsAmountTitle,
+          paragraphs: [l10n.movementsAmountHint],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: QuoinSpace.s),
         if (shown.isEmpty)
           Padding(
             padding: const EdgeInsets.only(top: QuoinSpace.section),
@@ -119,57 +124,21 @@ class _MovementsPageState extends ConsumerState<MovementsPage> {
       itemBuilder: (context, i) {
         final m = shown[i];
         final id = m.instrumentId;
-        return DecoratedBox(
-          decoration: BoxDecoration(
-            border: i == 0
-                ? null
-                : Border(top: BorderSide(color: c.borderSubtle)),
-          ),
-          child: movementTile(
-            context,
-            m,
-            zone,
-            onTap: id == null || id == widget.instrumentId
-                ? null
-                : () => context.push(Routes.instrument(id)),
-          ),
+        return Column(
+          children: [
+            if (i > 0) const Divider(height: 1),
+            movementTile(
+              context,
+              m,
+              zone,
+              onTap: id == null || id == widget.instrumentId
+                  ? null
+                  : () => context.push(Routes.instrument(id)),
+            ),
+          ],
         );
       },
     );
-  }
-
-  Future<void> _pickInstrument(
-    BuildContext context,
-    Map<String, String> names,
-  ) async {
-    final l10n = AppLocalizations.of(context);
-    final ids = names.keys.toList()
-      ..sort((a, b) => compareNamesEs(names[a]!, names[b]!));
-    final picked = await showModalBottomSheet<String>(
-      context: context,
-      showDragHandle: true,
-      isScrollControlled: true,
-      builder: (context) => SafeArea(
-        child: ListView(
-          shrinkWrap: true,
-          children: [
-            for (final (id, label) in [
-              ('', l10n.movementsAllInstruments),
-              for (final id in ids) (id, names[id]!),
-            ])
-              ListTile(
-                title: Text(label),
-                trailing: (id.isEmpty ? null : id) == _instrument
-                    ? const QuoinIcon(QuoinIcons.check)
-                    : null,
-                onTap: () => Navigator.of(context).pop(id),
-              ),
-          ],
-        ),
-      ),
-    );
-    if (picked == null || !mounted) return;
-    setState(() => _instrument = picked.isEmpty ? null : picked);
   }
 }
 

@@ -2,25 +2,24 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:quoin/src/core/l10n/gen/app_localizations.dart';
+import 'package:quoin/src/core/theme/quoin_icons.dart';
 import 'package:quoin/src/core/l10n/quoin_format.dart';
 import 'package:quoin/src/core/theme/quoin_colors.dart';
 import 'package:quoin/src/core/theme/quoin_tokens.dart';
 import 'package:quoin/src/core/theme/quoin_type.dart';
 import 'package:quoin/src/features/portfolio/presentation/widgets/ledger_tiles.dart';
-import 'package:quoin/src/features/portfolio/presentation/widgets/portfolio_view.dart';
 import 'package:quoin/src/features/portfolio/presentation/widgets/result_view.dart';
 import 'package:quoin/src/features/tax/domain/entities/realized_report.dart';
 import 'package:quoin/src/features/tax/presentation/providers/tax_providers.dart';
-import 'package:quoin/src/features/tax/presentation/widgets/how_calculated.dart';
+import 'package:quoin/src/ui/molecules/quoin_disclosure.dart';
 import 'package:quoin/src/features/tax/presentation/widgets/tax_year_panel.dart';
 import 'package:quoin/src/ui/atoms/display_figure.dart';
 import 'package:quoin/src/ui/atoms/quoin_card.dart';
 import 'package:quoin/src/ui/atoms/quoin_chip.dart';
 import 'package:quoin/src/ui/molecules/empty_state.dart';
-import 'package:quoin/src/ui/molecules/quoin_segmented.dart';
+import 'package:quoin/src/ui/organisms/quoin_segmented_pages.dart';
 import 'package:quoin/src/ui/templates/quoin_page.dart';
-
-enum _Tab { sales, tax }
+import 'package:quoin/src/ui/atoms/quoin_section_label.dart';
 
 class RealizedPage extends ConsumerStatefulWidget {
   const RealizedPage({super.key});
@@ -30,7 +29,6 @@ class RealizedPage extends ConsumerStatefulWidget {
 }
 
 class _RealizedPageState extends ConsumerState<RealizedPage> {
-  var _tab = _Tab.sales;
   var _order = SaleOrder.date;
   int? _taxYear;
 
@@ -41,27 +39,23 @@ class _RealizedPageState extends ConsumerState<RealizedPage> {
       title: l10n.realizedTitle,
       value: ref.watch(realizedReportProvider),
       builder: (report) => report.hasLedger
-          ? QuoinPage.list(
+          ? QuoinPage(
               title: l10n.realizedTitle,
-              children: [
-                QuoinSegmented<_Tab>(
-                  segments: [
-                    (_Tab.sales, l10n.realizedTabSales),
-                    (_Tab.tax, l10n.realizedTabTax),
-                  ],
-                  selected: _tab,
-                  onChanged: (tab) => setState(() => _tab = tab),
-                ),
-                const SizedBox(height: QuoinSpace.section),
-                ...switch (_tab) {
-                  _Tab.sales => _sales(context, report),
-                  _Tab.tax => _tax(context, report),
-                },
-              ],
+              body: QuoinSegmentedPages(
+                segments: [
+                  (0, l10n.realizedTabSales),
+                  (1, l10n.realizedTabTax),
+                ],
+                pages: [_sales(context, report), _tax(context, report)],
+              ),
             )
           : QuoinPage(
               title: l10n.realizedTitle,
-              body: EmptyState(message: l10n.homeEmpty),
+              body: EmptyState(
+                icon: QuoinIcons.realized,
+                title: l10n.emptySalesTitle,
+                body: l10n.realizedEmpty,
+              ),
             ),
     );
   }
@@ -87,11 +81,14 @@ class _RealizedPageState extends ConsumerState<RealizedPage> {
     };
 
     return [
-      HowCalculated(paragraphs: [l10n.realizedIntro, l10n.realizedAvcoWarning]),
-      const SizedBox(height: 12),
+      QuoinDisclosure(
+        title: l10n.realizedHow,
+        paragraphs: [l10n.realizedIntro, l10n.realizedAvcoWarning],
+      ),
+      const SizedBox(height: QuoinSpace.m),
       Wrap(
-        spacing: 8,
-        runSpacing: 8,
+        spacing: QuoinSpace.s,
+        runSpacing: QuoinSpace.s,
         children: [
           for (final MapEntry(:key, :value) in orders.entries)
             QuoinChip.text(
@@ -116,26 +113,23 @@ class _RealizedPageState extends ConsumerState<RealizedPage> {
         if (s.year == year) s,
     ];
     final totals = SalesTotals(lines);
-    final realized = format.signedMoney(totals.realized);
-    final pct = totals.returnPct;
+    final realized = format.gain(totals.realized, totals.returnPct);
     return [
-      sectionLabel(context, '$year'),
+      QuoinSectionLabel('$year'),
       DisplayFigure(
-        pct == null
-            ? realized.text
-            : '${realized.text} (${format.percent(pct, signed: true)})',
+        realized.text,
         color: realized.sign > 0
             ? c.positive
             : realized.sign < 0
             ? c.negative
             : null,
       ),
-      const SizedBox(height: 6),
+      const SizedBox(height: QuoinSpace.tight),
       Text(
         l10n.realizedYearSummary(totals.count, year, format.money(totals.cost)),
         style: type.secondary.copyWith(color: c.muted),
       ),
-      const SizedBox(height: 12),
+      const SizedBox(height: QuoinSpace.m),
       QuoinCard(
         padding: EdgeInsets.zero,
         child: Column(
@@ -164,18 +158,21 @@ class _RealizedPageState extends ConsumerState<RealizedPage> {
           l10n.taxUnclassified(report.unclassified.join(', ')),
       ]) ...[
         Text(notice, style: type.secondary.copyWith(color: c.muted)),
-        const SizedBox(height: 12),
+        const SizedBox(height: QuoinSpace.m),
       ],
-      HowCalculated(paragraphs: [l10n.taxHowRules, l10n.taxHowOwnRules]),
-      const SizedBox(height: 12),
+      QuoinDisclosure(
+        title: l10n.realizedHow,
+        paragraphs: [l10n.taxHowRules, l10n.taxHowOwnRules],
+      ),
+      const SizedBox(height: QuoinSpace.m),
       if (year == null)
         Text(l10n.taxNoYears, style: type.secondary.copyWith(color: c.muted))
       else ...[
         Text(l10n.taxYearLabel, style: type.small.copyWith(color: c.muted)),
-        const SizedBox(height: 8),
+        const SizedBox(height: QuoinSpace.s),
         Wrap(
-          spacing: 8,
-          runSpacing: 8,
+          spacing: QuoinSpace.s,
+          runSpacing: QuoinSpace.s,
           children: [
             for (final y in years)
               QuoinChip.code(

@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 
+import 'package:quoin/src/core/theme/quoin_tokens.dart';
 import 'package:quoin/src/core/theme/quoin_colors.dart';
 import 'package:quoin/src/core/theme/quoin_type.dart';
 
-/// A selectable pill. [QuoinChip.code] sets its label in Geist Mono, for
-/// ranges and codes («1M», «EUR»); [QuoinChip.text] in Geist, for filters
-/// that are words (a category).
 class QuoinChip extends StatelessWidget {
   const QuoinChip.code({
     super.key,
@@ -42,7 +40,10 @@ class QuoinChip extends StatelessWidget {
           onTap: onTap,
           child: Container(
             constraints: const BoxConstraints(minHeight: 32),
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: QuoinSpace.tight,
+            ),
             child: Center(
               widthFactor: 1,
               child: Text(

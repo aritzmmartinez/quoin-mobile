@@ -43,7 +43,7 @@ flows: `docs/ARCHITECTURE.md`.
 - `ui/` widgets take data and callbacks: no features, providers or router.
 - A widget used by one feature goes in its `presentation/widgets`.
 - Pages are `presentation/pages/*_page.dart` with a `*Page` class.
-- A `Failure` the user can act on is shown, translated (a SnackBar for a failed save).
+- A `Failure` the user can act on is shown, translated (a toast for a failed save).
 - Imports are package imports (`always_use_package_imports`), so the layer test can read them.
 - Routing: `go_router` with `StatefulShellRoute`.
 
@@ -75,6 +75,7 @@ flows: `docs/ARCHITECTURE.md`.
 - A hint is short and never carries what the user needs; the search hint is «Buscar», its description is the accessibility label.
 - Chips: `QuoinChip.code` (Geist Mono) for ranges and codes, `QuoinChip.text` (Geist) for filters that are words, such as categories.
 - Segmented controls: `QuoinSegmented` (honours reduce motion).
+- Toasts: `showQuoinToast` only, never a `SnackBar` (a test checks it): a block across the top under the status bar, a short title and the detail under it. Positive and negative on the signals' solid fills (`positiveSolid`, `negativeSolid`) with `onSignal` ink; anything else neutral, on `accent`.
 - No ink ripples (`NoSplash` in the theme): a pressed control changes colour (themed `highlightColor`, button overlays) or scales (`Pressable`).
 - Icons: Hugeicons stroke rounded, stroke 1.5; declared in `core/theme/quoin_icons.dart`, drawn with `ui/atoms/quoin_icon.dart`; only those two import `hugeicons` (a test checks it).
 - Bottom bar: 4 equal tabs on a liquid glass pill and the «+» as its own glass circle, as high as the pill, 10 px away; where it sits is `QuoinBarActionPlacement` (trailing by default; leading, above, or inside the pill at the centre). Both shapes share one `QuoinGlassLayer` (one backdrop capture, no blending). `liquid_glass_widgets` only in `quoin_bar_surface.dart`; content scrolls under the bar (`QuoinPage.list`).
@@ -109,3 +110,4 @@ flows: `docs/ARCHITECTURE.md`.
 - Before every tap or screenshot, check Quoin (`dev.aritzmmartinez.quoin`) has the focus (`dumpsys window`, `mCurrentFocus`); if not, stop and say so.
 - No blind coordinates: find each element with `uiautomator dump` by its text and tap that; if it is not there, stop.
 - No screenshot without asking first; only with Quoin in front, deleted after the test.
+- Sample data and screenshots only on the `.dev` install (`flutter run --android-project-arg=dev=true`): its own app, data and pairings beside the real one. Its focus is exactly `dev.aritzmmartinez.quoin.dev`; if the real package is in front, stop. A plain debug run lands on the real install.

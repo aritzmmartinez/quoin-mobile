@@ -24,6 +24,7 @@ import 'package:quoin/src/ui/molecules/empty_state.dart';
 import 'package:quoin/src/ui/molecules/figure_block.dart';
 import 'package:quoin/src/ui/molecules/gain_badge.dart';
 import 'package:quoin/src/ui/templates/quoin_page.dart';
+import 'package:quoin/src/ui/atoms/quoin_section_label.dart';
 
 class HomePage extends ConsumerWidget {
   const HomePage({super.key});
@@ -36,7 +37,9 @@ class HomePage extends ConsumerWidget {
       overview: ref.watch(portfolioOverviewProvider),
       onRefresh: () => refreshFromPc(context, ref),
       empty: EmptyState(
-        message: l10n.homeEmpty,
+        icon: QuoinIcons.portfolio,
+        title: l10n.emptyPortfolioTitle,
+        body: l10n.emptyPortfolioBody,
         actionLabel: l10n.importCsv,
         onAction: () => context.push(Routes.import),
       ),
@@ -63,29 +66,23 @@ class HomePage extends ConsumerWidget {
     final c = QuoinColors.of(context);
     final type = QuoinType.of(context);
     final summary = overview.summary;
-    final gain = format.signedMoney(summary.unrealizedPnL);
-    final returnPct = summary.returnPct;
+    final gain = format.gain(summary.unrealizedPnL, summary.returnPct);
 
     return [
       Text(l10n.homeTotal, style: type.secondary.copyWith(color: c.muted)),
-      const SizedBox(height: 6),
+      const SizedBox(height: QuoinSpace.tight),
       if (summary.pricedCount == 0)
         Text(l10n.homeNoPriced, style: type.row.copyWith(color: c.muted))
       else ...[
         DisplayFigure(format.money(summary.totalValue)),
-        const SizedBox(height: 10),
+        const SizedBox(height: QuoinSpace.row),
         Align(
           alignment: AlignmentDirectional.centerStart,
-          child: GainBadge(
-            text: returnPct == null
-                ? gain.text
-                : '${gain.text} (${format.percent(returnPct, signed: true)})',
-            sign: gain.sign,
-          ),
+          child: GainBadge(text: gain.text, sign: gain.sign),
         ),
       ],
       if (summary.unpricedCount > 0) ...[
-        const SizedBox(height: 10),
+        const SizedBox(height: QuoinSpace.row),
         Text(
           l10n.homeUnpriced(
             summary.unpricedCount,
@@ -100,7 +97,7 @@ class HomePage extends ConsumerWidget {
         _RealizedCard(report: report),
       ],
       if (overview.allocation.isNotEmpty) ...[
-        sectionLabel(context, l10n.homeAllocation),
+        QuoinSectionLabel(l10n.homeAllocation),
         QuoinCard(
           child: AllocationDonut(
             slices: [
@@ -115,8 +112,7 @@ class HomePage extends ConsumerWidget {
         ),
       ],
       if (overview.top.isNotEmpty) ...[
-        sectionLabel(
-          context,
+        QuoinSectionLabel(
           l10n.homePositions,
           action: TextButton(
             onPressed: () => context.go(Routes.portfolio),
@@ -154,7 +150,7 @@ class _RealizedCard extends StatelessWidget {
     return QuoinCard(
       onTap: () => context.push(Routes.realized),
       child: Row(
-        spacing: 12,
+        spacing: QuoinSpace.m,
         children: [
           Expanded(
             child: FigureBlock(
@@ -165,7 +161,7 @@ class _RealizedCard extends StatelessWidget {
           ),
           QuoinIcon(
             QuoinIcons.chevronRight,
-            size: 16,
+            size: QuoinIconSize.small,
             color: QuoinColors.of(context).faint,
           ),
         ],

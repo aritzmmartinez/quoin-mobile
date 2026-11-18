@@ -26,4 +26,15 @@ void main() {
         .map((f) => f.path);
     expect(offenders, isEmpty);
   });
+
+  test('toasts, never snack bars', () {
+    final offenders = Directory('lib')
+        .listSync(recursive: true)
+        .whereType<File>()
+        .where((f) => f.path.endsWith('.dart'))
+        .where((f) => !f.path.contains('l10n${Platform.pathSeparator}gen'))
+        .where((f) => f.readAsStringSync().contains(RegExp(r'SnackBar')))
+        .map((f) => f.path);
+    expect(offenders, isEmpty);
+  });
 }

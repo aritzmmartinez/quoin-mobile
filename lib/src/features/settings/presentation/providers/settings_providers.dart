@@ -1,7 +1,11 @@
+import 'dart:collection';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
+import 'package:quoin/src/app/runtime_packages.dart';
 import 'package:quoin/src/core/error/result.dart';
 import 'package:quoin/src/features/settings/domain/entities/preferences.dart';
 import 'package:quoin/src/features/settings/domain/repositories/settings_repository.dart';
@@ -65,3 +69,23 @@ class LocaleNotifier extends Notifier<Locale?> {
 final appVersionProvider = FutureProvider<String>(
   (ref) async => (await PackageInfo.fromPlatform()).version,
 );
+
+final licensesProvider = FutureProvider<Map<String, List<LicenseEntry>>>(
+  (ref) async => runtimeLicenses(await LicenseRegistry.licenses.toList()),
+);
+
+Map<String, List<LicenseEntry>> runtimeLicenses(List<LicenseEntry> entries) {
+  final byPackage = SplayTreeMap<String, List<LicenseEntry>>(
+    (a, b) => switch (a.toLowerCase().compareTo(b.toLowerCase())) {
+      0 => a.compareTo(b),
+      final order => order,
+    },
+  );
+  for (final entry in entries) {
+    for (final package in entry.packages) {
+      if (devPackages.contains(package)) continue;
+      (byPackage[package] ??= []).add(entry);
+    }
+  }
+  return byPackage;
+}

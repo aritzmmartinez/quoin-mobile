@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 
 import 'package:quoin/src/core/theme/quoin_colors.dart';
-import 'package:quoin/src/core/theme/quoin_type.dart';
+import 'package:quoin/src/core/theme/quoin_tokens.dart';
 import 'package:quoin/src/ui/atoms/quoin_card.dart';
+import 'package:quoin/src/ui/atoms/quoin_section_label.dart';
 import 'package:quoin/src/ui/molecules/settings_row.dart';
 
 class SettingsSection extends StatelessWidget {
@@ -19,14 +20,13 @@ class SettingsSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
-            child: Semantics(
-              header: true,
-              child: Text(
-                title.toUpperCase(),
-                style: QuoinType.of(context).section.copyWith(color: c.muted),
-              ),
+          QuoinSectionLabel(
+            title,
+            padding: const EdgeInsets.fromLTRB(
+              QuoinSpace.card,
+              QuoinSpace.m,
+              QuoinSpace.card,
+              QuoinSpace.s,
             ),
           ),
           for (final row in rows) ...[

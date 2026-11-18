@@ -12,7 +12,8 @@ final _minus = String.fromCharCode(0x2212);
 /// es-ES groups thousands only from five integer digits (CLDR's minimum
 /// grouping digits is 2): «1234,56 €» but «12.345,67 €». Rounding is half up,
 /// away from zero, as Intl's. A negative that rounds to zero keeps its sign,
-/// as Intl does («-0,0 %»), except in a signed figure.
+/// as Intl does («−0,0 %»), except in a signed figure. Signed figures and
+/// percentages use the minus sign (U+2212), as wide as the plus.
 class QuoinFormat {
   const QuoinFormat(this.languageCode);
 
@@ -53,6 +54,16 @@ class QuoinFormat {
     return (text: '$prefix$magnitude', sign: sign);
   }
 
+  ({String text, int sign}) gain(Money amount, Dec? fraction) {
+    final money = signedMoney(amount);
+    return (
+      text: fraction == null
+          ? money.text
+          : '${money.text} (${percent(fraction, signed: true)})',
+      sign: money.sign,
+    );
+  }
+
   String percent(
     Dec fraction, {
     int decimals = 1,
@@ -71,8 +82,8 @@ class QuoinFormat {
       maxDecimals: decimals,
     );
     final sign = signed
-        ? (roundsToZero ? '' : (value.isNegative ? '-' : '+'))
-        : (value.isNegative ? '-' : '');
+        ? (roundsToZero ? '' : (value.isNegative ? _minus : '+'))
+        : (value.isNegative ? _minus : '');
     return _es ? '$sign$number$_nbsp%' : '$sign$number%';
   }
 

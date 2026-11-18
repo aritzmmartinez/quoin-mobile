@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:quoin/src/app/router.dart';
 import 'package:quoin/src/ui/organisms/quoin_bottom_bar.dart';
+import 'package:quoin/src/ui/organisms/quoin_segmented_pages.dart';
 import 'package:quoin/src/ui/templates/quoin_page.dart';
 
 import 'helpers.dart';
@@ -22,7 +23,7 @@ void main() {
     Future<void> scrollToEnd() async {
       final list = find.descendant(
         of: find.byType(QuoinPage),
-        matching: find.byType(Scrollable),
+        matching: verticalLists,
       );
       if (list.evaluate().isEmpty) return;
       for (var i = 0; i < 30; i++) {
@@ -63,12 +64,24 @@ void main() {
       Routes.realized,
       Routes.pair,
       Routes.sync,
+      Routes.licenses,
+      Routes.license('flutter'),
     ]) {
       await visit(location);
       await scrollToEnd();
     }
 
     await visit(Routes.realized);
+    final views = find
+        .descendant(
+          of: find.byType(QuoinSegmentedPages<int>),
+          matching: find.byType(PageView),
+        )
+        .first;
+    await tester.drag(views, const Offset(-500, 0));
+    await tester.pumpAndSettle();
+    await tester.drag(views, const Offset(500, 0));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Fiscal (Bizkaia)'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Cómo se ha calculado'));
@@ -78,10 +91,7 @@ void main() {
       repurchased,
       300,
       scrollable: find
-          .descendant(
-            of: find.byType(QuoinPage),
-            matching: find.byType(Scrollable),
-          )
+          .descendant(of: find.byType(QuoinPage), matching: verticalLists)
           .first,
     );
     await tester.ensureVisible(repurchased);
@@ -92,6 +102,15 @@ void main() {
 
     GoRouter.of(tester.element(find.byType(QuoinPage).first)).go(Routes.home);
     await tester.pumpAndSettle();
+
+    for (var i = 0; i < 3; i++) {
+      await tester.drag(find.byType(PageView).first, const Offset(-500, 0));
+      await tester.pumpAndSettle();
+    }
+    for (var i = 0; i < 3; i++) {
+      await tester.drag(find.byType(PageView).first, const Offset(500, 0));
+      await tester.pumpAndSettle();
+    }
 
     await tester.tap(find.byTooltip('Importar CSV'));
     await tester.pumpAndSettle();

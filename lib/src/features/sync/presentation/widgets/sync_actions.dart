@@ -11,6 +11,7 @@ import 'package:quoin/src/features/sync/domain/entities/sync_outcome.dart';
 import 'package:quoin/src/features/sync/domain/usecases/sync_now.dart';
 import 'package:quoin/src/features/sync/presentation/providers/sync_providers.dart';
 import 'package:quoin/src/features/sync/presentation/widgets/sync_failure_text.dart';
+import 'package:quoin/src/ui/organisms/quoin_toast.dart';
 
 Future<Pairings> _pairings(WidgetRef ref) async =>
     switch (await ref.read(pairingsProvider.future)) {
@@ -32,32 +33,37 @@ Future<void> refreshFromPc(
       .sync(search: search);
   if (!context.mounted) return;
   final l10n = AppLocalizations.of(context);
-  void say(String text, {SnackBarAction? action}) =>
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(text), action: action));
+  void failed(String detail) => showQuoinToast(
+    context,
+    tone: QuoinToastTone.negative,
+    title: l10n.syncFailedTitle,
+    body: detail,
+  );
   final SyncPass pass;
   switch (result) {
     case Err(:final failure):
-      return say(syncFailureDetail(l10n, failure));
+      return failed(syncFailureDetail(l10n, failure));
     case Ok(:final value):
       pass = value;
   }
   if (pass.waiting.isNotEmpty) {
-    return say(
-      l10n.syncReviewSnack,
-      action: SnackBarAction(
+    return showQuoinToast(
+      context,
+      tone: QuoinToastTone.neutral,
+      title: l10n.syncReviewSnack,
+      action: (
         label: l10n.syncReview,
         onPressed: () => context.push(Routes.sync),
       ),
     );
   }
   if (pass.noneAnswered) {
-    return say(syncFailureDetail(l10n, pass.unanswered));
+    return failed(syncFailureDetail(l10n, pass.unanswered));
   }
   for (final pc in pass.pcs) {
     if (pc.pairing.shared) continue;
     if (pc.result case Err(:final failure)) {
-      return say(
+      return failed(
         l10n.syncPcFailure(pc.pairing.pcName, syncFailureText(l10n, failure)),
       );
     }
@@ -66,9 +72,19 @@ Future<void> refreshFromPc(
   if (followUp == null || !context.mounted) return;
   switch (followUp.prices) {
     case Err():
-      say(l10n.syncPricesFailed);
+      showQuoinToast(
+        context,
+        tone: QuoinToastTone.negative,
+        title: l10n.syncPricesFailedTitle,
+        body: l10n.syncPricesFailedBody,
+      );
     case Ok(value: PricesOutcome(pending: [_, ...])):
-      say(l10n.syncPricesPending);
+      showQuoinToast(
+        context,
+        tone: QuoinToastTone.neutral,
+        title: l10n.syncPricesPendingTitle,
+        body: l10n.syncPricesPendingBody,
+      );
     case _:
       break;
   }

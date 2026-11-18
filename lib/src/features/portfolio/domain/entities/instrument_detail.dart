@@ -20,4 +20,11 @@ class InstrumentDetail {
   final DateTime? firstBuy;
   final List<RealizedSale> sales;
   final List<Movement> movements;
+
+  Dec? get unrealizedPnLPct {
+    final pnl = value?.unrealizedPnL;
+    final cost = position?.costBasis;
+    if (pnl == null || cost == null || cost.isZero) return null;
+    return ratio(pnl, cost);
+  }
 }

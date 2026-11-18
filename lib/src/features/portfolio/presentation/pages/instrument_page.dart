@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:quoin/src/app/router.dart';
 import 'package:quoin/src/core/l10n/gen/app_localizations.dart';
+import 'package:quoin/src/core/theme/quoin_icons.dart';
 import 'package:quoin/src/core/l10n/quoin_format.dart';
 import 'package:quoin/src/core/theme/quoin_colors.dart';
 import 'package:quoin/src/core/theme/quoin_tokens.dart';
@@ -11,7 +12,6 @@ import 'package:quoin/src/core/theme/quoin_type.dart';
 import 'package:quoin/src/features/portfolio/domain/entities/instrument_detail.dart';
 import 'package:quoin/src/features/portfolio/presentation/providers/portfolio_providers.dart';
 import 'package:quoin/src/features/portfolio/presentation/widgets/ledger_tiles.dart';
-import 'package:quoin/src/features/portfolio/presentation/widgets/portfolio_view.dart';
 import 'package:quoin/src/features/portfolio/presentation/widgets/result_view.dart';
 import 'package:quoin/src/ui/atoms/display_figure.dart';
 import 'package:quoin/src/ui/atoms/quoin_card.dart';
@@ -19,6 +19,7 @@ import 'package:quoin/src/ui/molecules/empty_state.dart';
 import 'package:quoin/src/ui/molecules/figure_block.dart';
 import 'package:quoin/src/ui/molecules/gain_badge.dart';
 import 'package:quoin/src/ui/templates/quoin_page.dart';
+import 'package:quoin/src/ui/atoms/quoin_section_label.dart';
 
 /// Movements shown on the page before «Ver movimientos».
 const _recentMovements = 5;
@@ -37,7 +38,11 @@ class InstrumentPage extends ConsumerWidget {
       builder: (detail) => detail == null
           ? QuoinPage(
               title: id,
-              body: EmptyState(message: l10n.instrumentNotFound),
+              body: EmptyState(
+                icon: QuoinIcons.search,
+                title: l10n.instrumentNotFoundTitle,
+                body: l10n.instrumentNotFound,
+              ),
             )
           : QuoinPage.list(
               title: detail.instrument.name,
@@ -77,7 +82,7 @@ class InstrumentPage extends ConsumerWidget {
         l10n.instrumentValue,
         style: type.secondary.copyWith(color: c.muted),
       ),
-      const SizedBox(height: 6),
+      const SizedBox(height: QuoinSpace.tight),
       if (!held)
         Text(l10n.instrumentClosed, style: type.row.copyWith(color: c.muted))
       else if (marketValue == null)
@@ -85,13 +90,12 @@ class InstrumentPage extends ConsumerWidget {
       else ...[
         DisplayFigure(format.money(marketValue)),
         if (pnl != null) ...[
-          const SizedBox(height: 10),
+          const SizedBox(height: QuoinSpace.row),
           Align(
             alignment: AlignmentDirectional.centerStart,
-            child: GainBadge(
-              text: format.signedMoney(pnl).text,
-              sign: pnl.amount.sign,
-            ),
+            child: switch (format.gain(pnl, d.unrealizedPnLPct)) {
+              final gain => GainBadge(text: gain.text, sign: gain.sign),
+            },
           ),
         ],
       ],
@@ -137,7 +141,7 @@ class InstrumentPage extends ConsumerWidget {
         ]),
       ],
       if (d.sales.isNotEmpty) ...[
-        sectionLabel(context, l10n.instrumentSales),
+        QuoinSectionLabel(l10n.instrumentSales),
         QuoinCard(
           padding: EdgeInsets.zero,
           child: Column(
@@ -151,7 +155,7 @@ class InstrumentPage extends ConsumerWidget {
         ),
       ],
       if (d.movements.isNotEmpty) ...[
-        sectionLabel(context, l10n.instrumentMovements),
+        QuoinSectionLabel(l10n.instrumentMovements),
         QuoinCard(
           padding: EdgeInsets.zero,
           child: Column(
@@ -164,7 +168,7 @@ class InstrumentPage extends ConsumerWidget {
             ],
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: QuoinSpace.m),
         FilledButton(
           onPressed: () => context.push(Routes.movementsOf(d.instrument.id)),
           child: Text(l10n.seeMovements),

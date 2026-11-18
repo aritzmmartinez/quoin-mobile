@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:quoin/src/core/theme/quoin_tokens.dart';
 import 'package:quoin/src/core/theme/quoin_colors.dart';
 import 'package:quoin/src/core/theme/quoin_type.dart';
 
@@ -32,7 +33,7 @@ class FigureBlock extends StatelessWidget {
         : c.text;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      spacing: 4,
+      spacing: QuoinSpace.xs,
       children: [
         Text(label, style: type.small.copyWith(color: c.muted)),
         FittedBox(

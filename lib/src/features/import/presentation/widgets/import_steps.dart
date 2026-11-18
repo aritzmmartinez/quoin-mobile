@@ -9,10 +9,11 @@ import 'package:quoin/src/core/theme/quoin_icons.dart';
 import 'package:quoin/src/core/theme/quoin_tokens.dart';
 import 'package:quoin/src/core/theme/quoin_type.dart';
 import 'package:quoin/src/features/import/domain/entities/import_batch.dart';
+import 'package:quoin/src/ui/atoms/quoin_avatar.dart';
+import 'package:quoin/src/ui/molecules/icon_tile.dart';
 import 'package:quoin/src/ui/atoms/quoin_card.dart';
 import 'package:quoin/src/ui/atoms/quoin_icon.dart';
 
-/// The wizard's progress: one segment per step, the done ones in accent.
 class ImportProgress extends StatelessWidget {
   const ImportProgress({super.key, required this.step, required this.total});
 
@@ -25,7 +26,7 @@ class ImportProgress extends StatelessWidget {
     return Semantics(
       label: AppLocalizations.of(context).quoinStepOf(step, total),
       child: Row(
-        spacing: 6,
+        spacing: QuoinSpace.tight,
         children: [
           for (var i = 1; i <= total; i += 1)
             Expanded(
@@ -33,7 +34,7 @@ class ImportProgress extends StatelessWidget {
                 duration: MediaQuery.disableAnimationsOf(context)
                     ? Duration.zero
                     : const Duration(milliseconds: 200),
-                height: 4,
+                height: QuoinSpace.xs,
                 decoration: ShapeDecoration(
                   color: i <= step ? c.accent : c.border,
                   shape: const StadiumBorder(),
@@ -66,20 +67,20 @@ class ImportHelpStep extends StatelessWidget {
           style: type.secondary.copyWith(color: c.muted),
         ),
         const SizedBox(height: QuoinSpace.row),
-        for (final (letter, name, how) in [
-          ('T', l10n.brokerTradeRepublic, l10n.importHelpTradeRepublic),
-          ('K', l10n.brokerKraken, l10n.importHelpKraken),
+        for (final (name, how) in [
+          (l10n.brokerTradeRepublic, l10n.importHelpTradeRepublic),
+          (l10n.brokerKraken, l10n.importHelpKraken),
         ])
           QuoinCard(
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
-              spacing: 12,
+              spacing: QuoinSpace.m,
               children: [
-                _LetterTile(letter),
+                QuoinAvatar(name),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    spacing: 2,
+                    spacing: QuoinSpace.xxs,
                     children: [
                       Text(name, style: type.row),
                       Text(how, style: type.secondary.copyWith(color: c.muted)),
@@ -121,11 +122,18 @@ class ImportSelectStep extends StatelessWidget {
         if (picked == null)
           QuoinCard(
             onTap: onPick,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 32),
+            padding: const EdgeInsets.symmetric(
+              horizontal: QuoinSpace.card,
+              vertical: QuoinSpace.block,
+            ),
             child: Column(
-              spacing: 8,
+              spacing: QuoinSpace.s,
               children: [
-                QuoinIcon(QuoinIcons.upload, size: 24, color: c.accent),
+                QuoinIcon(
+                  QuoinIcons.upload,
+                  size: QuoinIconSize.large,
+                  color: c.accent,
+                ),
                 Text(
                   l10n.importSelectAction,
                   textAlign: TextAlign.center,
@@ -142,13 +150,17 @@ class ImportSelectStep extends StatelessWidget {
         else
           QuoinCard(
             child: Row(
-              spacing: 12,
+              spacing: QuoinSpace.m,
               children: [
-                QuoinIcon(QuoinIcons.csvFile, size: 22, color: c.accent),
+                QuoinIcon(
+                  QuoinIcons.csvFile,
+                  size: QuoinIconSize.large,
+                  color: c.accent,
+                ),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    spacing: 2,
+                    spacing: QuoinSpace.xxs,
                     children: [
                       Text(picked.name, style: type.row),
                       Text(
@@ -179,9 +191,9 @@ class ImportBusyStep extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = QuoinColors.of(context);
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 64),
+      padding: const EdgeInsets.symmetric(vertical: QuoinSpace.hero),
       child: Column(
-        spacing: 16,
+        spacing: QuoinSpace.card,
         children: [
           CircularProgressIndicator(color: c.accent, strokeWidth: 2.5),
           Text(
@@ -288,7 +300,7 @@ class _ImportReviewStepState extends State<ImportReviewStep> {
                   child: Padding(
                     padding: const EdgeInsets.all(QuoinSpace.card),
                     child: Row(
-                      spacing: 8,
+                      spacing: QuoinSpace.s,
                       children: [
                         Expanded(
                           child: Text(l10n.importSeeDetail, style: type.row),
@@ -304,7 +316,7 @@ class _ImportReviewStepState extends State<ImportReviewStep> {
                               : const Duration(milliseconds: 150),
                           child: QuoinIcon(
                             QuoinIcons.chevronDown,
-                            size: 16,
+                            size: QuoinIconSize.small,
                             color: c.faint,
                           ),
                         ),
@@ -317,8 +329,11 @@ class _ImportReviewStepState extends State<ImportReviewStep> {
                     _DetailRow(
                       title:
                           names[event.instrumentId] ?? _typeLabel(l10n, event),
-                      subtitle:
-                          '${format.date(event.ts, preview.zone)} · ${_typeLabel(l10n, event)}',
+                      date: format.date(event.ts, preview.zone),
+                      subtitle: [
+                        if (names.containsKey(event.instrumentId))
+                          _typeLabel(l10n, event),
+                      ],
                       amount: _amount(format, event),
                     ),
               ],
@@ -334,11 +349,14 @@ class _ImportReviewStepState extends State<ImportReviewStep> {
                 _DetailRow(
                   title:
                       row.externalId ?? l10n.importRowNumber(row.position ?? 0),
+                  date: switch (row.date) {
+                    final text? => date(text),
+                    null => null,
+                  },
                   subtitle: [
-                    if (row.date case final text?) date(text),
                     if (row.type case final code?) typeOf(code),
                     rowErrorLabel(l10n, reason.code),
-                  ].join(' · '),
+                  ],
                   others: sameOperation([
                     for (final other in rows) (other.row.date, other.row.type),
                   ]),
@@ -359,13 +377,13 @@ class _ImportReviewStepState extends State<ImportReviewStep> {
                   in batch.discardedDetails[reason] ?? const <DiscardDetail>[])
                 _DetailRow(
                   title: detail.instrument ?? typeOf(detail.type),
+                  date: date(detail.date),
                   subtitle: [
-                    date(detail.date),
-                    typeOf(detail.type),
+                    if (detail.instrument != null) typeOf(detail.type),
                     ?detail.subtype,
                     if (detail.unpriced case final ids? when ids.isNotEmpty)
                       l10n.importUnpriced(ids.join(', ')),
-                  ].join(' · '),
+                  ],
                   others: sameOperation([
                     for (final other in detail.rows) (other.date, other.type),
                   ]),
@@ -382,11 +400,11 @@ class _ImportReviewStepState extends State<ImportReviewStep> {
               for (final detail in details)
                 _DetailRow(
                   title: detail.instrument ?? typeOf(detail.type),
+                  date: date(detail.date),
                   subtitle: [
-                    date(detail.date),
-                    typeOf(detail.type),
+                    if (detail.instrument != null) typeOf(detail.type),
                     ?detail.subtype,
-                  ].join(' · '),
+                  ],
                 ),
             ],
           ),
@@ -451,12 +469,16 @@ class _Group extends StatelessWidget {
             padding: const EdgeInsets.all(QuoinSpace.card),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
-              spacing: 6,
+              spacing: QuoinSpace.tight,
               children: [
                 Row(
-                  spacing: 8,
+                  spacing: QuoinSpace.s,
                   children: [
-                    QuoinIcon(QuoinIcons.alert, size: 16, color: c.muted),
+                    QuoinIcon(
+                      QuoinIcons.alert,
+                      size: QuoinIconSize.small,
+                      color: c.muted,
+                    ),
                     Expanded(child: Text(title, style: type.row)),
                     Text(
                       '$count',
@@ -490,20 +512,11 @@ class ImportDoneStep extends StatelessWidget {
     final c = QuoinColors.of(context);
     final type = QuoinType.of(context);
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 48),
+      padding: const EdgeInsets.symmetric(vertical: QuoinSpace.hero),
       child: Column(
-        spacing: 12,
+        spacing: QuoinSpace.m,
         children: [
-          Container(
-            width: 64,
-            height: 64,
-            alignment: Alignment.center,
-            decoration: ShapeDecoration(
-              color: c.positive.withValues(alpha: 0.12),
-              shape: const CircleBorder(),
-            ),
-            child: QuoinIcon(QuoinIcons.check, size: 32, color: c.positive),
-          ),
+          IconTile(icon: QuoinIcons.check, signal: c.positive),
           Text(
             l10n.importDoneTitle,
             textAlign: TextAlign.center,
@@ -529,12 +542,16 @@ Future<bool> showImportFailure(BuildContext context, Failure failure) async {
   final retry = await showDialog<bool>(
     context: context,
     builder: (dialog) => AlertDialog(
-      icon: QuoinIcon(QuoinIcons.alert, size: 36, color: c.negative),
+      icon: QuoinIcon(
+        QuoinIcons.alert,
+        size: QuoinIconSize.feature,
+        color: c.negative,
+      ),
       title: Text(l10n.importErrorTitle, textAlign: TextAlign.center),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          spacing: 8,
+          spacing: QuoinSpace.s,
           children: [
             Text(
               failureText(context, failure),
@@ -695,32 +712,6 @@ class _StepTitle extends StatelessWidget {
   );
 }
 
-class _LetterTile extends StatelessWidget {
-  const _LetterTile(this.letter);
-
-  final String letter;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = QuoinColors.of(context);
-    return ExcludeSemantics(
-      child: Container(
-        width: 40,
-        height: 40,
-        alignment: Alignment.center,
-        decoration: ShapeDecoration(
-          color: c.accent.withValues(alpha: 0.15),
-          shape: const CircleBorder(),
-        ),
-        child: Text(
-          letter,
-          style: QuoinType.of(context).row.copyWith(color: c.accent),
-        ),
-      ),
-    );
-  }
-}
-
 class _Count extends StatelessWidget {
   const _Count(this.figure, this.label, {required this.color});
 
@@ -734,9 +725,12 @@ class _Count extends StatelessWidget {
     final type = QuoinType.of(context);
     return Expanded(
       child: QuoinCard(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 14),
+        padding: const EdgeInsets.symmetric(
+          horizontal: QuoinSpace.s,
+          vertical: QuoinSpace.m,
+        ),
         child: Column(
-          spacing: 4,
+          spacing: QuoinSpace.xs,
           children: [
             // Scaling exception: a row figure shrinks to one line.
             FittedBox(
@@ -763,12 +757,14 @@ class _DetailRow extends StatelessWidget {
   const _DetailRow({
     required this.title,
     required this.subtitle,
+    this.date,
     this.amount,
     this.others = const [],
   });
 
   final String title;
-  final String subtitle;
+  final String? date;
+  final List<String> subtitle;
   final String? amount;
 
   /// The other rows of the same operation, nested under its main row.
@@ -788,18 +784,34 @@ class _DetailRow extends StatelessWidget {
           vertical: QuoinSpace.row,
         ),
         child: Row(
-          spacing: 12,
+          spacing: QuoinSpace.m,
           children: [
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                spacing: 2,
+                spacing: QuoinSpace.xxs,
                 children: [
                   Text(title, style: type.control),
-                  Text(subtitle, style: type.small.copyWith(color: c.muted)),
+                  Text.rich(
+                    TextSpan(
+                      children: [
+                        if (date case final date?)
+                          TextSpan(text: date, style: type.small.mono),
+                        TextSpan(
+                          text: [
+                            if (date != null && subtitle.isNotEmpty) '',
+                            ...subtitle,
+                          ].join(' · '),
+                        ),
+                      ],
+                    ),
+                    style: type.small.copyWith(color: c.muted),
+                  ),
                   for (final other in others)
                     Padding(
-                      padding: const EdgeInsetsDirectional.only(start: 12),
+                      padding: const EdgeInsetsDirectional.only(
+                        start: QuoinSpace.m,
+                      ),
                       child: Text(
                         other,
                         style: type.small.copyWith(color: c.faint),

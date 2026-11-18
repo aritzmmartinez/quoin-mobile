@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:quoin_core/quoin_core.dart';
 
 import 'package:quoin/src/core/l10n/gen/app_localizations.dart';
+import 'package:quoin/src/core/l10n/quoin_format.dart';
 import 'package:quoin/src/core/theme/quoin_colors.dart';
+import 'package:quoin/src/core/theme/quoin_tokens.dart';
 import 'package:quoin/src/core/theme/quoin_type.dart';
-import 'package:quoin/src/features/portfolio/presentation/widgets/portfolio_view.dart';
 import 'package:quoin/src/features/sync/domain/entities/sync_outcome.dart';
 import 'package:quoin/src/ui/atoms/quoin_card.dart';
+import 'package:quoin/src/ui/atoms/quoin_section_label.dart';
 
 class SyncDetailView extends StatelessWidget {
   const SyncDetailView({
@@ -26,8 +27,7 @@ class SyncDetailView extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final type = QuoinType.of(context);
     final c = QuoinColors.of(context);
-    Widget title(String text) =>
-        Text(text, style: type.row.copyWith(fontWeight: FontWeight.w600));
+    Widget title(String text) => Text(text, style: type.rowStrong);
     Widget line(String text) =>
         Text(text, style: type.secondary.copyWith(color: c.body));
     List<Widget> names(String heading, Cut<String> cut) => [
@@ -74,7 +74,7 @@ class SyncDetailView extends StatelessWidget {
         QuoinCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            spacing: 6,
+            spacing: QuoinSpace.tight,
             children: parts.isEmpty
                 ? [Text(empty ?? l10n.syncNothing, style: type.row)]
                 : parts,
@@ -95,7 +95,7 @@ class SyncDetailView extends StatelessWidget {
       ResolvedKind.residence => l10n.syncFieldResidence,
       ResolvedKind.target => '${l10n.syncConflictTarget} · ${r.subject}',
       ResolvedKind.targetDay => l10n.syncConflictTargetDay(
-        _day(context, r.subject),
+        QuoinFormat.of(context).day(CalendarDate.parse(r.subject)),
       ),
       ResolvedKind.holdings => l10n.syncConflictHoldings(r.subject),
     };
@@ -121,27 +121,37 @@ class SetAsideView extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        sectionLabel(context, l10n.syncSetAsideTitle),
+        QuoinSectionLabel(l10n.syncSetAsideTitle),
         Text(
           l10n.syncSetAsideHint,
           style: type.secondary.copyWith(color: c.muted),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: QuoinSpace.s),
         QuoinCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            spacing: 8,
+            spacing: QuoinSpace.s,
             children: [
               for (final row in rows.items)
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      [
-                        _day(context, row.ts),
-                        ledgerTypeLabel(l10n, row.type),
-                        ?row.instrument,
-                      ].join(' · '),
+                    Text.rich(
+                      TextSpan(
+                        children: [
+                          TextSpan(
+                            text: _instantDay(context, row.ts),
+                            style: type.row.mono,
+                          ),
+                          TextSpan(
+                            text: [
+                              '',
+                              ledgerTypeLabel(l10n, row.type),
+                              ?row.instrument,
+                            ].join(' · '),
+                          ),
+                        ],
+                      ),
                       style: type.row,
                     ),
                     Text(
@@ -174,9 +184,9 @@ List<Widget> syncDetailSections(
     if (upToDate)
       SyncDetailView(detail: toPhone, empty: l10n.syncUpToDate)
     else ...[
-      sectionLabel(context, l10n.syncToPhone),
+      QuoinSectionLabel(l10n.syncToPhone),
       SyncDetailView(detail: toPhone),
-      sectionLabel(context, l10n.syncToPc),
+      QuoinSectionLabel(l10n.syncToPc),
       SyncDetailView(detail: toPc, setAside: false),
     ],
   ];
@@ -260,9 +270,8 @@ String _column(AppLocalizations l10n, String column) => switch (column) {
   _ => l10n.syncColumnOther,
 };
 
-String _day(BuildContext context, String text) {
-  final at = DateTime.tryParse(text);
-  if (at == null) return text;
-  final locale = Localizations.localeOf(context).toLanguageTag();
-  return DateFormat.yMMMd(locale).format(at.toLocal());
+/// This view has no residence, so a row's day is read on the phone's clock.
+String _instantDay(BuildContext context, String ts) {
+  final at = DateTime.parse(ts).toLocal();
+  return QuoinFormat.of(context).day(CalendarDate(at.year, at.month, at.day));
 }

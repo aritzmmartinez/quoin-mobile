@@ -11,6 +11,7 @@ import 'package:quoin/src/features/portfolio/presentation/pages/instrument_page.
 import 'package:quoin/src/features/portfolio/presentation/pages/movements_page.dart';
 import 'package:quoin/src/features/portfolio/presentation/pages/portfolio_page.dart';
 import 'package:quoin/src/features/settings/presentation/pages/component_gallery_page.dart';
+import 'package:quoin/src/features/settings/presentation/pages/licenses_page.dart';
 import 'package:quoin/src/features/settings/presentation/pages/settings_page.dart';
 import 'package:quoin/src/features/sync/presentation/pages/pair_page.dart';
 import 'package:quoin/src/features/sync/presentation/pages/sync_page.dart';
@@ -27,6 +28,10 @@ abstract final class Routes {
   static const pair = '/pair';
   static const repair = '/pair?repair=1';
   static const sync = '/sync';
+  static const licenses = '/licenses';
+
+  static String license(String package) =>
+      '$licenses/${Uri.encodeComponent(package)}';
 
   static String instrument(String id) =>
       '/instrument/${Uri.encodeComponent(id)}';
@@ -43,13 +48,16 @@ final routerProvider = Provider<GoRouter>((ref) {
   final router = GoRouter(
     initialLocation: Routes.home,
     routes: [
-      StatefulShellRoute.indexedStack(
-        builder: (context, state, shell) => AppShell(shell: shell),
+      StatefulShellRoute(
+        builder: (context, state, shell) => shell,
+        navigatorContainerBuilder: (context, shell, branches) =>
+            AppShell(shell: shell, branches: branches),
         branches: [
           _branch(Routes.home, const HomePage()),
           _branch(Routes.portfolio, const PortfolioPage()),
           _branch(Routes.analysis, const AnalysisPage()),
           StatefulShellBranch(
+            preload: true,
             routes: [
               GoRoute(
                 path: Routes.settings,
@@ -98,6 +106,20 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const Scaffold(body: SyncPage()),
       ),
       GoRoute(
+        path: Routes.licenses,
+        builder: (context, state) => const Scaffold(body: LicensesPage()),
+        routes: [
+          GoRoute(
+            path: ':package',
+            builder: (context, state) => Scaffold(
+              body: LicensePackagePage(
+                package: state.pathParameters['package']!,
+              ),
+            ),
+          ),
+        ],
+      ),
+      GoRoute(
         path: Routes.import,
         pageBuilder: (context, state) => MaterialPage(
           fullscreenDialog: true,
@@ -112,6 +134,9 @@ final routerProvider = Provider<GoRouter>((ref) {
   return router;
 });
 
+// Preloaded: a tab swiped into for the first time is already there under
+// the finger, not blank until it settles.
 StatefulShellBranch _branch(String path, Widget screen) => StatefulShellBranch(
+  preload: true,
   routes: [GoRoute(path: path, builder: (context, state) => screen)],
 );

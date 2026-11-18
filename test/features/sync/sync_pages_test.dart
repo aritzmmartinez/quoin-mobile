@@ -13,6 +13,7 @@ import 'package:http/testing.dart';
 import 'package:quoin/src/features/sync/data/datasources/pc_finder_datasource.dart';
 import 'package:quoin/src/features/sync/data/datasources/sync_remote_datasource.dart';
 import 'package:quoin/src/features/sync/domain/usecases/pull_prices.dart';
+import 'package:quoin/src/features/sync/presentation/pages/sync_page.dart';
 import 'package:quoin/src/features/sync/presentation/providers/sync_providers.dart';
 import 'package:quoin/src/ui/molecules/settings_row.dart';
 import 'package:quoin/src/ui/organisms/quoin_bottom_bar.dart';
@@ -212,7 +213,7 @@ void main() {
     );
   });
 
-  testWidgets('a conflict is settled by choosing a side', (tester) async {
+  Future<void> makeConflict(WidgetTester tester) async {
     await open(tester);
     await pairFromSettings(tester);
     await tester.tap(find.text('Sincronizar'));
@@ -254,6 +255,38 @@ void main() {
       lastHlc: '001761600200000-0000-dev-pc',
     );
     expect(fund.ter, isNull);
+  }
+
+  testWidgets('a pull that finds a conflict says so, and Revisar opens it', (
+    tester,
+  ) async {
+    await makeConflict(tester);
+    await tester.tap(
+      find.descendant(
+        of: find.byType(QuoinBottomBar),
+        matching: find.text('Cartera'),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.fling(verticalLists.first, const Offset(0, 400), 1000);
+    final toast = find.text('Tu PC tiene cambios por revisar');
+    for (var i = 0; i < 300 && toast.evaluate().isEmpty; i++) {
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 10)),
+      );
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(toast, findsOneWidget);
+    await tester.tap(find.text('Revisar'));
+    await settle(tester);
+    expect(find.byType(SyncPage), findsOneWidget);
+    expect(toast, findsNothing);
+  });
+
+  testWidgets('a conflict is settled by choosing a side', (tester) async {
+    await makeConflict(tester);
 
     await tapVisible(tester, find.text('Sincronizar ahora'));
     expect(find.text('TER'), findsOneWidget);

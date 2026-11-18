@@ -7,20 +7,20 @@ import 'package:quoin/src/app/router.dart';
 import 'package:quoin/src/core/error/failures.dart';
 import 'package:quoin/src/core/error/result.dart';
 import 'package:quoin/src/core/l10n/gen/app_localizations.dart';
-import 'package:quoin/src/core/theme/quoin_colors.dart';
+import 'package:quoin/src/core/theme/quoin_icons.dart';
 import 'package:quoin/src/core/theme/quoin_tokens.dart';
 import 'package:quoin/src/core/theme/quoin_type.dart';
-import 'package:quoin/src/features/portfolio/presentation/widgets/portfolio_view.dart';
 import 'package:quoin/src/features/sync/domain/entities/effect_outcome.dart';
 import 'package:quoin/src/features/sync/domain/entities/sync_outcome.dart';
 import 'package:quoin/src/features/sync/domain/usecases/sync_now.dart';
 import 'package:quoin/src/features/sync/presentation/providers/sync_providers.dart';
+import 'package:quoin/src/features/sync/presentation/widgets/conflict_card.dart';
 import 'package:quoin/src/features/sync/presentation/widgets/sync_detail_view.dart';
 import 'package:quoin/src/features/sync/presentation/widgets/sync_failure_text.dart';
 import 'package:quoin/src/ui/atoms/quoin_card.dart';
 import 'package:quoin/src/ui/molecules/empty_state.dart';
-import 'package:quoin/src/ui/molecules/quoin_segmented.dart';
 import 'package:quoin/src/ui/templates/quoin_page.dart';
+import 'package:quoin/src/ui/atoms/quoin_section_label.dart';
 
 class SyncPage extends ConsumerStatefulWidget {
   const SyncPage({super.key});
@@ -102,7 +102,7 @@ class _SyncPageState extends ConsumerState<SyncPage> {
         body: Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
-            spacing: 16,
+            spacing: QuoinSpace.card,
             children: [
               const CircularProgressIndicator(),
               Text(
@@ -127,8 +127,7 @@ class _SyncPageState extends ConsumerState<SyncPage> {
           title: title,
           children: [
             if (_waitingAtMost > 1)
-              sectionLabel(
-                context,
+              QuoinSectionLabel(
                 l10n.syncPcStep(
                   pc.pairing.pcName,
                   '${_waitingAtMost - pass.waiting.length + 1}',
@@ -136,7 +135,7 @@ class _SyncPageState extends ConsumerState<SyncPage> {
                 ),
               )
             else
-              sectionLabel(context, pc.pairing.pcName),
+              QuoinSectionLabel(pc.pairing.pcName),
             ..._waiting(context, pc),
           ],
         ),
@@ -160,7 +159,10 @@ class _SyncPageState extends ConsumerState<SyncPage> {
     return QuoinPage(
       title: l10n.settingsSync,
       body: EmptyState(
-        message: syncFailureDetail(l10n, failure),
+        icon: QuoinIcons.alert,
+        title: l10n.syncFailedTitle,
+        body: syncFailureDetail(l10n, failure),
+        negative: true,
         actionLabel: switch (failure) {
           PcUnreachableFailure() ||
           PcNotFoundOnNetworkFailure() => l10n.syncRescan,
@@ -184,9 +186,9 @@ class _SyncPageState extends ConsumerState<SyncPage> {
     return switch (pc.result) {
       Ok(value: SyncPreview(:final toPhone, :final toPc)) => [
         Text(l10n.syncPreviewIntro, style: type.row),
-        sectionLabel(context, l10n.syncToPhone),
+        QuoinSectionLabel(l10n.syncToPhone),
         SyncDetailView(detail: toPhone),
-        sectionLabel(context, l10n.syncToPc),
+        QuoinSectionLabel(l10n.syncToPc),
         SyncDetailView(detail: toPc, setAside: false),
         const SizedBox(height: QuoinSpace.gutter),
         FilledButton(
@@ -207,8 +209,8 @@ class _SyncPageState extends ConsumerState<SyncPage> {
         [
           Text(l10n.syncConflictsIntro, style: type.row),
           for (final conflict in conflicts) ...[
-            const SizedBox(height: 12),
-            _ConflictCard(
+            const SizedBox(height: QuoinSpace.m),
+            ConflictCard(
               conflict: conflict,
               names: instrumentNames,
               choice: _choices[sha]?[conflictKey(conflict)],
@@ -234,14 +236,14 @@ class _SyncPageState extends ConsumerState<SyncPage> {
           l10n.syncSameIdentityTitle(pc.pairing.pcName, question.other.pcName),
           style: type.row,
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: QuoinSpace.m),
         Text(l10n.syncSameIdentityQuestion, style: type.row),
         const SizedBox(height: QuoinSpace.gutter),
         FilledButton(
           onPressed: () => _answer(sha, question, samePc: true),
           child: Text(l10n.syncSamePc),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: QuoinSpace.s),
         OutlinedButton(
           onPressed: () => _answer(sha, question, samePc: false),
           child: Text(l10n.syncOtherPc),
@@ -272,7 +274,7 @@ class _SyncPageState extends ConsumerState<SyncPage> {
       if (rates.isNotEmpty)
         _Notice(text: l10n.syncRatesUnavailable(rates.join(', '))),
       for (final pc in pass.pcs) ...[
-        sectionLabel(context, pc.pairing.pcName),
+        QuoinSectionLabel(pc.pairing.pcName),
         ...switch (pc.result) {
           Ok(value: SyncDone(:final toPhone, :final toPc)) =>
             syncDetailSections(context, toPhone: toPhone, toPc: toPc),
@@ -288,90 +290,6 @@ class _SyncPageState extends ConsumerState<SyncPage> {
   }
 }
 
-class _ConflictCard extends StatelessWidget {
-  const _ConflictCard({
-    required this.conflict,
-    required this.names,
-    required this.choice,
-    required this.onChanged,
-  });
-
-  final Conflict conflict;
-  final Map<String, String> names;
-  final Resolution? choice;
-  final ValueChanged<Resolution> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final type = QuoinType.of(context);
-    final c = QuoinColors.of(context);
-    String shown(Object? value) => value == null || value == ''
-        ? l10n.syncEmptyValue
-        : value is bool
-        ? (value ? l10n.syncYes : l10n.syncNo)
-        : '$value';
-    final (title, subject, phone, pc) = switch (conflict) {
-      FieldConflict(entity: 'settings', :final local, :final incoming) => (
-        l10n.syncFieldResidence,
-        null,
-        shown(local),
-        shown(incoming),
-      ),
-      FieldConflict(:final key, :final field, :final local, :final incoming) =>
-        (_field(l10n, field), names[key], shown(local), shown(incoming)),
-      TargetConflict() => (l10n.syncConflictTarget, null, null, null),
-      TargetDayConflict(:final day) => (
-        l10n.syncConflictTargetDay(day),
-        null,
-        null,
-        null,
-      ),
-      HoldingsConflict(:final instrumentId) => (
-        l10n.syncConflictHoldings(names[instrumentId] ?? ''),
-        null,
-        null,
-        null,
-      ),
-    };
-    return QuoinCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        spacing: 8,
-        children: [
-          Text(title, style: type.row.copyWith(fontWeight: FontWeight.w600)),
-          if (subject != null)
-            Text(subject, style: type.secondary.copyWith(color: c.muted)),
-          if (phone != null && pc != null) ...[
-            Text(
-              '${l10n.syncKeepPhone}: $phone',
-              style: type.secondary.copyWith(color: c.body),
-            ),
-            Text(
-              '${l10n.syncTakePc}: $pc',
-              style: type.secondary.copyWith(color: c.body),
-            ),
-          ],
-          QuoinSegmented<Resolution?>(
-            segments: [
-              (Resolution.keep, l10n.syncKeepPhone),
-              (Resolution.take, l10n.syncTakePc),
-            ],
-            selected: choice,
-            onChanged: (value) => onChanged(value!),
-          ),
-        ],
-      ),
-    );
-  }
-
-  static String _field(AppLocalizations l10n, String field) =>
-      switch (DetailField.values.asNameMap()[field]) {
-        final known? => detailFieldLabel(l10n, known),
-        null => field,
-      };
-}
-
 class _Notice extends StatelessWidget {
   const _Notice({required this.text});
 
@@ -379,7 +297,7 @@ class _Notice extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(top: 12),
+    padding: const EdgeInsets.only(top: QuoinSpace.m),
     child: QuoinCard(child: Text(text, style: QuoinType.of(context).row)),
   );
 }
