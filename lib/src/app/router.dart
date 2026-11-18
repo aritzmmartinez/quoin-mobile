@@ -24,6 +24,10 @@ abstract final class Routes {
   static const settings = '/settings';
   static const import = '/import';
   static const realized = '/realized';
+  static final realizedTax = Uri(
+    path: realized,
+    queryParameters: {'view': 'tax'},
+  ).toString();
   static const movements = '/movements';
   static const pair = '/pair';
   static const repair = '/pair?repair=1';
@@ -90,7 +94,9 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: Routes.realized,
-        builder: (context, state) => const Scaffold(body: RealizedPage()),
+        builder: (context, state) => Scaffold(
+          body: RealizedPage(tax: state.uri.queryParameters['view'] == 'tax'),
+        ),
       ),
       GoRoute(
         path: Routes.pair,

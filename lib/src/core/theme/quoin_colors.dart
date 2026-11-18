@@ -21,6 +21,7 @@ class QuoinColors extends ThemeExtension<QuoinColors> {
     required this.dn3,
     required this.dn4,
     required this.dn5,
+    required this.iconTile,
   });
 
   static const dark = QuoinColors(
@@ -42,6 +43,7 @@ class QuoinColors extends ThemeExtension<QuoinColors> {
     dn3: Color(0xFF69696C),
     dn4: Color(0xFF4A4A4D),
     dn5: Color(0xFF26262A),
+    iconTile: Color(0xFF1A1A1E),
   );
 
   static const light = QuoinColors(
@@ -63,6 +65,7 @@ class QuoinColors extends ThemeExtension<QuoinColors> {
     dn3: Color(0xFFA2A2A2),
     dn4: Color(0xFFC4C4C4),
     dn5: Color(0xFFE3E3E8),
+    iconTile: Color(0xFFE3E3E8),
   );
 
   final Color bg;
@@ -83,10 +86,11 @@ class QuoinColors extends ThemeExtension<QuoinColors> {
   final Color dn3;
   final Color dn4;
   final Color dn5;
+  final Color iconTile;
 
-  Color get accentTint => accent.withValues(alpha: 0.12);
   Color get pressed => text.withValues(alpha: 0.06);
   Color get selected => text.withValues(alpha: 0.08);
+  Color get rim => text.withValues(alpha: 0.10);
   Color fillOf(Color signal) => signal.withValues(alpha: 0.08);
   Color edgeOf(Color signal) => signal.withValues(alpha: 0.25);
 
@@ -117,6 +121,7 @@ class QuoinColors extends ThemeExtension<QuoinColors> {
     Color? dn3,
     Color? dn4,
     Color? dn5,
+    Color? iconTile,
   }) {
     return QuoinColors(
       bg: bg ?? this.bg,
@@ -137,6 +142,7 @@ class QuoinColors extends ThemeExtension<QuoinColors> {
       dn3: dn3 ?? this.dn3,
       dn4: dn4 ?? this.dn4,
       dn5: dn5 ?? this.dn5,
+      iconTile: iconTile ?? this.iconTile,
     );
   }
 
@@ -163,6 +169,7 @@ class QuoinColors extends ThemeExtension<QuoinColors> {
       dn3: l(dn3, other.dn3),
       dn4: l(dn4, other.dn4),
       dn5: l(dn5, other.dn5),
+      iconTile: l(iconTile, other.iconTile),
     );
   }
 }

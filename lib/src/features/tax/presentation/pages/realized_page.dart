@@ -22,7 +22,9 @@ import 'package:quoin/src/ui/templates/quoin_page.dart';
 import 'package:quoin/src/ui/atoms/quoin_section_label.dart';
 
 class RealizedPage extends ConsumerStatefulWidget {
-  const RealizedPage({super.key});
+  const RealizedPage({super.key, this.tax = false});
+
+  final bool tax;
 
   @override
   ConsumerState<RealizedPage> createState() => _RealizedPageState();
@@ -42,6 +44,7 @@ class _RealizedPageState extends ConsumerState<RealizedPage> {
           ? QuoinPage(
               title: l10n.realizedTitle,
               body: QuoinSegmentedPages(
+                initialIndex: widget.tax ? 1 : 0,
                 segments: [
                   (0, l10n.realizedTabSales),
                   (1, l10n.realizedTabTax),

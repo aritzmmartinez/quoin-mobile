@@ -64,6 +64,16 @@ class QuoinFormat {
     );
   }
 
+  ({String text, int sign}) gainLine(Money amount, Dec? fraction) {
+    final money = signedMoney(amount);
+    return (
+      text: fraction == null
+          ? money.text
+          : '${money.text} · ${percent(fraction, signed: true)}',
+      sign: money.sign,
+    );
+  }
+
   String percent(
     Dec fraction, {
     int decimals = 1,

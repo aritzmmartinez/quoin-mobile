@@ -9,9 +9,10 @@ import 'package:quoin/src/features/portfolio/data/database/quoin_database.dart';
 /// the screens: categories, a position in dollars, a crypto swap, a closed
 /// position, one with no price and one with no category; for Realizado, a
 /// loss a year earlier that carries forward, a loss repurchased within two
-/// months and rewards received in kind. It stores no
-/// exchange rates (only the ECB's are ever stored), so its dollar position is
-/// shown without a value until an import fetches the series.
+/// months and rewards received in kind; every instrument icon, a crypto ETP
+/// among them. It stores no exchange rates (only the ECB's are ever stored),
+/// so its dollar position is shown without a value until an import fetches
+/// the series.
 class SamplePortfolio {
   SamplePortfolio(DateTime now) : _now = now.toUtc();
 
@@ -29,6 +30,7 @@ class SamplePortfolio {
     _instrument(_property, 'Inmobiliario Europa', 'ETF', null),
     _instrument(_health, 'Salud Mundial', 'ETF', 'EQUITY_FUND'),
     _instrument(_industrial, 'Ejemplo Industrial S.A.', 'STOCK', 'COMPANY'),
+    _instrument(_cryptoEtp, 'Cripto Ejemplo ETP Físico', 'ETF', 'CRYPTO'),
   ];
 
   late final entries = [
@@ -60,6 +62,7 @@ class SamplePortfolio {
     _trade('SELL', _emerging, 100, '8', '280', fees: '1'),
     _trade('BUY', _emerging, 70, '5', '190', fees: '1'),
     ..._reward(_coin, 40, '0.0057', '25'),
+    _trade('BUY', _cryptoEtp, 210, '30', '660', fees: '1'),
   ];
 
   late final prices = [
@@ -70,6 +73,7 @@ class SamplePortfolio {
     _price(_coin, '4380'),
     _price(_token, '3.42'),
     _price(_property, '23.70'),
+    _price(_cryptoEtp, '24.80'),
   ];
 
   static const _zone = 'Europe/Madrid';
@@ -78,6 +82,7 @@ class SamplePortfolio {
   static const _gold = 'XS00QSAMPLE3';
   static const _tech = 'US00QSAMPLE4';
   static const _coin = 'QSAMPLECOIN';
+  static const _cryptoEtp = 'GB00QSAMPLE11';
   static const _token = 'QSAMPLETOKEN';
   static const _emerging = 'IE00QSAMPLE7';
   static const _property = 'IE00QSAMPLE8';

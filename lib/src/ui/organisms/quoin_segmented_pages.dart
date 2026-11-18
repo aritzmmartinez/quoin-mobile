@@ -11,11 +11,13 @@ class QuoinSegmentedPages<T> extends StatefulWidget {
     required this.segments,
     required this.pages,
     this.padding = const EdgeInsets.symmetric(horizontal: QuoinSpace.gutter),
+    this.initialIndex = 0,
   }) : assert(segments.length == pages.length);
 
   final List<(T, String)> segments;
   final List<List<Widget>> pages;
   final EdgeInsets padding;
+  final int initialIndex;
 
   @override
   State<QuoinSegmentedPages<T>> createState() => _QuoinSegmentedPagesState<T>();
@@ -24,15 +26,17 @@ class QuoinSegmentedPages<T> extends StatefulWidget {
 class _QuoinSegmentedPagesState<T> extends State<QuoinSegmentedPages<T>> {
   static const _duration = Duration(milliseconds: 240);
 
-  final _pages = PageController();
-  final _position = ValueNotifier(0.0);
-  var _index = 0;
+  late final _pages = PageController(initialPage: widget.initialIndex);
+  late final _position = ValueNotifier(widget.initialIndex.toDouble());
+  late var _index = widget.initialIndex;
   var _swipe = 0.0;
 
   @override
   void initState() {
     super.initState();
-    _pages.addListener(() => _position.value = _pages.page ?? 0);
+    _pages.addListener(
+      () => _position.value = _pages.page ?? _index.toDouble(),
+    );
   }
 
   @override

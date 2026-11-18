@@ -13,17 +13,27 @@ import 'package:quoin/src/core/theme/quoin_colors.dart';
 class QuoinGlassLayer extends StatelessWidget {
   const QuoinGlassLayer({super.key, required this.child});
 
-  final Widget child;
+  /// How much of the tint covers the backdrop. Nearly opaque on purpose: the
+  /// bar reads as a solid surface and the glass only shows at the rim.
+  static const tintOpacity = 0.82;
 
-  static final _light = LiquidGlassSettings.ios27Light.copyWith(rimShade: 0);
+  final Widget child;
 
   @override
   Widget build(BuildContext context) {
+    final c = QuoinColors.of(context);
     final dark = Theme.of(context).brightness == Brightness.dark;
+    final settings = dark
+        ? LiquidGlassSettings.ios27Dark
+        : LiquidGlassSettings.ios27Light.copyWith(rimShade: 0);
     return AdaptiveLiquidGlassLayer(
       quality: GlassQuality.premium,
       blendAmount: 0,
-      settings: dark ? LiquidGlassSettings.ios27Dark : _light,
+      settings: settings.copyWith(
+        glassColor: (dark ? c.border : c.surface).withValues(
+          alpha: tintOpacity,
+        ),
+      ),
       child: child,
     );
   }
@@ -44,23 +54,46 @@ class QuoinBarSurface extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final glass = GlassContainer(
-      quality: GlassQuality.premium,
-      height: height,
-      width: _circle ? height : null,
-      shape: const LiquidRoundedSuperellipse(borderRadius: height / 2),
-      child: child,
-    );
-    if (Theme.of(context).brightness == Brightness.dark) return glass;
-    return DecoratedBox(
-      position: DecorationPosition.foreground,
-      decoration: ShapeDecoration(
-        shape: RoundedSuperellipseBorder(
-          borderRadius: const BorderRadius.all(Radius.circular(height / 2)),
-          side: BorderSide(color: QuoinColors.of(context).borderSubtle),
-        ),
+    return CustomPaint(
+      foregroundPainter: _TopRim(QuoinColors.of(context).rim),
+      child: GlassContainer(
+        quality: GlassQuality.premium,
+        height: height,
+        width: _circle ? height : null,
+        shape: const LiquidRoundedSuperellipse(borderRadius: height / 2),
+        child: child,
       ),
-      child: glass,
     );
   }
+}
+
+class _TopRim extends CustomPainter {
+  const _TopRim(this.color);
+
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rect = (Offset.zero & size).deflate(0.5);
+    final path = const RoundedSuperellipseBorder(
+      borderRadius: BorderRadius.all(
+        Radius.circular(QuoinBarSurface.height / 2),
+      ),
+    ).getOuterPath(rect);
+    canvas.drawPath(
+      path,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1
+        ..shader = LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [color, color.withValues(alpha: 0)],
+          stops: const [0, 0.5],
+        ).createShader(rect),
+    );
+  }
+
+  @override
+  bool shouldRepaint(_TopRim old) => old.color != color;
 }

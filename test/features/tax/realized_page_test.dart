@@ -22,11 +22,11 @@ void main() {
   testWidgets('home leads to the year realised so far', (tester) async {
     await pumpApp(tester, prefs: {'locale': 'es'}, sample: true);
     await tester.scrollUntilVisible(
-      find.text('Realizado en 2026'),
+      find.text('Realizado 2026'),
       200,
       scrollable: verticalLists.first,
     );
-    await tester.tap(find.text('Realizado en 2026'));
+    await tester.tap(find.text('Realizado 2026'));
     await tester.pumpAndSettle();
     expect(find.byType(RealizedPage), findsOneWidget);
   });

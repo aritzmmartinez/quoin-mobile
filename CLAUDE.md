@@ -70,7 +70,8 @@ flows: `docs/ARCHITECTURE.md`.
 - Theme follows the system unless the user picks one.
 - Layout reference: `docs/design/Quoin Terminal.dc.html`; its figures and names are invented.
 - Shape set in the component themes in `quoin_theme.dart`, not per screen: pills (`StadiumBorder`) for buttons, chips, segmented, fields and bar; cards 24; sheets 28 on top (`QuoinRadius`).
-- Icon tiles: circle for entities (position, broker), `RoundedSuperellipseBorder` for functions.
+- Icon tiles: circle for entities (broker), `RoundedSuperellipseBorder` for functions. An instrument's mark (`InstrumentIcon`): its shape by `type` (STOCK a circle with the initial, CRYPTO a circle with the «₿» coin whatever the coin; the rest a tile with the glyph of its `exposureKind`, a crypto fund the same «₿» coin). The globe and the «₿» are drawn in `quoin_icons.dart` on the set's grid and stroke. Every icon tile and circle sits on `iconTile`.
+- Position rows go in a `PositionList`: the list decides whether the figures go beside the name or under it, for all its rows.
 - Text input: `QuoinTextField` only; label above, required except `.search`; unit suffix in Geist Mono.
 - A hint is short and never carries what the user needs; the search hint is «Buscar», its description is the accessibility label.
 - Chips: `QuoinChip.code` (Geist Mono) for ranges and codes, `QuoinChip.text` (Geist) for filters that are words, such as categories.
@@ -79,7 +80,7 @@ flows: `docs/ARCHITECTURE.md`.
 - No ink ripples (`NoSplash` in the theme): a pressed control changes colour (themed `highlightColor`, button overlays) or scales (`Pressable`).
 - Icons: Hugeicons stroke rounded, stroke 1.5; declared in `core/theme/quoin_icons.dart`, drawn with `ui/atoms/quoin_icon.dart`; only those two import `hugeicons` (a test checks it).
 - Bottom bar: 4 equal tabs on a liquid glass pill and the «+» as its own glass circle, as high as the pill, 10 px away; where it sits is `QuoinBarActionPlacement` (trailing by default; leading, above, or inside the pill at the centre). Both shapes share one `QuoinGlassLayer` (one backdrop capture, no blending). `liquid_glass_widgets` only in `quoin_bar_surface.dart`; content scrolls under the bar (`QuoinPage.list`).
-- The bar's glass is `GlassQuality.premium` (the standard shader keeps a hard rim over dark backdrops).
+- The bar's glass is `GlassQuality.premium` (the standard shader keeps a hard rim over dark backdrops), tinted at 82 % (`border` in dark, `surface` in light) with a hairline on top in both themes. Under it, one `QuoinBarFade` in the shell; tab lists reserve its height.
 - Bottom bar active tab: accent icon and label plus a pill that springs under it (jumps with reduce motion); a tab scales to 0.92 when pressed and clicks with `HapticFeedback.selectionClick`.
 - Navigation bar hidden natively in `MainActivity`, which passes its inset to Flutter; never `SystemChrome.setEnabledSystemUIMode`.
 - Component gallery and the sample portfolio: debug only (`kDebugMode`, Settings → Debug), the only places for invented data, not localised.

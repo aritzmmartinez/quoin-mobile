@@ -8,9 +8,9 @@ import 'package:quoin/src/app/router.dart';
 import 'package:quoin/src/core/l10n/gen/app_localizations.dart';
 import 'package:quoin/src/core/theme/quoin_icons.dart';
 import 'package:quoin/src/features/sync/presentation/widgets/sync_actions.dart';
+import 'package:quoin/src/ui/organisms/quoin_bar_fade.dart';
 import 'package:quoin/src/ui/organisms/quoin_bottom_bar.dart';
 
-/// inside it (the gallery).
 const _tabRoots = {
   Routes.home,
   Routes.portfolio,
@@ -120,31 +120,36 @@ class _AppShellState extends ConsumerState<AppShell> {
     );
     return Scaffold(
       extendBody: true,
-      body: Stack(
-        children: [
-          GestureDetector(
-            onHorizontalDragStart: jumps ? (_) => _swipe = 0 : null,
-            onHorizontalDragUpdate: jumps
-                ? (d) => _swipe += d.primaryDelta ?? 0
-                : null,
-            onHorizontalDragEnd: jumps ? _onSwipeEnd : null,
-            child: pages,
+      body: Builder(
+        builder: (context) => _faded(
+          context,
+          Stack(
+            children: [
+              GestureDetector(
+                onHorizontalDragStart: jumps ? (_) => _swipe = 0 : null,
+                onHorizontalDragUpdate: jumps
+                    ? (d) => _swipe += d.primaryDelta ?? 0
+                    : null,
+                onHorizontalDragEnd: jumps ? _onSwipeEnd : null,
+                child: pages,
+              ),
+              PositionedDirectional(
+                start: 0,
+                top: 0,
+                bottom: 0,
+                width: edges.left,
+                child: edge(),
+              ),
+              PositionedDirectional(
+                end: 0,
+                top: 0,
+                bottom: 0,
+                width: edges.right,
+                child: edge(),
+              ),
+            ],
           ),
-          PositionedDirectional(
-            start: 0,
-            top: 0,
-            bottom: 0,
-            width: edges.left,
-            child: edge(),
-          ),
-          PositionedDirectional(
-            end: 0,
-            top: 0,
-            bottom: 0,
-            width: edges.right,
-            child: edge(),
-          ),
-        ],
+        ),
       ),
       bottomNavigationBar: QuoinBottomBar(
         items: [
@@ -161,6 +166,25 @@ class _AppShellState extends ConsumerState<AppShell> {
         addLabel: l10n.importCsv,
         onAdd: () => context.push(Routes.import),
       ),
+    );
+  }
+
+  Widget _faded(BuildContext context, Widget tab) {
+    final media = MediaQuery.of(context);
+    final under = media.padding.bottom + QuoinBarFade.reach;
+    return Stack(
+      children: [
+        MediaQuery(
+          data: media.copyWith(padding: media.padding.copyWith(bottom: under)),
+          child: tab,
+        ),
+        PositionedDirectional(
+          start: 0,
+          end: 0,
+          bottom: 0,
+          child: QuoinBarFade(height: under),
+        ),
+      ],
     );
   }
 }

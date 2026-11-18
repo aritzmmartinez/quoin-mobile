@@ -13,14 +13,17 @@ import 'package:quoin/src/features/sync/presentation/widgets/pc_row.dart';
 import 'package:quoin/src/features/sync/presentation/widgets/pc_sheet.dart';
 import 'package:quoin/src/features/sync/presentation/widgets/sync_detail_view.dart';
 import 'package:quoin/src/ui/atoms/display_figure.dart';
+import 'package:quoin/src/ui/atoms/instrument_icon.dart';
 import 'package:quoin/src/ui/atoms/quoin_card.dart';
 import 'package:quoin/src/ui/atoms/quoin_chip.dart';
-import 'package:quoin/src/ui/molecules/allocation_donut.dart';
+import 'package:quoin/src/ui/molecules/allocation_bar.dart';
 import 'package:quoin/src/ui/molecules/empty_state.dart';
 import 'package:quoin/src/ui/molecules/figure_block.dart';
+import 'package:quoin/src/ui/molecules/group_header.dart';
 import 'package:quoin/src/ui/molecules/gain_badge.dart';
 import 'package:quoin/src/ui/molecules/icon_tile.dart';
 import 'package:quoin/src/ui/molecules/movement_row.dart';
+import 'package:quoin/src/ui/molecules/notice_row.dart';
 import 'package:quoin/src/ui/molecules/quoin_segmented.dart';
 import 'package:quoin/src/ui/organisms/quoin_segmented_pages.dart';
 import 'package:quoin/src/ui/organisms/quoin_toast.dart';
@@ -28,6 +31,8 @@ import 'package:quoin/src/ui/molecules/quoin_text_field.dart';
 import 'package:quoin/src/ui/molecules/sale_row.dart';
 import 'package:quoin/src/ui/molecules/position_row.dart';
 import 'package:quoin/src/ui/molecules/settings_row.dart';
+import 'package:quoin/src/ui/molecules/stat_columns.dart';
+import 'package:quoin/src/ui/molecules/stat_tile.dart';
 import 'package:quoin/src/ui/organisms/quoin_bottom_bar.dart';
 import 'package:quoin/src/ui/organisms/quoin_dropdown.dart';
 import 'package:quoin/src/ui/organisms/settings_section.dart';
@@ -133,7 +138,11 @@ class _ComponentGalleryPageState extends State<ComponentGalleryPage> {
                     spacing: QuoinSpace.section,
                     runSpacing: QuoinSpace.card,
                     children: [
-                      FigureBlock(label: 'Resultado', value: '+1.234,56 €', sign: 1),
+                      FigureBlock(
+                        label: 'Resultado',
+                        value: '+1.234,56 €',
+                        sign: 1,
+                      ),
                       FigureBlock(label: 'Vendido', value: '12.345,00 €'),
                     ],
                   ),
@@ -434,47 +443,104 @@ class _ComponentGalleryPageState extends State<ComponentGalleryPage> {
             ],
           ),
           label('Distribución'),
-          const QuoinCard(
-            child: AllocationDonut(
-              slices: [
-                DonutSlice(
-                  label: 'Fondo de renta variable',
-                  fraction: 0.46,
-                  percent: '46,1 %',
+          const AllocationBar(
+            segments: [
+              AllocationSegment(
+                label: 'Fondo de renta variable',
+                fraction: 0.46,
+                percent: '46 %',
+              ),
+              AllocationSegment(
+                label: 'Fondo de bonos',
+                fraction: 0.3,
+                percent: '30 %',
+              ),
+              AllocationSegment(
+                label: 'Acción',
+                fraction: 0.17,
+                percent: '17 %',
+              ),
+              AllocationSegment(
+                label: 'Cripto',
+                fraction: 0.05,
+                percent: '5 %',
+              ),
+              AllocationSegment(
+                label: 'Sin clasificar',
+                fraction: 0.02,
+                percent: '2 %',
+                unclassified: true,
+              ),
+            ],
+          ),
+          label('Aviso'),
+          NoticeRow(
+            text: '2 posiciones sin precio',
+            action: 'Revisar',
+            onTap: () {},
+          ),
+          label('Cifras'),
+          Row(
+            spacing: QuoinSpace.row,
+            children: [
+              Expanded(
+                child: StatTile(
+                  label: 'Realizado 2026',
+                  value: '+399,39 €',
+                  sign: 1,
+                  onTap: () {},
                 ),
-                DonutSlice(
-                  label: 'Fondo de bonos',
-                  fraction: 0.3,
-                  percent: '30,1 %',
+              ),
+              Expanded(
+                child: StatTile(
+                  label: 'Impuesto estimado 2026',
+                  value: '75,89 €',
+                  onTap: () {},
                 ),
-                DonutSlice(label: 'Acción', fraction: 0.17, percent: '17,2 %'),
-                DonutSlice(label: 'Cripto', fraction: 0.05, percent: '4,9 %'),
-                DonutSlice(
-                  label: 'Sin clasificar',
-                  fraction: 0.02,
-                  percent: '1,7 %',
-                ),
-              ],
-            ),
+              ),
+            ],
+          ),
+          const SizedBox(height: QuoinSpace.m),
+          const StatColumns(
+            stats: [
+              (label: 'Valor', value: '15.918,72 €', sign: 0),
+              (label: 'Coste', value: '13.806,84 €', sign: 0),
+              (label: 'Resultado', value: '+15,3 %', sign: 1),
+            ],
+          ),
+          label('Iconos de instrumento'),
+          const Wrap(
+            spacing: QuoinSpace.m,
+            runSpacing: QuoinSpace.m,
+            children: [
+              InstrumentIcon.tile(QuoinIcons.equityFund),
+              InstrumentIcon.tile(QuoinIcons.bondFund),
+              InstrumentIcon.tile(QuoinIcons.commodityFund),
+              InstrumentIcon.tile(QuoinIcons.crypto),
+              InstrumentIcon.tile(QuoinIcons.fund),
+              InstrumentIcon.circle('E'),
+              InstrumentIcon.coin(QuoinIcons.crypto),
+            ],
           ),
           label('Posiciones (para ver el cristal de la barra)'),
-          QuoinCard(
-            padding: EdgeInsets.zero,
-            child: Column(
-              children: [
-                const PositionRow(
-                  name: 'Sin Precio Ejemplo',
-                  detail: '12',
-                  value: '720,00 € de coste',
-                  valueMuted: true,
-                  change: Text('Sin precio'),
-                ),
-                for (var i = 0; i < 32; i++) ...[
-                  const Divider(height: 1),
-                  _row(_positions[i % _positions.length]),
-                ],
-              ],
-            ),
+          PositionList(
+            children: [
+              const GroupHeader(
+                label: 'Fondo de renta variable',
+                total: '11.555,75 €',
+              ),
+              const PositionRow(
+                leading: InstrumentIcon.tile(QuoinIcons.fund),
+                name: 'Sin Precio Ejemplo',
+                detail: '12 participaciones',
+                value: 'Sin precio',
+                valueIsFigure: false,
+                changePrefix: 'coste',
+                change: '720,00 €',
+              ),
+              for (var i = 0; i < 32; i++)
+                _row(context, _positions[i % _positions.length]),
+            ],
           ),
         ],
       ),
@@ -657,12 +723,24 @@ const _conflicts = <Conflict>[
   HoldingsConflict('XX00EJEMPLO1'),
 ];
 
-PositionRow _row((String, String, String, String, int) position) {
+PositionRow _row(
+  BuildContext context,
+  (String, String, String, String, int) position,
+) {
   final (name, ticker, value, change, sign) = position;
+  final c = QuoinColors.of(context);
   return PositionRow(
+    leading: ticker == 'CR1'
+        ? const InstrumentIcon.coin(QuoinIcons.crypto)
+        : const InstrumentIcon.tile(QuoinIcons.equityFund),
     name: name,
     detail: ticker,
     value: value,
-    change: GainBadge(text: change, sign: sign),
+    change: change,
+    changeColor: switch (sign) {
+      > 0 => c.positive,
+      < 0 => c.negative,
+      _ => c.muted,
+    },
   );
 }

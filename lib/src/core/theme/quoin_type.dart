@@ -159,8 +159,8 @@ class QuoinType extends ThemeExtension<QuoinType> {
 }
 
 extension QuoinMono on TextStyle {
-  /// The same role in Geist Mono with tabular digits: for amounts and
-  /// percentages.
+  TextStyle get tabular =>
+      copyWith(fontFeatures: const [FontFeature.tabularFigures()]);
   TextStyle get mono => copyWith(
     fontFamily: 'GeistMono',
     fontFeatures: const [FontFeature.tabularFigures()],

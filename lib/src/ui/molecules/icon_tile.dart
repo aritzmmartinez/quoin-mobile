@@ -23,7 +23,7 @@ class IconTile extends StatelessWidget {
       decoration: ShapeDecoration(
         color: switch (signal) {
           final signal? => c.fillOf(signal),
-          null => c.accentTint,
+          null => c.iconTile,
         },
         shape: RoundedSuperellipseBorder(
           borderRadius: BorderRadius.circular(QuoinRadius.tile),

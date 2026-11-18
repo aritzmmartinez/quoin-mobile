@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:quoin_core/quoin_core.dart';
 
 import 'package:quoin/src/app/router.dart';
 import 'package:quoin/src/core/l10n/gen/app_localizations.dart';
@@ -14,9 +15,12 @@ import 'package:quoin/src/features/portfolio/domain/entities/portfolio_overview.
 import 'package:quoin/src/features/portfolio/presentation/providers/portfolio_providers.dart';
 import 'package:quoin/src/features/portfolio/presentation/widgets/portfolio_view.dart';
 import 'package:quoin/src/features/sync/presentation/widgets/sync_actions.dart';
-import 'package:quoin/src/ui/atoms/display_figure.dart';
 import 'package:quoin/src/ui/atoms/quoin_icon.dart';
+import 'package:quoin/src/ui/atoms/quoin_pill_button.dart';
 import 'package:quoin/src/ui/molecules/empty_state.dart';
+import 'package:quoin/src/ui/molecules/group_header.dart';
+import 'package:quoin/src/ui/molecules/position_row.dart';
+import 'package:quoin/src/ui/molecules/stat_columns.dart';
 import 'package:quoin/src/ui/organisms/quoin_dropdown.dart';
 import 'package:quoin/src/ui/templates/quoin_page.dart';
 
@@ -57,13 +61,10 @@ class _PortfolioPageState extends ConsumerState<PortfolioPage> {
               )
             : Padding(
                 padding: const EdgeInsetsDirectional.only(end: QuoinSpace.m),
-                child: OutlinedButton.icon(
-                  icon: const QuoinIcon(
-                    QuoinIcons.movements,
-                    size: QuoinIconSize.row,
-                  ),
-                  label: Text(l10n.movementsTitle),
-                  onPressed: () => context.push(Routes.movements),
+                child: QuoinPillButton(
+                  icon: QuoinIcons.movements,
+                  label: l10n.movementsTitle,
+                  onTap: () => context.push(Routes.movements),
                 ),
               ),
         children: _content(context, overview),
@@ -91,18 +92,32 @@ class _PortfolioPageState extends ConsumerState<PortfolioPage> {
       HoldingOrder.name: l10n.portfolioSortName,
     };
 
+    final result = summary.returnPct;
+    final resultSign = summary.unrealizedPnL.amount.sign;
+    String detail(Holding h) => quantityText(l10n, format, h);
+
     return [
-      DisplayFigure(format.money(summary.totalValue)),
-      const SizedBox(height: QuoinSpace.tight),
-      Text(
-        l10n.portfolioSummary(
-          summary.pricedCount + summary.unpricedCount,
-          format.money(summary.openCost),
-        ),
-        style: type.secondary.copyWith(color: c.muted),
+      StatColumns(
+        stats: [
+          (
+            label: l10n.portfolioValue,
+            value: format.money(summary.totalValue),
+            sign: 0,
+          ),
+          (
+            label: l10n.portfolioCost,
+            value: format.money(summary.totalInvested),
+            sign: 0,
+          ),
+          (
+            label: l10n.portfolioResult,
+            value: format.percent(result ?? Dec.zero, signed: true),
+            sign: result == null ? 0 : resultSign,
+          ),
+        ],
       ),
-      ...valuationNotices(context, overview),
-      const SizedBox(height: QuoinSpace.section),
+      ...unconvertibleNote(context, overview),
+      const SizedBox(height: QuoinSpace.gutter),
       Wrap(
         spacing: QuoinSpace.s,
         children: [
@@ -127,19 +142,36 @@ class _PortfolioPageState extends ConsumerState<PortfolioPage> {
           ),
         ],
       ),
-      const SizedBox(height: QuoinSpace.m),
-      if (shown.isEmpty)
+      if (shown.isEmpty) ...[
+        const SizedBox(height: QuoinSpace.m),
         Text(
           l10n.portfolioNoneInCategory,
           style: type.secondary.copyWith(color: c.muted),
-        )
-      else
-        holdingsCard(
-          context,
-          shown,
-          detail: (h) => format.quantity(h.position.quantity),
         ),
-      const SizedBox(height: QuoinSpace.section),
+      ] else ...[
+        const SizedBox(height: QuoinSpace.s),
+        PositionList(
+          children: [
+            if (category != null)
+              for (final h in shown) holdingRow(context, h, detail: detail(h))
+            else
+              for (final group in groupByCategory(
+                shown,
+                overview.allocation,
+              )) ...[
+                GroupHeader(
+                  label: categoryLabel(l10n, group.category),
+                  total: switch (group.value) {
+                    final value? => format.money(value),
+                    null => null,
+                  },
+                ),
+                for (final h in group.holdings)
+                  holdingRow(context, h, detail: detail(h)),
+              ],
+          ],
+        ),
+      ],
     ];
   }
 }

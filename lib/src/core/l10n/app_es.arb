@@ -64,36 +64,135 @@
   "@searchHint": {
     "description": "Texto de ejemplo del buscador. Corto: la descripción completa va en la etiqueta."
   },
-  "homeTotal": "Patrimonio total",
+  "homeTotal": "Patrimonio",
   "@homeTotal": {
     "description": "Cifra grande de Inicio: valor de las posiciones con precio."
   },
-  "homeUnpriced": "{count} sin valorar ({cost} de coste)",
-  "@homeUnpriced": {
+  "homeNoPriced": "Aún no hay posiciones valoradas.",
+  "homeAllocation": "Distribución",
+  "homePositions": "Mayores posiciones",
+  "homeSeeAll": "Ver cartera",
+  "homeSinceStart": "desde el inicio",
+  "@homeSinceStart": {
+    "description": "Tras el resultado de Inicio: «+2111,88 € · +15,3 % desde el inicio»."
+  },
+  "homeWeight": "{percent} de la cartera",
+  "@homeWeight": {
     "placeholders": {
-      "count": {
-        "type": "int"
-      },
-      "cost": {
+      "percent": {
         "type": "String"
       }
     }
   },
-  "homeNoPriced": "Aún no hay posiciones valoradas.",
-  "homeAllocation": "Distribución de activos",
-  "homePositions": "Posiciones",
-  "homeSeeAll": "Ver todas",
-  "fxUnrated": "Sin tipo de cambio reciente, quedan sin valorar: {names}{end, select, dot{} other{.}}",
-  "@fxUnrated": {
+  "homeTaxEstimate": "Impuesto estimado {year}",
+  "@homeTaxEstimate": {
     "placeholders": {
-      "names": {
-        "type": "String"
-      },
-      "end": {
+      "year": {
+        "type": "int"
+      }
+    },
+    "description": "Cuota del ahorro estimada del año, con el criterio FIFO de la pestaña Fiscal."
+  },
+  "noticeUnpriced": "{count, plural, =1{1 posición sin precio} other{{count} posiciones sin precio}}",
+  "@noticeUnpriced": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "noticeOutside": "{count, plural, =1{1 instrumento fuera del total} other{{count} instrumentos fuera del total}}",
+  "@noticeOutside": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    },
+    "description": "Instrumentos que un movimiento sin tipo de cambio deja fuera de la cartera."
+  },
+  "noticeReview": "Revisar",
+  "valuationTitle": "Fuera del total",
+  "@valuationTitle": {
+    "description": "Hoja del aviso de Inicio: lo que el patrimonio no cuenta y por qué."
+  },
+  "valuationLeftOut": "Un movimiento sin tipo de cambio lo deja fuera",
+  "valuationNoRate": "Sin tipo de cambio reciente del {currency}",
+  "@valuationNoRate": {
+    "placeholders": {
+      "currency": {
         "type": "String"
       }
     },
-    "description": "end es «dot» cuando la lista ya acaba en punto (Tesla Inc.), para no cerrar la frase dos veces."
+    "description": "currency es el código ISO: «Sin tipo de cambio reciente del USD»."
+  },
+  "valuationNoPrice": "Sin precio de mercado",
+  "portfolioValue": "Valor",
+  "portfolioCost": "Coste",
+  "portfolioResult": "Resultado",
+  "positionShares": "{quantity} {count, select, one{acción} other{acciones}}",
+  "@positionShares": {
+    "placeholders": {
+      "quantity": {
+        "type": "String"
+      },
+      "count": {
+        "type": "String"
+      }
+    },
+    "description": "count es «one» si la cantidad es exactamente 1."
+  },
+  "positionFundUnits": "{quantity} {count, select, one{participación} other{participaciones}}",
+  "@positionFundUnits": {
+    "placeholders": {
+      "quantity": {
+        "type": "String"
+      },
+      "count": {
+        "type": "String"
+      }
+    },
+    "description": "count es «one» si la cantidad es exactamente 1."
+  },
+  "positionUnits": "{quantity} {count, select, one{unidad} other{unidades}}",
+  "@positionUnits": {
+    "placeholders": {
+      "quantity": {
+        "type": "String"
+      },
+      "count": {
+        "type": "String"
+      }
+    },
+    "description": "count es «one» si la cantidad es exactamente 1."
+  },
+  "positionCostPrefix": "coste",
+  "@positionCostPrefix": {
+    "description": "Delante del coste de una posición sin precio: «coste 591,56 €»."
+  },
+  "syncedJustNow": "Sincronizado ahora mismo",
+  "syncedMinutesAgo": "Sincronizado hace {minutes} min",
+  "@syncedMinutesAgo": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "syncedHoursAgo": "Sincronizado hace {hours} h",
+  "@syncedHoursAgo": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "syncedDaysAgo": "Sincronizado hace {days, plural, =1{1 día} other{{days} días}}",
+  "@syncedDaysAgo": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
   },
   "fxUnconvertible": "Un movimiento sin tipo de cambio deja fuera: {names}{end, select, dot{} other{.}}",
   "@fxUnconvertible": {
@@ -107,17 +206,6 @@
     },
     "description": "end es «dot» cuando la lista ya acaba en punto (Tesla Inc.), para no cerrar la frase dos veces."
   },
-  "portfolioSummary": "{count, plural, =1{1 posición} other{{count} posiciones}} · {cost} de coste",
-  "@portfolioSummary": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      },
-      "cost": {
-        "type": "String"
-      }
-    }
-  },
   "portfolioSort": "Ordenar",
   "portfolioSortValue": "Por valor",
   "portfolioSortGain": "Por plusvalía %",
@@ -127,7 +215,6 @@
   "@positionUnpriced": {
     "description": "Una posición sin precio: se nombra, no se suma."
   },
-  "positionCostSuffix": "de coste",
   "portfolioLoadFailed": "No se ha podido leer la cartera",
   "residenceUnsupported": "Tu PC usa un territorio fiscal que esta versión de la app no conoce. Actualiza la app.",
   "categoryCompany": "Acción",
@@ -369,7 +456,7 @@
   },
   "realizedTitle": "Realizado",
   "realizedHint": "Ventas cerradas y fiscalidad de Bizkaia",
-  "homeRealized": "Realizado en {year}",
+  "homeRealized": "Realizado {year}",
   "@homeRealized": {
     "placeholders": {
       "year": {

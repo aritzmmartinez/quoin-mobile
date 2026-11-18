@@ -1,10 +1,10 @@
 import 'package:quoin_core/quoin_core.dart';
 
-/// An open position with what the screens show of it.
 class Holding {
   const Holding({
     required this.instrumentId,
     required this.name,
+    required this.type,
     required this.category,
     required this.position,
     required this.value,
@@ -12,15 +12,13 @@ class Holding {
 
   final String instrumentId;
   final String name;
-
-  /// An [ExposureKind] code, or [otherCategory].
+  final String type;
   final String category;
   final Position position;
   final MarketValue value;
 
   bool get isPriced => value.marketValue != null;
 
-  /// Unrealized P&L over cost; null when unpriced or it cost nothing.
   Dec? get unrealizedPnLPct {
     final pnl = value.unrealizedPnL;
     if (pnl == null || position.costBasis.isZero) return null;
@@ -28,7 +26,67 @@ class Holding {
   }
 }
 
-/// The home and portfolio screens, computed at one instant.
+class HoldingGroup {
+  const HoldingGroup({
+    required this.category,
+    required this.holdings,
+    required this.value,
+  });
+
+  final String category;
+  final List<Holding> holdings;
+  final Money? value;
+}
+
+List<HoldingGroup> groupByCategory(
+  List<Holding> holdings,
+  List<AllocationSlice> allocation,
+) {
+  final byCategory = <String, List<Holding>>{};
+  for (final h in holdings) {
+    (byCategory[h.category] ??= []).add(h);
+  }
+  final order = [
+    for (final slice in allocation)
+      if (slice.category != otherCategory) slice.category,
+    for (final category in byCategory.keys)
+      if (category != otherCategory &&
+          !allocation.any((s) => s.category == category))
+        category,
+    otherCategory,
+  ];
+  return [
+    for (final category in order)
+      if (byCategory[category] case final group?)
+        HoldingGroup(
+          category: category,
+          holdings: group,
+          value: group.any((h) => h.isPriced)
+              ? group.fold<Money>(
+                  Money.zero,
+                  (sum, h) => sum.add(h.value.marketValue ?? Money.zero),
+                )
+              : null,
+        ),
+  ];
+}
+
+enum ValuationGap { leftOut, noRate, noPrice }
+
+class ValuationIssue {
+  const ValuationIssue({
+    required this.instrumentId,
+    required this.name,
+    required this.gap,
+    this.currency,
+  });
+
+  final String instrumentId;
+  final String name;
+  final ValuationGap gap;
+  final String? currency;
+}
+
 class PortfolioOverview {
   const PortfolioOverview({
     required this.hasLedger,
@@ -36,24 +94,15 @@ class PortfolioOverview {
     required this.holdings,
     required this.allocation,
     required this.top,
-    required this.unrated,
+    required this.issues,
     required this.unconvertible,
   });
 
-  /// Whether anything was ever imported; false shows the empty state.
   final bool hasLedger;
   final PortfolioSummary summary;
-
-  /// Every open position, priced or not, largest value first.
   final List<Holding> holdings;
   final List<AllocationSlice> allocation;
-
-  /// The largest priced positions.
   final List<Holding> top;
-
-  /// Names of the instruments left unvalued for want of a recent rate.
-  final List<String> unrated;
-
-  /// Names of the instruments left out because a trade has no rate.
+  final List<ValuationIssue> issues;
   final List<String> unconvertible;
 }

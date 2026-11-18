@@ -19,7 +19,7 @@ class QuoinAvatar extends StatelessWidget {
         height: size,
         alignment: Alignment.center,
         decoration: ShapeDecoration(
-          color: c.accentTint,
+          color: c.iconTile,
           shape: const CircleBorder(),
         ),
         child: FittedBox(
