@@ -1,96 +1,81 @@
 import 'package:flutter/material.dart';
 
-import 'package:quoin/src/core/theme/quoin_tokens.dart';
 import 'package:quoin/src/core/theme/quoin_colors.dart';
+import 'package:quoin/src/core/theme/quoin_tokens.dart';
 import 'package:quoin/src/core/theme/quoin_type.dart';
 
 class MovementRow extends StatelessWidget {
   const MovementRow({
     super.key,
-    required this.type,
-    required this.date,
+    required this.title,
+    required this.detail,
     required this.amount,
-    this.subject,
-    this.marks = const [],
+    this.leading,
+    this.quiet = false,
     this.onTap,
   });
 
-  final String type;
-  final String date;
+  final String title;
+  final String detail;
   final String amount;
-  final String? subject;
-  final List<String> marks;
+  final Widget? leading;
+  final bool quiet;
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final c = QuoinColors.of(context);
-    final text = QuoinType.of(context);
-    final row = Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: QuoinSpace.card,
-        vertical: QuoinSpace.m,
-      ),
-      child: LayoutBuilder(
-        builder: (context, constraints) => Row(
-          spacing: QuoinSpace.m,
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                spacing: QuoinSpace.xs,
-                children: [
-                  Text(type, style: text.row),
-                  if (subject case final subject?)
+    final type = QuoinType.of(context);
+    final leading = this.leading;
+    final row = ConstrainedBox(
+      constraints: const BoxConstraints(minHeight: kMinInteractiveDimension),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: QuoinSpace.row),
+        child: LayoutBuilder(
+          builder: (context, constraints) => Row(
+            spacing: QuoinSpace.m,
+            children: [
+              ?leading,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  spacing: QuoinSpace.xxs,
+                  children: [
+                    Text(title, style: type.row),
                     Text(
-                      subject,
-                      style: text.secondary.copyWith(color: c.body),
+                      detail,
+                      style: type.secondary.tabular.copyWith(color: c.muted),
                     ),
-                  Wrap(
-                    spacing: QuoinSpace.s,
-                    runSpacing: QuoinSpace.xs,
-                    children: [
-                      Text(
-                        date,
-                        style: text.small.mono.copyWith(color: c.muted),
-                      ),
-                      for (final mark in marks)
-                        DecoratedBox(
-                          decoration: ShapeDecoration(
-                            shape: StadiumBorder(
-                              side: BorderSide(color: c.border),
-                            ),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: QuoinSpace.tight,
-                            ),
-                            child: Text(
-                              mark,
-                              style: text.small.copyWith(color: c.muted),
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            ConstrainedBox(
-              constraints: BoxConstraints(maxWidth: constraints.maxWidth * 0.5),
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                alignment: AlignmentDirectional.centerEnd,
-                child: Text(
-                  amount,
-                  style: text.row.mono.copyWith(color: c.text),
+                  ],
                 ),
               ),
-            ),
-          ],
+              ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: constraints.maxWidth * 0.5,
+                ),
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: AlignmentDirectional.centerEnd,
+                  child: Text(
+                    amount,
+                    style: type.row.mono.copyWith(
+                      color: quiet ? c.muted : c.text,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
-    return onTap == null ? row : InkWell(onTap: onTap, child: row);
+    return Semantics(
+      container: true,
+      button: onTap != null,
+      onTap: onTap,
+      excludeSemantics: true,
+      label: '$title, $detail, $amount',
+      child: onTap == null ? row : InkWell(onTap: onTap, child: row),
+    );
   }
 }

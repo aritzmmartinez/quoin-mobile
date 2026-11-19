@@ -5,6 +5,9 @@ abstract final class QuoinRadius {
   static const double card = 24;
   static const double sheet = 28;
 
+  /// A small card or a bordered row that sits loose on the page.
+  static const double compact = 16;
+
   /// A square nested in a card: [card] minus the card's padding, rounded up.
   static const double tile = 12;
 }

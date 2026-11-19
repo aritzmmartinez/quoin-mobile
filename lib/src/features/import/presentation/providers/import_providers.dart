@@ -34,7 +34,7 @@ final commitImportProvider = Provider(
   (ref) => CommitImport(ref.watch(importRepositoryProvider)),
 );
 
-enum ImportStage { help, select, processing, review, writing, done }
+enum ImportStage { select, processing, review, writing, done }
 
 final class ImportState {
   const ImportState(this.stage, {this.file, this.preview, this.failure});
@@ -50,9 +50,7 @@ final importFlowProvider =
 
 class ImportFlow extends Notifier<ImportState> {
   @override
-  ImportState build() => const ImportState(ImportStage.help);
-
-  void showSelect() => state = const ImportState(ImportStage.select);
+  ImportState build() => const ImportState(ImportStage.select);
 
   Future<void> pick() async {
     final result = await ref.read(pickImportFileProvider)();
@@ -71,7 +69,7 @@ class ImportFlow extends Notifier<ImportState> {
 
   Future<void> process() async {
     final file = state.file;
-    if (file == null) return;
+    if (file == null || file.broker == null) return;
     await _plan(file);
   }
 
@@ -87,7 +85,11 @@ class ImportFlow extends Notifier<ImportState> {
     );
     if (!ref.mounted) return;
     state = switch (result) {
-      Ok(:final value) => ImportState(ImportStage.review, preview: value),
+      Ok(:final value) => ImportState(
+        ImportStage.review,
+        file: file,
+        preview: value,
+      ),
       Err(:final failure) => ImportState(ImportStage.select, failure: failure),
     };
   }
@@ -105,6 +107,7 @@ class ImportFlow extends Notifier<ImportState> {
       case Err(:final failure):
         state = ImportState(
           ImportStage.review,
+          file: state.file,
           preview: preview,
           failure: failure,
         );

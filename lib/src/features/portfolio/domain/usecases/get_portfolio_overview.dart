@@ -4,7 +4,7 @@ import 'package:quoin/src/features/portfolio/domain/entities/holding_order.dart'
 import 'package:quoin/src/features/portfolio/domain/entities/portfolio_ledger.dart';
 import 'package:quoin/src/features/portfolio/domain/entities/portfolio_overview.dart';
 
-const topPositions = 5;
+const topPositions = 4;
 
 PortfolioOverview overviewOf(PortfolioLedger ledger, DateTime now) {
   final jurisdiction = jurisdictionOf(ledger.residence);
@@ -19,6 +19,7 @@ PortfolioOverview overviewOf(PortfolioLedger ledger, DateTime now) {
 
   final instruments = {for (final i in ledger.instruments) i.id: i};
   String nameOf(String id) => instruments[id]?.name ?? id;
+  String typeOf(String id) => instruments[id]?.type ?? '';
   final categories = {
     for (final i in ledger.instruments)
       if (i.exposureKind case final kind?) i.id: kind.code,
@@ -30,13 +31,14 @@ PortfolioOverview overviewOf(PortfolioLedger ledger, DateTime now) {
         Holding(
           instrumentId: p.instrumentId,
           name: nameOf(p.instrumentId),
+          type: typeOf(p.instrumentId),
           category: categories[p.instrumentId] ?? otherCategory,
           position: p,
           value: marketValues[p.instrumentId]!,
         ),
   ], HoldingOrder.value);
   final byId = {for (final h in holdings) h.instrumentId: h};
-  final open = holdings.map((h) => h.instrumentId).toSet();
+  final unconvertible = unconvertibleInstrumentIds(ledger.events);
 
   return PortfolioOverview(
     hasLedger: ledger.events.isNotEmpty,
@@ -51,12 +53,29 @@ PortfolioOverview overviewOf(PortfolioLedger ledger, DateTime now) {
       ))
         byId[row.instrumentId]!,
     ],
-    unrated: [
-      for (final id in valued.unrated.keys)
-        if (open.contains(id)) nameOf(id),
-    ]..sort(compareNamesEs),
-    unconvertible: [
-      for (final id in unconvertibleInstrumentIds(ledger.events)) nameOf(id),
-    ]..sort(compareNamesEs),
+    issues: [
+      ...[
+        for (final id in unconvertible)
+          ValuationIssue(
+            instrumentId: id,
+            name: nameOf(id),
+            gap: ValuationGap.leftOut,
+          ),
+      ]..sort((a, b) => compareNamesEs(a.name, b.name)),
+      ...[
+        for (final h in holdings)
+          if (!h.isPriced)
+            ValuationIssue(
+              instrumentId: h.instrumentId,
+              name: h.name,
+              gap: valued.unrated.containsKey(h.instrumentId)
+                  ? ValuationGap.noRate
+                  : ValuationGap.noPrice,
+              currency: valued.unrated[h.instrumentId],
+            ),
+      ]..sort((a, b) => compareNamesEs(a.name, b.name)),
+    ],
+    unconvertible: [for (final id in unconvertible) nameOf(id)]
+      ..sort(compareNamesEs),
   );
 }

@@ -36,7 +36,8 @@ flows: `docs/ARCHITECTURE.md`.
 - The sample data never syncs; a copied database claims a new device id before any sync; Kraken rows without USD are valued on the PC only.
 - Every request to the PC goes through `PinnedClient` (the QR's SHA-256 pin, no trusted roots); never a plain client.
 - The pairing and its device token live only in `flutter_secure_storage`; price histories only in `PricesDatabase` (`files/prices/`). Both, and `install_id`, are left out of Android backup in `backup_rules.xml` and `data_extraction_rules.xml`: a restored phone must never arrive paired.
-- Only `qr_scanner_view.dart` imports the scanner (`qrscan`); tests override `qrScannerProvider`.
+- The QR scanner is `packages/qrscan`, a fork of qrscan 1.2.4 (MIT): its `LICENSE` and notice stay as they came, and `FORK.md` lists every change and the upstream version it starts from. Only `qr_scanner_view.dart` imports it; tests override `qrScannerProvider`.
+- The fork changes only the scanner's look (`ScanOverlayView`, `activity_second.xml`, its icons) and how labels and fonts reach it: every visible string comes from Flutter (`ScanLabels`), in the app's language, and nothing native is written in English. Camera, decoder and permissions stay upstream's.
 - Anything new that leaves the phone changes `docs/privacy.md` first (source of the privacy policy and Play's Data safety form).
 - One provider per link: data source → repository → use case → screen state.
 - A repository's provider is typed abstract in presentation and bound in `app/dependencies.dart`.
@@ -70,7 +71,8 @@ flows: `docs/ARCHITECTURE.md`.
 - Theme follows the system unless the user picks one.
 - Layout reference: `docs/design/Quoin Terminal.dc.html`; its figures and names are invented.
 - Shape set in the component themes in `quoin_theme.dart`, not per screen: pills (`StadiumBorder`) for buttons, chips, segmented, fields and bar; cards 24; sheets 28 on top (`QuoinRadius`).
-- Icon tiles: circle for entities (position, broker), `RoundedSuperellipseBorder` for functions.
+- Icon tiles: circle for entities (broker), `RoundedSuperellipseBorder` for functions. An instrument's mark (`InstrumentIcon`): its shape by `type` (STOCK a circle with the initial, CRYPTO a circle with the «₿» coin whatever the coin; the rest a tile with the glyph of its `exposureKind`, a crypto fund the same «₿» coin). The globe and the «₿» are drawn in `quoin_icons.dart` on the set's grid and stroke. Every icon tile and circle sits on `iconTile`.
+- Position rows go in a `PositionList`: the list decides whether the figures go beside the name or under it, for all its rows.
 - Text input: `QuoinTextField` only; label above, required except `.search`; unit suffix in Geist Mono.
 - A hint is short and never carries what the user needs; the search hint is «Buscar», its description is the accessibility label.
 - Chips: `QuoinChip.code` (Geist Mono) for ranges and codes, `QuoinChip.text` (Geist) for filters that are words, such as categories.
@@ -79,7 +81,7 @@ flows: `docs/ARCHITECTURE.md`.
 - No ink ripples (`NoSplash` in the theme): a pressed control changes colour (themed `highlightColor`, button overlays) or scales (`Pressable`).
 - Icons: Hugeicons stroke rounded, stroke 1.5; declared in `core/theme/quoin_icons.dart`, drawn with `ui/atoms/quoin_icon.dart`; only those two import `hugeicons` (a test checks it).
 - Bottom bar: 4 equal tabs on a liquid glass pill and the «+» as its own glass circle, as high as the pill, 10 px away; where it sits is `QuoinBarActionPlacement` (trailing by default; leading, above, or inside the pill at the centre). Both shapes share one `QuoinGlassLayer` (one backdrop capture, no blending). `liquid_glass_widgets` only in `quoin_bar_surface.dart`; content scrolls under the bar (`QuoinPage.list`).
-- The bar's glass is `GlassQuality.premium` (the standard shader keeps a hard rim over dark backdrops).
+- The bar's glass is `GlassQuality.premium` (the standard shader keeps a hard rim over dark backdrops), tinted at 82 % (`border` in dark, `surface` in light) with a hairline on top in both themes. Under it, one `QuoinBarFade` in the shell; tab lists reserve its height.
 - Bottom bar active tab: accent icon and label plus a pill that springs under it (jumps with reduce motion); a tab scales to 0.92 when pressed and clicks with `HapticFeedback.selectionClick`.
 - Navigation bar hidden natively in `MainActivity`, which passes its inset to Flutter; never `SystemChrome.setEnabledSystemUIMode`.
 - Component gallery and the sample portfolio: debug only (`kDebugMode`, Settings → Debug), the only places for invented data, not localised.
@@ -100,7 +102,7 @@ flows: `docs/ARCHITECTURE.md`.
 - CI also runs `flutter build apk --debug`, on Flutter 3.47.8.
 - No tool or assistant marks in code, comments or docs.
 - Comments only say why (a decision, or a trap someone would break without knowing), short; never what the code already says.
-- `qrscan` is pinned to an exact version: a new one is tried on a phone (reads a QR, 16 KB pages) before it is raised.
+- An upstream qrscan release is brought in by hand: diff it against the version in `packages/qrscan/FORK.md`, carry the look over, and try it on a phone (reads a QR, 16 KB pages, torch, permission denied) before it lands.
 - Aritz makes the commits; write each message in `msg-N.txt` (ignored), N the commit's place in the branch.
 
 ## Testing on the phone

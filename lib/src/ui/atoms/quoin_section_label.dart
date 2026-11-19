@@ -13,11 +13,22 @@ class QuoinSectionLabel extends StatelessWidget {
       top: QuoinSpace.section,
       bottom: QuoinSpace.row,
     ),
-  });
+  }) : _heading = false;
+
+  const QuoinSectionLabel.heading(
+    this.text, {
+    super.key,
+    this.action,
+    this.padding = const EdgeInsets.only(
+      top: QuoinSpace.block,
+      bottom: QuoinSpace.s,
+    ),
+  }) : _heading = true;
 
   final String text;
   final Widget? action;
   final EdgeInsetsGeometry padding;
+  final bool _heading;
 
   @override
   Widget build(BuildContext context) {
@@ -28,11 +39,13 @@ class QuoinSectionLabel extends StatelessWidget {
           Expanded(
             child: Semantics(
               header: true,
-              child: Text(
-                text.toUpperCase(),
-                style: QuoinType.of(context).section
-                    .copyWith(color: QuoinColors.of(context).muted),
-              ),
+              child: _heading
+                  ? Text(text, style: QuoinType.of(context).rowStrong)
+                  : Text(
+                      text.toUpperCase(),
+                      style: QuoinType.of(context).section
+                          .copyWith(color: QuoinColors.of(context).muted),
+                    ),
             ),
           ),
           ?action,

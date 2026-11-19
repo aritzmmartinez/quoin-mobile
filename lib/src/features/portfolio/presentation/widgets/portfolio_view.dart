@@ -13,9 +13,8 @@ import 'package:quoin/src/core/theme/quoin_colors.dart';
 import 'package:quoin/src/core/theme/quoin_tokens.dart';
 import 'package:quoin/src/core/theme/quoin_type.dart';
 import 'package:quoin/src/features/portfolio/domain/entities/portfolio_overview.dart';
-import 'package:quoin/src/ui/atoms/quoin_card.dart';
+import 'package:quoin/src/ui/atoms/instrument_icon.dart';
 import 'package:quoin/src/ui/molecules/empty_state.dart';
-import 'package:quoin/src/ui/molecules/gain_badge.dart';
 import 'package:quoin/src/ui/molecules/position_row.dart';
 import 'package:quoin/src/ui/templates/quoin_page.dart';
 
@@ -74,24 +73,29 @@ class PortfolioView extends StatelessWidget {
 String _end(List<String> names) =>
     names.isNotEmpty && names.last.endsWith('.') ? 'dot' : 'none';
 
-List<Widget> valuationNotices(BuildContext context, PortfolioOverview o) {
-  final l10n = AppLocalizations.of(context);
-  final style = QuoinType.of(context).secondary
-      .copyWith(color: QuoinColors.of(context).muted);
+List<Widget> unconvertibleNote(BuildContext context, PortfolioOverview o) {
+  if (o.unconvertible.isEmpty) return const [];
   return [
-    if (o.unrated.isNotEmpty) ...[
-      const SizedBox(height: QuoinSpace.s),
-      Text(l10n.fxUnrated(o.unrated.join(', '), _end(o.unrated)), style: style),
-    ],
-    if (o.unconvertible.isNotEmpty) ...[
-      const SizedBox(height: QuoinSpace.s),
-      Text(
-        l10n.fxUnconvertible(o.unconvertible.join(', '), _end(o.unconvertible)),
-        style: style,
-      ),
-    ],
+    const SizedBox(height: QuoinSpace.m),
+    Text(
+      AppLocalizations.of(context)
+          .fxUnconvertible(o.unconvertible.join(', '), _end(o.unconvertible)),
+      style: QuoinType.of(context).secondary
+          .copyWith(color: QuoinColors.of(context).muted),
+    ),
   ];
 }
+
+String? valuationNotice(AppLocalizations l10n, PortfolioOverview o) =>
+    switch (o) {
+      _ when o.unconvertible.isNotEmpty => l10n.noticeOutside(
+        o.unconvertible.length,
+      ),
+      _ when o.summary.unpricedCount > 0 => l10n.noticeUnpriced(
+        o.summary.unpricedCount,
+      ),
+      _ => null,
+    };
 
 String categoryLabel(AppLocalizations l10n, String category) =>
     switch (ExposureKind.values.where((k) => k.code == category).firstOrNull) {
@@ -103,54 +107,92 @@ String categoryLabel(AppLocalizations l10n, String category) =>
       null => l10n.categoryOther,
     };
 
-Widget holdingsCard(
+Widget instrumentIcon(Holding h) => instrumentMark(
+  type: h.type,
+  name: h.name,
+  kind: ExposureKind.values.where((k) => k.code == h.category).firstOrNull,
+);
+
+Widget instrumentMark({
+  required String type,
+  required String name,
+  ExposureKind? kind,
+  double extent = InstrumentIcon.size,
+}) => switch (type) {
+  'STOCK' => InstrumentIcon.circle(
+    name.isEmpty ? '?' : name.characters.first.toUpperCase(),
+    extent: extent,
+  ),
+  'CRYPTO' => InstrumentIcon.coin(QuoinIcons.crypto, extent: extent),
+  _ => InstrumentIcon.tile(switch (kind) {
+    ExposureKind.equityFund => QuoinIcons.equityFund,
+    ExposureKind.bondFund => QuoinIcons.bondFund,
+    ExposureKind.commodity => QuoinIcons.commodityFund,
+    ExposureKind.crypto => QuoinIcons.crypto,
+    ExposureKind.company || null => QuoinIcons.fund,
+  }, extent: extent),
+};
+
+String quantityText(AppLocalizations l10n, QuoinFormat format, Holding h) =>
+    unitsText(l10n, format, h.type, h.position.quantity);
+
+String unitsText(
+  AppLocalizations l10n,
+  QuoinFormat format,
+  String type,
+  Dec quantity,
+) {
+  final text = format.quantity(quantity);
+  final count = quantity.compareTo(Dec.one) == 0 ? 'one' : 'other';
+  return switch (type) {
+    'STOCK' => l10n.positionShares(text, count),
+    'ETF' || 'COMMODITY' => l10n.positionFundUnits(text, count),
+    _ => l10n.positionUnits(text, count),
+  };
+}
+
+Widget holdingRow(
   BuildContext context,
-  List<Holding> holdings, {
-  required String Function(Holding holding) detail,
+  Holding h, {
+  required String detail,
+  bool compact = false,
 }) {
   final l10n = AppLocalizations.of(context);
   final format = QuoinFormat.of(context);
   final c = QuoinColors.of(context);
-  final type = QuoinType.of(context);
-
-  Widget row(Holding h) {
-    void open() => context.push(Routes.instrument(h.instrumentId));
-    final value = h.value.marketValue;
-    final pnl = h.value.unrealizedPnL;
-    if (value == null) {
-      return PositionRow(
-        name: h.name,
-        detail: detail(h),
-        value: format.money(h.position.costBasis),
-        valueSuffix: l10n.positionCostSuffix,
-        valueMuted: true,
-        onTap: open,
-        change: Text(
-          l10n.positionUnpriced,
-          style: type.small.copyWith(color: c.muted),
-        ),
-      );
-    }
+  void open() => context.push(Routes.instrument(h.instrumentId));
+  final value = h.value.marketValue;
+  if (value == null) {
     return PositionRow(
+      leading: instrumentIcon(h),
       name: h.name,
-      detail: detail(h),
-      value: format.money(value),
+      detail: detail,
+      value: l10n.positionUnpriced,
+      valueIsFigure: false,
+      changePrefix: l10n.positionCostPrefix,
+      change: format.money(h.position.costBasis),
       onTap: open,
-      change: switch (format.gain(pnl!, h.unrealizedPnLPct)) {
-        final gain => GainBadge(text: gain.text, sign: gain.sign),
-      },
     );
   }
-
-  return QuoinCard(
-    padding: EdgeInsets.zero,
-    child: Column(
-      children: [
-        for (final (i, h) in holdings.indexed) ...[
-          if (i > 0) const Divider(height: 1),
-          row(h),
-        ],
-      ],
-    ),
+  final pnl = h.value.unrealizedPnL!;
+  final pct = h.unrealizedPnLPct;
+  final gain = compact
+      ? (
+          text: pct == null ? '' : format.percent(pct, signed: true),
+          sign: pnl.amount.sign,
+        )
+      : format.gainLine(pnl, pct);
+  return PositionRow(
+    leading: instrumentIcon(h),
+    name: h.name,
+    detail: detail,
+    value: format.money(value),
+    change: gain.text.isEmpty ? null : gain.text,
+    changeColor: switch (gain.sign) {
+      > 0 => c.positive,
+      < 0 => c.negative,
+      _ => c.muted,
+    },
+    onTap: open,
   );
 }

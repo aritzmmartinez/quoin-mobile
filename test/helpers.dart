@@ -10,6 +10,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:quoin/src/app/app.dart';
 import 'package:quoin/src/app/dependencies.dart';
+import 'package:quoin/src/core/l10n/gen/app_localizations.dart';
 import 'package:quoin/src/features/portfolio/data/database/prices_database.dart';
 import 'package:quoin/src/features/portfolio/data/database/quoin_database.dart';
 import 'package:quoin/src/features/portfolio/data/datasources/portfolio_local_datasource.dart';
@@ -74,8 +75,12 @@ final testNow = DateTime.utc(2026, 10, 30, 10);
 
 var fakeQr = '';
 
-Future<QrScan> fakeScanner({required String hint}) async =>
-    (text: fakeQr, denied: false);
+AppLocalizations? scannedWith;
+
+Future<QrScan> fakeScanner(AppLocalizations l10n) async {
+  scannedWith = l10n;
+  return (text: fakeQr, denied: false);
+}
 
 QuoinDatabase memoryDatabase() {
   driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;

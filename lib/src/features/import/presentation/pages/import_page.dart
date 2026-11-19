@@ -45,35 +45,30 @@ class _ImportPageState extends ConsumerState<ImportPage> {
     });
 
     final step = switch (state.stage) {
-      ImportStage.help => 1,
-      ImportStage.select => 2,
-      ImportStage.processing || ImportStage.review || ImportStage.writing => 3,
-      ImportStage.done => 4,
+      ImportStage.select => 1,
+      ImportStage.processing || ImportStage.review || ImportStage.writing => 2,
+      ImportStage.done => 3,
     };
 
     final body = switch (state.stage) {
-      ImportStage.help => const ImportHelpStep(),
       ImportStage.select => ImportSelectStep(
         file: state.file,
         onPick: flow.pick,
         onClear: flow.clearFile,
       ),
       ImportStage.processing || ImportStage.writing => const ImportBusyStep(),
-      ImportStage.review => ImportReviewStep(preview: state.preview!),
+      ImportStage.review => ImportReviewStep(
+        preview: state.preview!,
+        fileName: state.file?.name,
+      ),
       ImportStage.done => ImportDoneStep(written: state.preview!.toWrite),
     };
 
     final actions = <Widget>[
       ...switch (state.stage) {
-        ImportStage.help => [
-          FilledButton(
-            onPressed: flow.showSelect,
-            child: Text(l10n.importContinue),
-          ),
-        ],
         ImportStage.select => [
           FilledButton(
-            onPressed: state.file == null ? null : flow.process,
+            onPressed: state.file?.broker == null ? null : flow.process,
             child: Text(l10n.importContinue),
           ),
         ],
@@ -105,7 +100,7 @@ class _ImportPageState extends ConsumerState<ImportPage> {
           tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
           onPressed: () => Navigator.of(context).pop(),
         ),
-        subheader: ImportProgress(step: step, total: 4),
+        subheader: ImportProgress(step: step, total: 3),
         actions: actions,
         children: [body],
       ),

@@ -7,5 +7,9 @@ class PickImportFile {
 
   final ImportRepository _repository;
 
-  Future<Result<ImportFile?>> call() => _repository.pickFile();
+  Future<Result<ImportFile?>> call() async =>
+      switch (await _repository.pickFile()) {
+        Ok(:final value) => Ok(value?.recognized()),
+        final Err<ImportFile?> err => err,
+      };
 }

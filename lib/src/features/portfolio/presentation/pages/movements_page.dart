@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:quoin/src/app/router.dart';
 import 'package:quoin/src/core/l10n/gen/app_localizations.dart';
+import 'package:quoin/src/core/l10n/quoin_format.dart';
 import 'package:quoin/src/core/theme/quoin_colors.dart';
 import 'package:quoin/src/core/theme/quoin_icons.dart';
 import 'package:quoin/src/core/theme/quoin_tokens.dart';
@@ -14,7 +15,9 @@ import 'package:quoin/src/features/portfolio/presentation/providers/portfolio_pr
 import 'package:quoin/src/features/portfolio/presentation/widgets/ledger_tiles.dart';
 import 'package:quoin/src/features/portfolio/presentation/widgets/result_view.dart';
 import 'package:quoin/src/ui/molecules/empty_state.dart';
-import 'package:quoin/src/ui/molecules/quoin_disclosure.dart';
+import 'package:quoin/src/ui/atoms/quoin_icon.dart';
+import 'package:quoin/src/ui/molecules/group_header.dart';
+import 'package:quoin/src/ui/organisms/explain_sheet.dart';
 import 'package:quoin/src/ui/organisms/quoin_dropdown.dart';
 import 'package:quoin/src/ui/templates/quoin_page.dart';
 
@@ -74,11 +77,41 @@ class _MovementsPageState extends ConsumerState<MovementsPage> {
           m,
     ];
 
+    final months = byMonth(shown, zone);
+    final format = QuoinFormat.of(context);
+    final items = <Widget Function(BuildContext)>[
+      for (final month in months) ...[
+        (_) => GroupHeader(
+          label: format.month(month.month),
+          total: format.signedMoney(month.net).text,
+        ),
+        for (final m in month.rows)
+          (context) => movementTile(
+            context,
+            m,
+            zone,
+            onTap: switch (m.instrumentId) {
+              final id? when id != widget.instrumentId => () => context.push(
+                Routes.instrument(id),
+              ),
+              _ => null,
+            },
+          ),
+      ],
+    ];
+
     return QuoinPage.lazy(
       title: l10n.movementsTitle,
+      trailing: IconButton(
+        icon: const QuoinIcon(QuoinIcons.info),
+        tooltip: l10n.movementsAmountTitle,
+        onPressed: () => _explain(context),
+      ),
+      card: false,
       header: [
         Wrap(
           spacing: QuoinSpace.s,
+          runSpacing: QuoinSpace.s,
           children: [
             QuoinDropdown<String?>(
               label: l10n.movementsFilterInstrument,
@@ -101,16 +134,6 @@ class _MovementsPageState extends ConsumerState<MovementsPage> {
             ),
           ],
         ),
-        const SizedBox(height: QuoinSpace.m),
-        Text(
-          l10n.movementsCount(shown.length),
-          style: type.secondary.copyWith(color: c.muted),
-        ),
-        QuoinDisclosure(
-          title: l10n.movementsAmountTitle,
-          paragraphs: [l10n.movementsAmountHint],
-        ),
-        const SizedBox(height: QuoinSpace.s),
         if (shown.isEmpty)
           Padding(
             padding: const EdgeInsets.only(top: QuoinSpace.section),
@@ -120,24 +143,32 @@ class _MovementsPageState extends ConsumerState<MovementsPage> {
             ),
           ),
       ],
-      itemCount: shown.length,
-      itemBuilder: (context, i) {
-        final m = shown[i];
-        final id = m.instrumentId;
-        return Column(
-          children: [
-            if (i > 0) const Divider(height: 1),
-            movementTile(
-              context,
-              m,
-              zone,
-              onTap: id == null || id == widget.instrumentId
-                  ? null
-                  : () => context.push(Routes.instrument(id)),
-            ),
-          ],
-        );
-      },
+      itemCount: items.length,
+      itemBuilder: (context, i) => items[i](context),
+    );
+  }
+
+  Future<void> _explain(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return showExplainSheet(
+      context,
+      title: l10n.movementsAmountTitle,
+      points: [
+        (
+          icon: QuoinIcons.cashFlow,
+          title: l10n.movementsCashTitle,
+          body: l10n.movementsCashBody,
+          source: null,
+        ),
+        (
+          icon: QuoinIcons.swap,
+          title: l10n.movementsSwapTitle,
+          body: l10n.movementsSwapBody,
+          source: null,
+        ),
+      ],
+      detailTitle: l10n.realizedHowDetail,
+      detail: [l10n.movementsAmountHint],
     );
   }
 }

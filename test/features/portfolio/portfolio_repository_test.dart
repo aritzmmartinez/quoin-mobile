@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:quoin/src/features/portfolio/domain/entities/portfolio_overview.dart';
 import 'package:quoin/src/core/error/result.dart';
 import 'package:drift/drift.dart' show Value;
 import 'package:quoin/src/features/portfolio/data/database/prices_database.dart';
@@ -83,8 +84,14 @@ void main() {
     expect(byName['Fondo Emergentes']!.isPriced, isFalse);
     expect(byName['Inmobiliario Europa']!.category, otherCategory);
     expect(overview.summary.unpricedCount, 2);
-    expect(overview.summary.pricedCount, 6);
-    expect(overview.unrated, ['Ejemplo Tecnología Inc.']);
+    expect(overview.summary.pricedCount, 7);
+    expect(
+      [for (final i in overview.issues) (i.name, i.gap, i.currency)],
+      [
+        ('Ejemplo Tecnología Inc.', ValuationGap.noRate, 'USD'),
+        ('Fondo Emergentes', ValuationGap.noPrice, null),
+      ],
+    );
     expect(overview.top, hasLength(topPositions));
   });
 
@@ -119,7 +126,7 @@ void main() {
           ),
         );
     var overview = overviewOf(await load(), testNow);
-    expect(overview.unrated, ['Ejemplo Tecnología Inc.'], reason: 'ignored');
+    expect(_unrated(overview), ['Ejemplo Tecnología Inc.'], reason: 'ignored');
 
     await db
         .into(db.fxRate)
@@ -135,7 +142,7 @@ void main() {
           ),
         );
     overview = overviewOf(await load(), testNow);
-    expect(overview.unrated, isEmpty, reason: 'the same day, two sources');
+    expect(_unrated(overview), isEmpty, reason: 'the same day, two sources');
   });
 
   test('clearing leaves the empty state', () async {
@@ -175,3 +182,8 @@ void main() {
     );
   });
 }
+
+List<String> _unrated(PortfolioOverview overview) => [
+  for (final i in overview.issues)
+    if (i.gap == ValuationGap.noRate) i.name,
+];

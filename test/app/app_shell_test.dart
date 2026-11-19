@@ -6,6 +6,7 @@ import 'package:quoin/src/features/portfolio/presentation/pages/home_page.dart';
 import 'package:quoin/src/features/portfolio/presentation/pages/instrument_page.dart';
 import 'package:quoin/src/features/portfolio/presentation/pages/portfolio_page.dart';
 import 'package:quoin/src/features/settings/presentation/pages/settings_page.dart';
+import 'package:quoin/src/ui/organisms/quoin_bar_fade.dart';
 import 'package:quoin/src/ui/organisms/quoin_bottom_bar.dart';
 import 'package:quoin/src/ui/templates/quoin_page.dart';
 
@@ -183,5 +184,28 @@ void main() {
 
     await _swipe(tester, _left);
     expect(_title('Análisis'), findsOneWidget, reason: 'clear of the edge');
+  });
+
+  testWidgets('the fade under the bar takes no touch and says nothing', (
+    tester,
+  ) async {
+    final handle = tester.ensureSemantics();
+    await pumpApp(tester, prefs: {'locale': 'es'}, sample: true);
+    final fade = find.byType(QuoinBarFade);
+    expect(fade, findsOneWidget);
+    expect(
+      find.descendant(of: fade, matching: find.byType(IgnorePointer)),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: fade, matching: find.byType(ExcludeSemantics)),
+      findsOneWidget,
+    );
+    final bar = tester.getRect(find.byType(QuoinBottomBar));
+    expect(
+      tester.getRect(fade).top,
+      lessThanOrEqualTo(bar.top - QuoinBarFade.reach),
+    );
+    handle.dispose();
   });
 }

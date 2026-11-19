@@ -4,8 +4,8 @@ import 'package:quoin/src/features/portfolio/domain/entities/movement.dart';
 import 'package:quoin/src/features/portfolio/domain/entities/portfolio_ledger.dart';
 
 List<Movement> movementsOf(PortfolioLedger ledger) {
-  final names = {for (final i in ledger.instruments) i.id: i.name};
-  String nameOf(String id) => names[id] ?? id;
+  final instruments = {for (final i in ledger.instruments) i.id: i};
+  String nameOf(String id) => instruments[id]?.name ?? id;
   final routes = _swapRoutes(ledger.events, nameOf);
 
   final events = [...ledger.events]
@@ -32,6 +32,8 @@ List<Movement> movementsOf(PortfolioLedger ledger) {
           null => null,
           final id => nameOf(id),
         },
+        instrumentType: instruments[event.instrumentId]?.type,
+        exposureKind: instruments[event.instrumentId]?.exposureKind,
         quantity: event is TradeEvent ? event.quantity : null,
         amount: _amount(event),
         currency: event.currency,

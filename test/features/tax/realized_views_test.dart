@@ -53,7 +53,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(_view(tester), 1);
       expect(tester.getSemantics(find.text('Fiscal (Bizkaia)')), _isSelected);
-      expect(find.text('Base liquidable del ahorro'), findsOneWidget);
+      expect(find.text('Impuesto estimado de 2026'), findsOneWidget);
 
       await tester.drag(_views, const Offset(500, 0));
       await tester.pumpAndSettle();

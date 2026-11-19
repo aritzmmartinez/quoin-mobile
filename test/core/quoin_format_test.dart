@@ -46,11 +46,11 @@ void main() {
   });
 
   test('gain', () {
-    expect(es.gain(Money.parse('-30'), Dec.parse('-0.123')), (
-      text: intl('_30,00~€ (_12,3~%)'),
+    expect(es.gainLine(Money.parse('-30'), Dec.parse('-0.123')), (
+      text: intl('_30,00~€ · _12,3~%'),
       sign: -1,
     ));
-    expect(en.gain(Money.parse('6.8'), null), (text: '+€6.80', sign: 1));
+    expect(en.gainLine(Money.parse('6.8'), null), (text: '+€6.80', sign: 1));
   });
 
   test('percent', () {

@@ -7,6 +7,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
+import 'package:quoin/src/app/router.dart';
+import 'package:quoin/src/features/sync/presentation/widgets/qr_scanner_view.dart';
 import 'package:quoin/src/features/portfolio/data/database/quoin_database.dart'
     hide SettingsRow;
 import 'package:http/testing.dart';
@@ -136,15 +139,81 @@ void main() {
 
   Future<void> pairFromSettings(WidgetTester tester) async {
     await tapVisible(tester, find.text('Vincular con tu PC'));
-    expect(
-      find.text('Comprueba que tu PC muestra este código'),
-      findsOneWidget,
-    );
+    expect(find.text('Paso 1 de 3'), findsOneWidget);
+    await tester.tap(find.text('Escanear el código'));
+    await settle(tester);
+    expect(find.text('Paso 3 de 3'), findsOneWidget);
+    expect(find.text('Conectado con Test PC'), findsOneWidget);
     expect(find.widgetWithText(TextField, 'Mi móvil'), findsOneWidget);
     await tester.enterText(find.byType(TextField), 'Móvil de prueba');
-    await tester.tap(find.text('Vincular'));
+    await tester.tap(find.text('Continuar'));
     await settle(tester);
   }
+
+  testWidgets('pairing walks the same three steps, at 200 % too, and '
+      '«Cancelar» goes back to the start without pairing', (tester) async {
+    tester.platformDispatcher.textScaleFactorTestValue = 2;
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+    final semantics = tester.ensureSemantics();
+    await open(tester);
+    GoRouter.of(tester.element(find.byType(QuoinPage).first))
+        .push<void>(Routes.pair)
+        .ignore();
+    await settle(tester);
+
+    expect(find.text('Paso 1 de 3'), findsOneWidget);
+    expect(
+      find.text('Conecta el móvil con Quoin en tu ordenador'),
+      findsOneWidget,
+    );
+    for (final step in [
+      'Abre Quoin en el PC',
+      'Escanea el código',
+      'Compara y acepta en el PC',
+    ]) {
+      await tester.scrollUntilVisible(
+        find.text(step),
+        200,
+        scrollable: verticalLists.last,
+      );
+    }
+    expect(pc.log, isNot(contains('POST /v1/pair')));
+
+    await tester.tap(find.text('Escanear el código'));
+    await settle(tester);
+    final labels = scanLabels(scannedWith!);
+    expect(
+      [labels.step, labels.title, labels.searching, labels.torch],
+      [
+        'Paso 2 de 3',
+        'Escanea el código del PC',
+        'Buscando el código…',
+        'Linterna',
+      ],
+      reason: 'the scanner speaks the language of the app, not of the system',
+    );
+    expect(find.text('Paso 3 de 3'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('Compara y acepta en el PC'),
+      200,
+      scrollable: verticalLists.last,
+    );
+    final code = find.textContaining(RegExp(r'^\d{3} \d{3}$'));
+    await tester.scrollUntilVisible(code, 200, scrollable: verticalLists.last);
+    expect(find.bySemanticsLabel(RegExp(r'^Código: \d{3} \d{3}$')), findsOne);
+    expect(find.textContaining('segundos'), findsNothing);
+    expect(
+      find.textContaining('muestra ahora'),
+      findsNothing,
+      reason: 'the PC shows the number only once the phone sends its name',
+    );
+
+    await tester.tap(find.text('Cancelar'));
+    await settle(tester);
+    expect(find.text('Paso 1 de 3'), findsOneWidget);
+    expect(pc.log, isNot(contains('POST /v1/pair')));
+    semantics.dispose();
+  });
 
   testWidgets('pairs, previews the first sync, then syncs on confirmation', (
     tester,
@@ -166,12 +235,18 @@ void main() {
       (pc.bodies['POST /v1/pair']!.single! as Map<String, Object?>)['name'],
       'Móvil de prueba',
     );
-    expect(find.text('Del PC a este móvil'.toUpperCase()), findsOneWidget);
+    expect(find.text('Primera vez con Test PC'), findsOneWidget);
+    expect(find.text('Del PC a este móvil'), findsOneWidget);
     expect(find.text('Instrumentos nuevos'), findsNWidgets(2));
     expect(find.text('PC Fund'), findsOneWidget);
     expect(find.text('Phone Fund'), findsOneWidget);
     expect(pc.log, isNot(contains('POST /v1/sync')));
 
+    await tester.scrollUntilVisible(
+      find.text('Sincronizar'),
+      200,
+      scrollable: verticalLists.first,
+    );
     await tester.tap(find.text('Sincronizar'));
     await settle(tester);
 
@@ -303,6 +378,8 @@ void main() {
     await settle(tester);
 
     expect(find.text('Sincronizado'), findsOneWidget);
+    await tester.tap(find.text('Conflictos resueltos'));
+    await tester.pumpAndSettle();
     expect(find.text('PC Fund · TER → PC'), findsOneWidget);
     expect(find.textContaining(pcFund), findsNothing);
     final settled = await (db.select(

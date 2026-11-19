@@ -6,21 +6,31 @@ import 'package:quoin/src/core/l10n/quoin_format.dart';
 import 'package:quoin/src/core/theme/quoin_colors.dart';
 import 'package:quoin/src/core/theme/quoin_tokens.dart';
 import 'package:quoin/src/core/theme/quoin_type.dart';
+import 'package:quoin/src/features/portfolio/presentation/widgets/portfolio_view.dart';
 import 'package:quoin/src/features/tax/domain/entities/realized_report.dart';
-import 'package:quoin/src/ui/atoms/quoin_card.dart';
-import 'package:quoin/src/ui/molecules/figure_block.dart';
+import 'package:quoin/src/features/tax/presentation/widgets/tax_sale_sheet.dart';
+import 'package:quoin/src/ui/atoms/display_figure.dart';
+import 'package:quoin/src/ui/molecules/count_list.dart';
+import 'package:quoin/src/ui/molecules/group_header.dart';
 import 'package:quoin/src/ui/molecules/sale_row.dart';
-import 'package:quoin/src/ui/atoms/quoin_section_label.dart';
 
-/// One fiscal year of the Bizkaia view, as the web's TaxYearPanel lays it
-/// out: the base and the tax, the year's net, its FIFO sales with their
-/// repurchases, the deferred losses that compute or wait, the carryforward
-/// and the income in kind, which no figure adds.
+/// One fiscal year of the Bizkaia view: the estimated tax, the chain of
+/// figures from the sales' result down to the savings base, how it is
+/// worked out, the year's FIFO sales, the deferred losses still waiting and
+/// the income in kind, which no figure adds.
 class TaxYearPanel extends StatelessWidget {
-  const TaxYearPanel({super.key, required this.report, required this.view});
+  const TaxYearPanel({
+    super.key,
+    required this.report,
+    required this.view,
+    required this.how,
+    this.onOpenInstrument,
+  });
 
   final RealizedReport report;
   final TaxYearView view;
+  final Widget how;
+  final void Function(String instrumentId)? onOpenInstrument;
 
   @override
   Widget build(BuildContext context) {
@@ -28,278 +38,170 @@ class TaxYearPanel extends StatelessWidget {
     final format = QuoinFormat.of(context);
     final c = QuoinColors.of(context);
     final type = QuoinType.of(context);
-    final zone = report.zone;
-    String money(Dec value) => format.money(Money.of(value));
     String signed(Dec value) => format.signedMoney(Money.of(value)).text;
-    String deferred(Money value) => isBelowCent(value)
-        ? l10n.taxBelowCent(format.money(Money.parse('0.01')))
-        : format.signedMoney(value).text;
 
+    final year = view.year;
     final base = view.netSavingsBase;
     final quota = view.quota;
     final pending = view.result.pending;
-    final integrations = view.result.integrations;
     final inKind = view.inKindIncome;
-    final steps = [
-      for (final s in view.carryforward.steps)
-        if (s.year == view.year ||
-            !(s.ownNet.isZero && s.pendingLossRemaining.isZero))
-          s,
-    ];
-
-    Widget card(List<Widget> children) => QuoinCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        spacing: QuoinSpace.s,
-        children: children,
+    final earlier = view.carryforward.steps.last.consumedFromCarryforward;
+    Widget note(String text) => Semantics(
+      container: true,
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: QuoinSpace.s),
+        child: Text(text, style: type.secondary.copyWith(color: c.muted)),
       ),
     );
-    Widget body(String text) =>
-        Text(text, style: type.secondary.copyWith(color: c.muted));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        card([
-          FigureBlock(
-            label: l10n.taxNetBase,
-            value: signed(base),
-            sign: base.sign,
-          ),
-          FigureBlock(
-            label: l10n.taxQuota,
-            value: quota == null ? l10n.taxNoScale : format.money(quota),
-            muted: quota == null,
-            caption: view.scale == null ? null : l10n.taxScale(view.year),
-          ),
-        ]),
-        const SizedBox(height: QuoinSpace.m),
-        card([
-          Text(
-            l10n.taxCounts(view.sales.length, view.affectedCount),
-            style: type.secondary.copyWith(color: c.muted),
-          ),
-          DetailLine(label: l10n.taxNetOwn, value: signed(view.ownNet)),
-          DetailLine(
-            label: l10n.taxNetNonComputable,
-            value: signed(view.nonComputableSum),
-          ),
-          DetailLine(
-            label: l10n.taxNetIntegrated,
-            value: signed(view.integratedSum),
-          ),
-          DetailLine(
-            label: l10n.taxNetComputable,
-            value: signed(view.computableNet),
-            color: c.text,
-          ),
-        ]),
-        QuoinSectionLabel(l10n.taxSalesTitle),
-        if (view.sales.isEmpty)
-          body(l10n.taxEmptyYear)
-        else
-          QuoinCard(
-            padding: EdgeInsets.zero,
-            child: Column(
-              children: [
-                for (final (i, gain) in view.sales.indexed) ...[
-                  if (i > 0) const Divider(height: 1),
-                  _saleRow(context, gain, deferred),
-                ],
-              ],
-            ),
-          ),
-        if (integrations.isNotEmpty) ...[
-          QuoinSectionLabel(l10n.taxIntegrationsTitle),
-          card([
-            body(l10n.taxIntegrationsBody),
-            for (final i in integrations)
-              DetailLine(
-                label:
-                    '${report.nameOf(i.instrumentId)}: '
-                    '${l10n.taxIntegrationLine(format.date(i.originTs, zone), format.date(i.ts, zone))}',
-                value: deferred(i.amount),
+        MergeSemantics(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            spacing: QuoinSpace.xs,
+            children: [
+              Text(
+                quota == null ? l10n.taxBaseOf(year) : l10n.taxEstimated(year),
+                style: type.secondary.tabular.copyWith(color: c.muted),
               ),
-          ]),
-        ],
-        if (pending.isNotEmpty) ...[
-          QuoinSectionLabel(l10n.taxPendingTitle(view.year)),
-          card([
-            body(l10n.taxPendingBody),
-            for (final p in pending)
-              DetailLine(
-                label:
-                    '${report.nameOf(p.instrumentId)}: '
-                    '${l10n.taxPendingLine(format.date(p.acquiredAt, zone))}',
-                value: deferred(p.amount),
+              DisplayFigure(quota == null ? signed(base) : format.money(quota)),
+              if (quota == null)
+                Text(
+                  l10n.taxNoScaleFor(year),
+                  style: type.secondary.copyWith(color: c.muted),
+                )
+              else
+                Text.rich(
+                  TextSpan(
+                    text: '${l10n.taxBase} ',
+                    children: [
+                      TextSpan(
+                        text: signed(base),
+                        style: type.secondary.mono.copyWith(color: c.body),
+                      ),
+                      TextSpan(text: ' · ${l10n.taxScaleOf(year)}'),
+                    ],
+                  ),
+                  style: type.secondary.tabular.copyWith(color: c.muted),
+                ),
+            ],
+          ),
+        ),
+        const SizedBox(height: QuoinSpace.gutter),
+        CountList(
+          entries: [
+            CountEntry(l10n.taxSalesResult, signed(view.ownNet)),
+            CountEntry(
+              l10n.taxDeferredByRepurchase,
+              signed(-view.nonComputableSum),
+            ),
+            CountEntry(l10n.taxDeferredCounting, signed(view.integratedSum)),
+            if (earlier.isPositive) ...[
+              CountEntry(
+                l10n.taxCountsThisYear,
+                signed(view.computableNet),
+                strong: true,
               ),
-            DetailLine(
-              label: l10n.taxTotal,
-              value: signed(view.pendingSum),
-              color: c.text,
-            ),
-          ]),
-        ],
-        QuoinSectionLabel(l10n.taxCarryforwardTitle),
-        card([
-          for (final (i, s) in steps.indexed) ...[
-            if (i > 0) const Divider(height: 1),
-            Text('${s.year}', style: type.row.mono),
-            DetailLine(label: l10n.taxCfOwnNet, value: signed(s.ownNet)),
-            DetailLine(
-              label: l10n.taxCfConsumed,
-              value: money(s.consumedFromCarryforward),
-            ),
-            DetailLine(label: l10n.taxCfFinal, value: signed(s.finalNet)),
-            DetailLine(
-              label: l10n.taxCfPending,
-              value: money(s.pendingLossRemaining),
-            ),
+              CountEntry(l10n.taxEarlierLosses, signed(-earlier)),
+            ],
+            CountEntry(l10n.taxBase, signed(base), strong: true),
           ],
-        ]),
+        ),
+        const SizedBox(height: QuoinSpace.gutter),
+        how,
+        GroupHeader(
+          label: l10n.taxSalesOf(year),
+          total: '${view.sales.length}',
+        ),
+        if (view.sales.isEmpty)
+          note(l10n.taxEmptyYear)
+        else
+          for (final gain in view.sales) _saleRow(context, gain),
+        if (pending.isNotEmpty) ...[
+          GroupHeader(
+            label: l10n.taxPendingTitle(year),
+            total: signed(view.pendingSum),
+          ),
+          note(l10n.taxPendingBody),
+          CountList(
+            entries: [
+              for (final p in pending)
+                CountEntry(
+                  report.nameOf(p.instrumentId),
+                  deferredText(l10n, format, p.amount),
+                  note: l10n.taxPendingLine(
+                    format.date(p.acquiredAt, report.zone),
+                  ),
+                ),
+            ],
+          ),
+        ],
         if (inKind.count > 0) ...[
-          QuoinSectionLabel(l10n.taxInKindTitle),
-          card([
-            body(l10n.taxInKindBody),
-            DetailLine(label: l10n.taxInKindCount, value: '${inKind.count}'),
-            DetailLine(
-              label: l10n.taxInKindGross,
-              value: format.money(inKind.gross),
-            ),
-            DetailLine(
-              label: l10n.taxInKindWithheld,
-              value: format.money(inKind.withheld),
-            ),
-          ]),
+          GroupHeader(label: l10n.taxInKindTitle),
+          note(l10n.taxInKindBody),
+          CountList(
+            entries: [
+              CountEntry(l10n.taxInKindCount, '${inKind.count}'),
+              CountEntry(l10n.taxInKindGross, format.money(inKind.gross)),
+              CountEntry(l10n.taxInKindWithheld, format.money(inKind.withheld)),
+            ],
+          ),
         ],
         const SizedBox(height: QuoinSpace.section),
       ],
     );
   }
 
-  Widget _saleRow(
-    BuildContext context,
-    RealizedGainDetail gain,
-    String Function(Money value) deferred,
-  ) {
+  Widget _saleRow(BuildContext context, RealizedGainDetail gain) {
     final l10n = AppLocalizations.of(context);
     final format = QuoinFormat.of(context);
-    final zone = report.zone;
-    final sale = gain.sale;
-    final wash = gain.washSale;
-    final material = wash != null && !isDeferralMinor(gain);
+    final material = gain.washSale != null && !isDeferralMinor(gain);
     final result = format.signedMoney(gain.realizedPnL);
-    final until = windowOpenUntil(gain, report.today);
-    final notice = gain.unlistedNotice;
-    String share(int decimals) => format.percent(
-      wash!.assessment.fraction,
-      decimals: decimals,
-      floorNonZero: true,
+    final name = report.nameOf(gain.instrumentId);
+    final instrument = report.instruments[gain.instrumentId];
+    Widget icon() => instrumentMark(
+      type: instrument?.type ?? '',
+      name: name,
+      kind: instrument?.exposureKind,
     );
-
+    final open = onOpenInstrument;
     return SaleRow(
-      name: report.nameOf(gain.instrumentId),
-      when: format.date(gain.ts, zone),
+      leading: icon(),
+      name: name,
+      when: format.date(gain.ts, report.zone),
+      tag: material
+          ? l10n.taxRepurchaseTag
+          : gain.unlistedNotice != null
+          ? l10n.taxNoticeTag
+          : null,
       result: result.text,
       sign: result.sign,
-      badge: material
-          ? l10n.taxWashSaleBadge
-          : notice != null
-          ? l10n.taxUnlistedBadge
+      note: material && gain.computablePnL.compareTo(gain.realizedPnL) != 0
+          ? (
+              label: l10n.taxCountsLabel,
+              value: format.signedMoney(gain.computablePnL).text,
+            )
           : null,
-      notes: [
-        if (wash != null && !material)
-          l10n.taxMinorDeferralReason(
-            share(1),
-            format.money(Money.parse('0.01')),
-          ),
-        if (wash != null && material)
-          [
-            l10n.taxWashSaleReason(
-              format.quantity(wash.assessment.repurchased),
-              format.quantity(sale.quantity),
-            ),
-            if (!gain.nonComputable.isZero)
-              l10n.taxOwnDeferredReason(
-                share(1),
-                format.signedMoney(gain.nonComputable).text,
-              ),
-            if (!gain.carriedOver.isZero)
-              l10n.taxCarriedOverReason(
-                format.signedMoney(gain.carriedOver).text,
-              ),
-          ].join(' '),
-        if (until != null)
-          l10n.taxWindowOpenReason(format.day(CalendarDate.parse(until))),
-        if (notice != null)
-          l10n.taxUnlistedReason(format.date(notice.buyTs, zone)),
-      ],
-      details: [
-        (l10n.saleUnits, format.quantity(sale.quantity)),
-        (l10n.saleGross, format.money(sale.gross)),
-        (l10n.saleFees, sale.fees.isZero ? '—' : format.money(sale.fees)),
-        (l10n.saleCost, format.money(sale.costRemoved)),
-        (l10n.saleResult, result.text),
-      ],
-      more: [
-        if (wash != null) ...[
-          _subtitle(context, l10n.taxBreakdownTitle(wash.letter.name)),
-          for (final (label, value) in [
-            (
-              l10n.taxBefore(wash.windowMonths),
-              format.quantity(wash.assessment.before),
-            ),
-            (
-              l10n.taxRemainingAfter,
-              format.quantity(wash.assessment.remainingAfter),
-            ),
-            (
-              l10n.taxRepurchaseBefore,
-              format.quantity(wash.assessment.repurchaseBefore),
-            ),
-            (
-              l10n.taxRepurchaseAfter(wash.windowMonths),
-              format.quantity(wash.assessment.repurchaseAfter),
-            ),
-            (l10n.taxRepurchased, format.quantity(wash.assessment.repurchased)),
-            (l10n.taxShare, share(2)),
-            if (!gain.nonComputable.isZero)
-              (l10n.taxNonComputable, deferred(gain.nonComputable)),
-            if (!gain.carriedOver.isZero)
-              (l10n.taxCarriedOver, deferred(gain.carriedOver)),
-          ])
-            DetailLine(label: label, value: value),
-          _subtitle(context, l10n.taxRecipientsTitle),
-          for (final r in wash.recipients)
-            DetailLine(
-              label: l10n.taxRecipientLine(
-                format.quantity(r.quantity),
-                format.date(r.acquiredAt, zone),
-              ),
-              value: deferred(r.deferredLoss),
-            ),
-        ],
-        _subtitle(context, l10n.taxLotsTitle),
-        for (final lot in sale.lots)
-          Text(
-            l10n.taxLotLine(
-              format.quantity(lot.quantity),
-              format.date(lot.acquiredAt, zone),
-              format.money(lot.unitCost),
-            ),
-            style: QuoinType.of(context).secondary.mono
-                .copyWith(color: QuoinColors.of(context).body),
-          ),
-      ],
+      onTap: () => showTaxSaleSheet(
+        context,
+        gain: gain,
+        name: name,
+        type: instrument?.type ?? '',
+        year: view.year,
+        zone: report.zone,
+        today: report.today,
+        icon: icon(),
+        onOpenInstrument: open == null || instrument == null
+            ? null
+            : () => open(gain.instrumentId),
+      ),
     );
   }
-
-  Widget _subtitle(BuildContext context, String text) => Padding(
-    padding: const EdgeInsets.only(top: QuoinSpace.s),
-    child: Text(
-      text,
-      style: QuoinType.of(context).secondary
-          .copyWith(color: QuoinColors.of(context).text),
-    ),
-  );
 }
+
+String deferredText(AppLocalizations l10n, QuoinFormat format, Money value) =>
+    isBelowCent(value)
+    ? l10n.taxBelowCent(format.money(Money.parse('0.01')))
+    : format.signedMoney(value).text;

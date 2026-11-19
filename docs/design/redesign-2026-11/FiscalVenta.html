@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Fiscal · detalle de una venta</title>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; box-sizing: border-box; overflow: hidden; background: #0a0a0b; color: #ffffff; font-family: 'Geist', ui-sans-serif, system-ui, sans-serif; -webkit-font-smoothing: antialiased">
+
+<div aria-hidden="true" style="padding: 32px 24px 0">
+<div style="height: 44px; display: flex; align-items: center; font-size: 20px; font-weight: 600">Realizado</div>
+</div>
+<div aria-hidden="true" style="position: absolute; inset: 0; background: rgba(0,0,0,0.6)"></div>
+
+<section role="dialog" aria-labelledby="t" style="position: absolute; left: 0; right: 0; bottom: 0; top: 64px; background: #151518; border-radius: 28px 28px 0 0; display: flex; flex-direction: column; overflow: hidden">
+<div aria-hidden="true" style="align-self: center; margin-top: 10px; width: 40px; height: 4px; border-radius: 999px; background: #3a3a40"></div>
+
+<div style="padding: 18px 24px 0; display: flex; align-items: center; gap: 14px">
+<span aria-hidden="true" style="width: 44px; height: 44px; border-radius: 12px; background: #1f1f23; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f2f2f4" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"></circle><path d="M3.5 12h17M12 3.5c2.5 2.6 3.5 5.4 3.5 8.5s-1 5.9-3.5 8.5M12 3.5C9.5 6.1 8.5 8.9 8.5 12s1 5.9 3.5 8.5"></path></svg></span>
+<div style="display: flex; flex-direction: column; gap: 2px"><h1 id="t" style="margin: 0; font-size: 18px; font-weight: 600">Fondo Emergentes</h1><span style="font-size: 13px; color: #8b8b93; font-variant-numeric: tabular-nums">Venta del 11 ago 2026 · 8 participaciones</span></div>
+</div>
+
+<div style="padding: 20px 24px 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr))">
+<div style="display: flex; flex-direction: column; gap: 3px"><span style="font-size: 13px; color: #8b8b93">Resultado</span><span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 24px; font-weight: 600; color: #ff6b7a">−41,44 €</span></div>
+<div style="padding-left: 16px; border-left: 1px solid #26262a; display: flex; flex-direction: column; gap: 3px"><span style="font-size: 13px; color: #8b8b93">Cuenta en 2026</span><span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 24px; font-weight: 600">−15,54 €</span></div>
+</div>
+
+<div style="margin: 18px 24px 0; padding: 14px; border-radius: 16px; background: #1f1f23; display: flex; gap: 12px">
+<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" style="flex: 0 0 auto; margin-top: 1px"><path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v4h-4" fill="none" stroke="#c9c9cf" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+<p style="margin: 0; font-size: 14px; line-height: 1.5; color: #c9c9cf">Recompraste 5 de las 8 participaciones en los dos meses siguientes. Esa parte de la pérdida, <span style="font-family: 'Geist Mono', ui-monospace, monospace">−25,90 €</span>, se aplaza: contará cuando vendas las recompradas.</p>
+</div>
+
+<dl style="margin: 18px 24px 0; display: flex; flex-direction: column">
+<div style="display: flex; justify-content: space-between; padding: 11px 0; border-top: 1px solid #26262a"><dt style="font-size: 14px; color: #a8a8b0">Has recibido</dt><dd style="margin: 0; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 14px">279,00 €</dd></div>
+<div style="display: flex; justify-content: space-between; padding: 11px 0; border-top: 1px solid #26262a"><dt style="font-size: 14px; color: #a8a8b0">Te había costado</dt><dd style="margin: 0; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 14px">320,44 €</dd></div>
+<div style="display: flex; justify-content: space-between; padding: 11px 0; border-top: 1px solid #26262a; border-bottom: 1px solid #26262a"><dt style="font-size: 14px; color: #a8a8b0">Comisiones</dt><dd style="margin: 0; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 14px">1,00 €</dd></div>
+</dl>
+
+<div style="margin: 6px 24px 0; display: flex; flex-direction: column">
+<button type="button" aria-expanded="true" style="display: flex; align-items: center; min-height: 48px; padding: 0; border: 0; background: transparent; color: inherit; font-family: inherit; font-size: 15px; text-align: left"><span style="flex: 1">Compras que se venden (FIFO)</span><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6" fill="none" stroke="#8b8b93" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></button>
+<div style="display: flex; justify-content: space-between; padding: 0 0 10px; font-size: 14px; color: #a8a8b0; font-variant-numeric: tabular-nums"><span>8 participaciones del 23 may 2026</span><span>a <span style="font-family: 'Geist Mono', ui-monospace, monospace; color: #ffffff">40,06 €</span></span></div>
+<button type="button" aria-expanded="false" style="display: flex; align-items: center; min-height: 48px; padding: 0; border: 0; border-top: 1px solid #26262a; background: transparent; color: inherit; font-family: inherit; font-size: 15px; text-align: left"><span style="flex: 1">Cómo se calcula la recompra</span><span style="font-size: 12px; color: #6e6e76; margin-right: 10px">Art. 43</span><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="#8b8b93" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></button>
+<button type="button" aria-expanded="false" style="display: flex; align-items: center; min-height: 48px; padding: 0; border: 0; border-top: 1px solid #26262a; background: transparent; color: inherit; font-family: inherit; font-size: 15px; text-align: left"><span style="flex: 1">Dónde queda la pérdida aplazada</span><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="#8b8b93" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></button>
+</div>
+
+<a href="#" style="margin: auto 24px 34px; height: 52px; display: flex; align-items: center; justify-content: center; border: 1px solid #26262a; border-radius: 999px; color: #ffffff; text-decoration: none; font-size: 15px">Ver la ficha del instrumento</a>
+</section>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
