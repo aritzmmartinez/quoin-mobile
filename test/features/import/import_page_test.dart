@@ -8,6 +8,7 @@ import 'package:quoin/src/app/router.dart';
 import 'package:quoin/src/features/import/data/datasources/ecb_remote_datasource.dart';
 import 'package:quoin/src/features/import/data/datasources/import_file_datasource.dart';
 import 'package:quoin/src/features/import/domain/entities/import_batch.dart';
+import 'package:quoin/src/features/import/presentation/widgets/broker_guides.dart';
 
 import '../../helpers.dart';
 
@@ -107,9 +108,34 @@ void main() {
     expect(tester.widget<FilledButton>(confirm).onPressed, isNull);
   });
 
-  testWidgets('an unknown file opens the modal and nothing is written', (
+  testWidgets('the review reads each text and each count on its own', (
     tester,
   ) async {
+    final semantics = tester.ensureSemantics();
+    await pumpApp(tester, prefs: {'locale': 'es'}, overrides: [offline]);
+    await open(tester, Routes.importSample);
+
+    void ownNode(Finder text, String label) {
+      final node = tester.getSemantics(text);
+      expect(node.label, label);
+      expect(node.rect.height, lessThan(tester.getSize(text).height + 40));
+    }
+
+    for (final text in [
+      'Trade Republic · sample.csv',
+      'El resto ya estaba en tu cartera o no son inversiones.',
+    ]) {
+      ownNode(find.text(text), text);
+    }
+    final help = find.textContaining('Estas filas no se han importado');
+    ownNode(help, tester.widget<Text>(help).data!);
+    ownNode(find.text('Nuevas'), 'Nuevas, 6');
+    ownNode(find.text('Ya importadas'), 'Ya importadas, 0');
+    semantics.dispose();
+  });
+
+  testWidgets('step 1 joins the file and the guides; Continue waits for '
+      'a file it recognises', (tester) async {
     await pumpApp(
       tester,
       prefs: {'locale': 'es'},
@@ -121,31 +147,56 @@ void main() {
     );
     await open(tester, Routes.import);
 
-    expect(find.text('Cómo exportar tus movimientos'), findsOneWidget);
-    await tester.tap(find.text('Continuar'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Toca para seleccionar archivo'));
+    expect(find.text('Sube tu CSV'), findsOneWidget);
+    expect(find.text('Paso 1 de 3'), findsOneWidget);
+    expect(find.byType(BrokerGuideRow), findsNWidgets(brokerGuides.length));
+    expect(find.text('Desde la app · 4 pasos'), findsOneWidget);
+    expect(
+      find.text('Desde la web, no desde la app · 4 pasos'),
+      findsOneWidget,
+    );
+    FilledButton continueButton() =>
+        tester.widget(find.widgetWithText(FilledButton, 'Continuar'));
+    expect(continueButton().onPressed, isNull, reason: 'no file yet');
+
+    await tester.tap(find.text('Elige el CSV'));
     await tester.pumpAndSettle();
     expect(find.text('movimientos.csv'), findsOneWidget);
-
-    await tester.tap(find.text('Continuar'));
-    await tester.pumpAndSettle();
-    expect(find.text('No se pudo procesar el archivo'), findsOneWidget);
     expect(find.textContaining('No reconozco este export'), findsOneWidget);
-    expect(find.text('Tu cartera actual no se ha modificado.'), findsOneWidget);
+    expect(find.text('Reconocido por las columnas del fichero'), findsNothing);
+    expect(continueButton().onPressed, isNull, reason: 'nothing to read it as');
 
-    await tester.tap(find.text('Reintentar'));
+    await tester.tap(find.text('Cambiar'));
     await tester.pumpAndSettle();
-    expect(find.text('Toca para seleccionar archivo'), findsOneWidget);
+    expect(find.text('Elige el CSV'), findsOneWidget);
 
-    await tester.tap(find.text('Toca para seleccionar archivo'));
+    await tester.tap(find.byTooltip('Cerrar'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Continuar'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Cancelar'));
-    await tester.pumpAndSettle();
-    expect(find.text('Cómo exportar tus movimientos'), findsNothing);
+    expect(find.text('Sube tu CSV'), findsNothing);
     expect(find.text('Sin posiciones todavía'), findsOneWidget);
+  });
+
+  testWidgets('a broker guide opens its numbered steps', (tester) async {
+    await pumpApp(tester, prefs: {'locale': 'es'});
+    await open(tester, Routes.import);
+
+    await tester.tap(find.text('Trade Republic'));
+    await tester.pumpAndSettle();
+    expect(find.text('Se exporta desde la app del móvil'), findsOneWidget);
+    for (final step in ['1', '2', '3', '4']) {
+      expect(find.text(step), findsOneWidget);
+    }
+    expect(
+      find.text('Entra en Perfil (o Cuenta).', findRichText: true),
+      findsOneWidget,
+      reason: 'the asterisks mark what to tap and are not shown',
+    );
+    expect(find.textContaining('*', findRichText: true), findsNothing);
+    expect(find.textContaining('las repetidas se detectan'), findsOneWidget);
+
+    await tester.tap(find.text('Entendido'));
+    await tester.pumpAndSettle();
+    expect(find.text('Se exporta desde la app del móvil'), findsNothing);
   });
 
   testWidgets('a saveback pair that cannot be read is one failed operation, '
@@ -167,10 +218,12 @@ void main() {
       ],
     );
     await open(tester, Routes.import);
-    await tester.tap(find.text('Continuar'));
+    await tester.tap(find.text('Elige el CSV'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Toca para seleccionar archivo'));
-    await tester.pumpAndSettle();
+    expect(
+      find.text('Reconocido por las columnas del fichero'),
+      findsOneWidget,
+    );
     await tester.tap(find.text('Continuar'));
     await tester.pumpAndSettle();
 
@@ -195,10 +248,12 @@ void main() {
       ],
     );
     await open(tester, Routes.import);
-    await tester.tap(find.text('Continuar'));
+    await tester.tap(find.text('Elige el CSV'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Toca para seleccionar archivo'));
-    await tester.pumpAndSettle();
+    expect(
+      find.text('Reconocido por las columnas del fichero'),
+      findsOneWidget,
+    );
     await tester.tap(find.text('Continuar'));
     await tester.pumpAndSettle();
     expect(find.textContaining('export antiguo de Kraken'), findsOneWidget);
@@ -223,14 +278,13 @@ void main() {
       ],
     );
     await open(tester, Routes.import);
-    await tester.tap(find.text('Continuar'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Toca para seleccionar archivo'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Continuar'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Reintentar'));
-    await tester.pumpAndSettle();
+    for (final target in ['Kraken', 'Entendido', 'Elige el CSV']) {
+      await tester.ensureVisible(find.text(target));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(target));
+      await tester.pumpAndSettle();
+    }
+    expect(find.textContaining('No reconozco este export'), findsOneWidget);
     Navigator.of(tester.element(find.text('Importar CSV'))).pop();
     await tester.pumpAndSettle();
 

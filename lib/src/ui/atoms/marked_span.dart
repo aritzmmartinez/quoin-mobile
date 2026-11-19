@@ -11,3 +11,14 @@ InlineSpan markedSpan(String text, String part, TextStyle style) {
     ],
   );
 }
+
+InlineSpan starredSpan(String text, TextStyle strong) {
+  final parts = text.split('*');
+  return TextSpan(
+    children: [
+      for (final (i, part) in parts.indexed)
+        if (part.isNotEmpty)
+          TextSpan(text: part, style: i.isOdd ? strong : null),
+    ],
+  );
+}

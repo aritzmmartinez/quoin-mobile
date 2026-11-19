@@ -238,8 +238,6 @@
   "quoinStepDone": "hecho",
   "quoinStepCurrent": "ahora",
   "quoinStepPending": "pendiente",
-  "importHelpTitle": "Cómo exportar tus movimientos",
-  "importHelpBody": "Sube el CSV tal cual lo descargas, sin abrirlo ni guardarlo con otro programa. Quoin reconoce el bróker por las columnas del fichero: no hace falta elegirlo.",
   "brokerTradeRepublic": "Trade Republic",
   "@brokerTradeRepublic": {
     "description": "Nombre propio; igual en todos los ARB."
@@ -248,12 +246,40 @@
   "@brokerKraken": {
     "description": "Nombre propio; igual en todos los ARB."
   },
-  "importHelpTradeRepublic": "En la app: Perfil o Cuenta → Certificados y extractos → Exportación de transacción. Elige el periodo y se descarga el CSV.",
-  "importHelpKraken": "En la web, no desde la app: Documentos → Nueva exportación → Libro mayor. Elige el periodo y el formato CSV.",
   "importContinue": "Continuar",
-  "importSelectTitle": "Sube tu archivo CSV",
-  "importSelectAction": "Toca para seleccionar archivo",
-  "importSelectHint": "Trade Republic o Kraken, tal cual lo descargas",
+  "importSelectTitle": "Sube tu CSV",
+  "importSelectAction": "Elige el CSV",
+  "importSelectHint": "Súbelo tal cual lo descargas, sin abrirlo ni guardarlo con otro programa.",
+  "importRecognized": "Reconocido por las columnas del fichero",
+  "importHowTitle": "¿Cómo lo descargo?",
+  "importFromApp": "Desde la app · {count, plural, =1{1 paso} other{{count} pasos}}",
+  "@importFromApp": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "importFromWeb": "Desde la web, no desde la app · {count, plural, =1{1 paso} other{{count} pasos}}",
+  "@importFromWeb": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "importExportedInApp": "Se exporta desde la app del móvil",
+  "importExportedOnWeb": "Se exporta desde la web, no desde la app",
+  "importGuideNote": "Luego vuelve aquí y elige el fichero descargado. Si exportas un periodo que ya importaste, las repetidas se detectan solas.",
+  "importGotIt": "Entendido",
+  "importTradeRepublicStep1": "Abre la app de Trade Republic.",
+  "importTradeRepublicStep2": "Entra en *Perfil* (o *Cuenta*).",
+  "importTradeRepublicStep3": "Toca *Certificados y extractos*.",
+  "importTradeRepublicStep4": "Elige *Exportación de transacción*, marca el periodo y descarga el CSV.",
+  "importKrakenStep1": "Entra en kraken.com desde el navegador: la app no exporta.",
+  "importKrakenStep2": "Abre *Documentos*.",
+  "importKrakenStep3": "Toca *Nueva exportación* y elige *Libro mayor*.",
+  "importKrakenStep4": "Marca el periodo, elige el formato *CSV* y descárgalo.",
   "importFileSize": "{size} KB",
   "@importFileSize": {
     "placeholders": {

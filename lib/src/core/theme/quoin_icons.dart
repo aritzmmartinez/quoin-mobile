@@ -64,6 +64,11 @@ abstract final class QuoinIcons {
   // Import.
   static const upload = QuoinIconData._(HugeIcons.strokeRoundedUpload04);
   static const csvFile = QuoinIconData._(HugeIcons.strokeRoundedCsv01);
+  static const exportInApp = QuoinIconData._(HugeIcons.strokeRoundedSmartphone);
+  static const exportOnWeb = QuoinIconData._(HugeIcons.strokeRoundedBrowser);
+  static const recognized = QuoinIconData._(
+    HugeIcons.strokeRoundedCheckmarkCircle02,
+  );
   static const alert = QuoinIconData._(HugeIcons.strokeRoundedAlert02);
 
   // Sync.

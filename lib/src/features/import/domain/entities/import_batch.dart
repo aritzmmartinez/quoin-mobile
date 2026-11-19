@@ -7,12 +7,20 @@ final class ImportFile {
     required this.name,
     required this.size,
     required this.text,
+    this.broker,
   });
 
   final String name;
-
   final int size;
   final String text;
+  final Broker? broker;
+
+  ImportFile recognized() => ImportFile(
+    name: name,
+    size: size,
+    text: text,
+    broker: detectBroker(text),
+  );
 }
 
 final class ImportPreview {

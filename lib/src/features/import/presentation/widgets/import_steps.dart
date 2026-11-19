@@ -9,12 +9,13 @@ import 'package:quoin/src/core/theme/quoin_icons.dart';
 import 'package:quoin/src/core/theme/quoin_tokens.dart';
 import 'package:quoin/src/core/theme/quoin_type.dart';
 import 'package:quoin/src/features/import/domain/entities/import_batch.dart';
-import 'package:quoin/src/ui/atoms/quoin_avatar.dart';
+import 'package:quoin/src/features/import/presentation/widgets/broker_guides.dart';
 import 'package:quoin/src/ui/molecules/icon_tile.dart';
 import 'package:quoin/src/ui/atoms/quoin_card.dart';
 import 'package:quoin/src/ui/atoms/quoin_icon.dart';
 import 'package:quoin/src/ui/molecules/count_list.dart';
 import 'package:quoin/src/ui/molecules/fold_section.dart';
+import 'package:quoin/src/ui/molecules/group_header.dart';
 
 class ImportProgress extends StatelessWidget {
   const ImportProgress({super.key, required this.step, required this.total});
@@ -65,55 +66,9 @@ class ImportProgress extends StatelessWidget {
   }
 }
 
-/// Step 1: how to export from each broker. There is no picker: the header
-/// says which broker a file comes from.
-class ImportHelpStep extends StatelessWidget {
-  const ImportHelpStep({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final c = QuoinColors.of(context);
-    final type = QuoinType.of(context);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      spacing: QuoinSpace.row,
-      children: [
-        _StepTitle(l10n.importHelpTitle),
-        Text(
-          l10n.importHelpBody,
-          style: type.secondary.copyWith(color: c.muted),
-        ),
-        const SizedBox(height: QuoinSpace.row),
-        for (final (name, how) in [
-          (l10n.brokerTradeRepublic, l10n.importHelpTradeRepublic),
-          (l10n.brokerKraken, l10n.importHelpKraken),
-        ])
-          QuoinCard(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              spacing: QuoinSpace.m,
-              children: [
-                QuoinAvatar(name),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    spacing: QuoinSpace.xxs,
-                    children: [
-                      Text(name, style: type.row),
-                      Text(how, style: type.secondary.copyWith(color: c.muted)),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-      ],
-    );
-  }
-}
-
-/// Step 2: the file, or the area to pick one.
+/// Step 1: the file, or the area to pick one, and how to download it from
+/// each broker. There is no broker picker: the header's columns say whose
+/// export it is, as soon as the file is chosen.
 class ImportSelectStep extends StatelessWidget {
   const ImportSelectStep({
     super.key,
@@ -134,74 +89,139 @@ class ImportSelectStep extends StatelessWidget {
     final picked = file;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
-      spacing: QuoinSpace.gutter,
       children: [
         _StepTitle(l10n.importSelectTitle),
+        const SizedBox(height: QuoinSpace.section),
         if (picked == null)
-          QuoinCard(
-            onTap: onPick,
-            padding: const EdgeInsets.symmetric(
-              horizontal: QuoinSpace.card,
-              vertical: QuoinSpace.block,
-            ),
-            child: Column(
-              spacing: QuoinSpace.s,
-              children: [
-                QuoinIcon(
-                  QuoinIcons.upload,
-                  size: QuoinIconSize.large,
-                  color: c.accent,
-                ),
-                Text(
-                  l10n.importSelectAction,
-                  textAlign: TextAlign.center,
-                  style: type.row,
-                ),
-                Text(
-                  l10n.importSelectHint,
-                  textAlign: TextAlign.center,
-                  style: type.secondary.copyWith(color: c.muted),
-                ),
-              ],
+          Semantics(
+            container: true,
+            button: true,
+            child: QuoinCard(
+              onTap: onPick,
+              padding: const EdgeInsets.symmetric(
+                horizontal: QuoinSpace.gutter,
+                vertical: QuoinSpace.block,
+              ),
+              child: Column(
+                spacing: QuoinSpace.row,
+                children: [
+                  QuoinIcon(
+                    QuoinIcons.upload,
+                    size: QuoinIconSize.large,
+                    color: c.accent,
+                  ),
+                  Text(
+                    l10n.importSelectAction,
+                    textAlign: TextAlign.center,
+                    style: type.row,
+                  ),
+                  Text(
+                    l10n.importSelectHint,
+                    textAlign: TextAlign.center,
+                    style: type.secondary.copyWith(color: c.muted),
+                  ),
+                ],
+              ),
             ),
           )
         else
-          QuoinCard(
-            child: Row(
-              spacing: QuoinSpace.m,
-              children: [
-                QuoinIcon(
-                  QuoinIcons.csvFile,
-                  size: QuoinIconSize.large,
-                  color: c.accent,
-                ),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    spacing: QuoinSpace.xxs,
-                    children: [
-                      Text(picked.name, style: type.row),
-                      Text(
-                        l10n.importFileSize(_kilobytes(picked.size, context)),
-                        style: type.secondary.mono.copyWith(color: c.muted),
-                      ),
-                    ],
-                  ),
-                ),
-                TextButton(onPressed: onClear, child: Text(l10n.importChange)),
-              ],
-            ),
-          ),
+          ChosenFile(file: picked, onChange: onClear),
+        const SizedBox(height: QuoinSpace.s),
+        GroupHeader(label: l10n.importHowTitle),
+        for (final guide in brokerGuides) BrokerGuideRow(guide: guide),
       ],
     );
   }
-
-  static String _kilobytes(int bytes, BuildContext context) => QuoinFormat.of(
-    context,
-  ).quantity(Dec.parse('$bytes').dividedBy(Dec.parse('1024')), maxDecimals: 1);
 }
 
-/// Step 3 while the file is read or the batch written.
+/// The chosen file: whose export it is, its name and size, and under it
+/// either that the columns gave the broker away or why they did not.
+class ChosenFile extends StatelessWidget {
+  const ChosenFile({super.key, required this.file, required this.onChange});
+
+  final ImportFile file;
+  final VoidCallback onChange;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final c = QuoinColors.of(context);
+    final type = QuoinType.of(context);
+    final broker = file.broker;
+    final guide = broker == null ? null : guideOf(broker);
+    final size = l10n.importFileSize(kilobytes(file.size, context));
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      spacing: QuoinSpace.row,
+      children: [
+        QuoinCard(
+          child: Row(
+            spacing: QuoinSpace.m,
+            children: [
+              IconTile(icon: guide?.icon ?? QuoinIcons.csvFile),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  spacing: QuoinSpace.xxs,
+                  children: [
+                    Text(
+                      file.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: type.row,
+                    ),
+                    Text.rich(
+                      TextSpan(
+                        children: [
+                          if (guide != null)
+                            TextSpan(text: '${guide.name(l10n)} · '),
+                          TextSpan(text: size, style: type.secondary.mono),
+                        ],
+                      ),
+                      style: type.secondary.copyWith(color: c.muted),
+                    ),
+                  ],
+                ),
+              ),
+              TextButton(onPressed: onChange, child: Text(l10n.importChange)),
+            ],
+          ),
+        ),
+        Semantics(
+          container: true,
+          liveRegion: true,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: QuoinSpace.xs),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              spacing: QuoinSpace.s,
+              children: [
+                QuoinIcon(
+                  guide == null ? QuoinIcons.info : QuoinIcons.recognized,
+                  size: QuoinIconSize.small,
+                  color: c.muted,
+                ),
+                Expanded(
+                  child: Text(
+                    guide == null
+                        ? l10n.importUnknownBroker
+                        : l10n.importRecognized,
+                    style: type.secondary.copyWith(color: c.muted),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+String kilobytes(int bytes, BuildContext context) => QuoinFormat.of(context)
+    .quantity(Dec.parse('$bytes').dividedBy(Dec.parse('1024')), maxDecimals: 1);
+
+/// Step 2 while the file is read or the batch written.
 class ImportBusyStep extends StatelessWidget {
   const ImportBusyStep({super.key});
 
@@ -225,7 +245,7 @@ class ImportBusyStep extends StatelessWidget {
   }
 }
 
-//// Step 3: what the import adds, what it leaves out and why, what it noticed
+/// Step 2: what the import adds, what it leaves out and why, what it noticed
 /// and which rows it could not read.
 class ImportReviewStep extends StatelessWidget {
   const ImportReviewStep({super.key, required this.preview, this.fileName});
@@ -319,18 +339,15 @@ class ImportReviewStep extends StatelessWidget {
           rows: const [],
         ),
     ];
-    final file = [
-      switch (preview.broker) {
-        Broker.tradeRepublic => l10n.brokerTradeRepublic,
-        Broker.kraken => l10n.brokerKraken,
-      },
-      ?fileName,
-    ].join(' · ');
+    final file = [guideOf(preview.broker).name(l10n), ?fileName].join(' · ');
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(file, style: type.secondary.copyWith(color: c.muted)),
+        Semantics(
+          container: true,
+          child: Text(file, style: type.secondary.copyWith(color: c.muted)),
+        ),
         const SizedBox(height: QuoinSpace.tight),
         Semantics(
           header: true,
@@ -495,12 +512,15 @@ class _Lead extends StatelessWidget {
   final String text;
 
   @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(top: QuoinSpace.tight),
-    child: Text(
-      text,
-      style: QuoinType.of(context).secondary
-          .copyWith(color: QuoinColors.of(context).body),
+  Widget build(BuildContext context) => Semantics(
+    container: true,
+    child: Padding(
+      padding: const EdgeInsets.only(top: QuoinSpace.tight),
+      child: Text(
+        text,
+        style: QuoinType.of(context).secondary
+            .copyWith(color: QuoinColors.of(context).body),
+      ),
     ),
   );
 }
@@ -547,25 +567,28 @@ class _IssueGroup extends StatelessWidget {
             ),
           ...rows,
           if (help != null)
-            Padding(
-              padding: const EdgeInsets.only(top: QuoinSpace.tight),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                spacing: QuoinSpace.m,
-                children: [
-                  if (alert)
-                    QuoinIcon(
-                      QuoinIcons.alert,
-                      size: QuoinIconSize.small,
-                      color: c.muted,
+            Semantics(
+              container: true,
+              child: Padding(
+                padding: const EdgeInsets.only(top: QuoinSpace.tight),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  spacing: QuoinSpace.m,
+                  children: [
+                    if (alert)
+                      QuoinIcon(
+                        QuoinIcons.alert,
+                        size: QuoinIconSize.small,
+                        color: c.muted,
+                      ),
+                    Expanded(
+                      child: Text(
+                        help,
+                        style: type.secondary.copyWith(color: c.muted),
+                      ),
                     ),
-                  Expanded(
-                    child: Text(
-                      help,
-                      style: type.secondary.copyWith(color: c.muted),
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
         ],
@@ -574,7 +597,7 @@ class _IssueGroup extends StatelessWidget {
   }
 }
 
-// Step 4: done.
+// Step 3: done.
 class ImportDoneStep extends StatelessWidget {
   const ImportDoneStep({super.key, required this.written});
 
