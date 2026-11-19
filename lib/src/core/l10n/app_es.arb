@@ -891,7 +891,7 @@
     "description": "Nombre del móvil propuesto al vincular; editable."
   },
   "pairNameInvalid": "Escribe un nombre de 1 a 100 caracteres.",
-  "pairWaiting": "Quoin en tu PC te pide que aceptes este móvil.",
+  "pairWaiting": "Tu PC muestra ahora este número: compruébalo y acéptalo allí.",
   "pairIntroTitle": "Conecta el móvil con Quoin en tu ordenador",
   "pairIntroBody": "Se sincronizan por tu wifi, cifrado y sin pasar por internet. Tarda un minuto y solo se hace una vez.",
   "pairStepOpen": "Abre Quoin en el PC",
@@ -906,14 +906,21 @@
       }
     }
   },
-  "pairStepCompare": "Compara y confirma",
-  "pairStepCompareDetail": "Los dos mostrarán el mismo código",
-  "pairCompareBody": "Tu PC muestra ahora este mismo número. Si es distinto, pulsa «No coincide».",
-  "pairMatch": "Coincide, continuar",
-  "pairNoMatch": "No coincide",
+  "pairStepCompare": "Compara y acepta en el PC",
+  "pairStepCompareDetail": "Si el número es otro, recházalo allí",
+  "pairCompareBody": "Pulsa Continuar y tu PC mostrará este mismo número.",
+  "pairYourCode": "Tu código",
+  "pairContinue": "Continuar",
+  "pairCancel": "Cancelar",
   "pairAccept": "Acepta en el PC",
   "pairScannerTitle": "Escanea el código del PC",
   "pairScannerHint": "Lo encuentras en Quoin, en Ajustes → Dispositivos",
+  "pairScannerSearching": "Buscando el código…",
+  "pairScannerClose": "Cerrar",
+  "pairScannerTorch": "Linterna",
+  "pairScannerTorchOn": "Encender la linterna",
+  "pairScannerTorchOff": "Apagar la linterna",
+  "pairScannerTorchUnavailable": "No se puede usar la linterna",
   "pairCodeLabel": "Código: {code}",
   "@pairCodeLabel": {
     "placeholders": {

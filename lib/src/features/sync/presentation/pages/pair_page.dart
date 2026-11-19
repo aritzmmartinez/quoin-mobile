@@ -47,11 +47,7 @@ class _PairPageState extends ConsumerState<PairPage> {
 
   Future<void> _scan() async {
     final l10n = AppLocalizations.of(context);
-    final scan = await ref.read(qrScannerProvider)(
-      title: l10n.pairScannerTitle,
-      hint: '${l10n.quoinStepOf(2, 3)} · ${l10n.pairScannerHint}',
-      color: QuoinColors.dark.accent,
-    );
+    final scan = await ref.read(qrScannerProvider)(l10n);
     if (!mounted) return;
     if (scan.denied) return setState(() => _cameraDenied = true);
     if (scan.text case final text?) await _scanned(text);
@@ -196,9 +192,9 @@ class _PairPageState extends ConsumerState<PairPage> {
           if (_step == _Step.name) ...[
             FilledButton(
               onPressed: () => _pair(l10n.pairDefaultName),
-              child: Text(l10n.pairMatch),
+              child: Text(l10n.pairContinue),
             ),
-            TextButton(onPressed: _again, child: Text(l10n.pairNoMatch)),
+            TextButton(onPressed: _again, child: Text(l10n.pairCancel)),
           ],
         ],
         children: [
@@ -224,25 +220,37 @@ class _PairPageState extends ConsumerState<PairPage> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       spacing: QuoinSpace.card,
       children: [
-        Text(
-          l10n.pairCompareBody,
-          style: type.secondary.copyWith(color: c.body),
-        ),
-        Semantics(
-          container: true,
-          label: l10n.pairCodeLabel(_grouped(code)),
-          excludeSemantics: true,
-          child: FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: AlignmentDirectional.centerStart,
-            child: Text(
-              _grouped(code),
-              maxLines: 1,
-              style: type.display.copyWith(color: c.text),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          spacing: QuoinSpace.xs,
+          children: [
+            Text(
+              l10n.pairYourCode,
+              style: type.secondary.copyWith(color: c.muted),
             ),
-          ),
+            Semantics(
+              container: true,
+              label: l10n.pairCodeLabel(_grouped(code)),
+              excludeSemantics: true,
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: AlignmentDirectional.centerStart,
+                child: Text(
+                  _grouped(code),
+                  maxLines: 1,
+                  style: type.display.copyWith(color: c.text),
+                ),
+              ),
+            ),
+          ],
         ),
-        if (_step == _Step.name)
+        // The PC works the number out only once the phone sends its name,
+        // so it can show it only after Continue, never before.
+        if (_step == _Step.name) ...[
+          Text(
+            l10n.pairCompareBody,
+            style: type.secondary.copyWith(color: c.body),
+          ),
           QuoinTextField(
             label: l10n.pairPhoneName,
             help: l10n.pairPhoneNameHelp,
@@ -250,8 +258,8 @@ class _PairPageState extends ConsumerState<PairPage> {
             controller: _name ??= TextEditingController(
               text: l10n.pairDefaultName,
             ),
-          )
-        else
+          ),
+        ] else
           MergeSemantics(
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -307,7 +315,7 @@ class _PairPageState extends ConsumerState<PairPage> {
       ),
       StepEntry(
         title: l10n.pairStepCompare,
-        detail: compare == null ? l10n.pairStepCompareDetail : null,
+        detail: l10n.pairStepCompareDetail,
         status: status(3),
         child: compare,
       ),

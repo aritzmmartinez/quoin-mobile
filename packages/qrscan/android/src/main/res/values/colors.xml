@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <color name="scan_corner_color_green">#0effc2</color>
+    <color name="scan_corner_color_blue">#12C4FF</color>
+
+    <!-- The scanner sits on the camera, always dark: white text and glass. -->
+    <color name="scan_veil">#A8060608</color>
+    <color name="scan_glass">#1FFFFFFF</color>
+    <color name="scan_tag">#1AFFFFFF</color>
+    <color name="scan_text">#FFFFFFFF</color>
+    <color name="scan_text_soft">#FFC9C9CF</color>
+    <color name="scan_text_tag">#FFE4E4E8</color>
+    <color name="scan_text_faint">#FFA8A8B0</color>
+    <color name="scan_torch_on_icon">#FF0A0A0B</color>
+</resources>

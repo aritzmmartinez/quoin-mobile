@@ -1,0 +1,15 @@
+<resources>
+    <!-- Default screen margins, per the Android Design guidelines. -->
+    <dimen name="activity_horizontal_margin">16dp</dimen>
+    <dimen name="activity_vertical_margin">16dp</dimen>
+    <dimen name="fab_margin">16dp</dimen>
+
+    <!-- The viewfinder, as in docs/design/redesign-2026-11/Escaner.html of
+         the app this fork serves. -->
+    <dimen name="scan_hole">260dp</dimen>
+    <dimen name="scan_hole_min">160dp</dimen>
+    <dimen name="scan_side">32dp</dimen>
+    <dimen name="scan_hole_radius">32dp</dimen>
+    <dimen name="scan_corner_arm">12dp</dimen>
+    <dimen name="scan_corner_stroke">4dp</dimen>
+</resources>

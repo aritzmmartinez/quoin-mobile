@@ -9,6 +9,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:quoin/src/app/router.dart';
+import 'package:quoin/src/features/sync/presentation/widgets/qr_scanner_view.dart';
 import 'package:quoin/src/features/portfolio/data/database/quoin_database.dart'
     hide SettingsRow;
 import 'package:http/testing.dart';
@@ -145,12 +146,12 @@ void main() {
     expect(find.text('Conectado con Test PC'), findsOneWidget);
     expect(find.widgetWithText(TextField, 'Mi móvil'), findsOneWidget);
     await tester.enterText(find.byType(TextField), 'Móvil de prueba');
-    await tester.tap(find.text('Coincide, continuar'));
+    await tester.tap(find.text('Continuar'));
     await settle(tester);
   }
 
   testWidgets('pairing walks the same three steps, at 200 % too, and '
-      '«No coincide» goes back to the start without pairing', (tester) async {
+      '«Cancelar» goes back to the start without pairing', (tester) async {
     tester.platformDispatcher.textScaleFactorTestValue = 2;
     addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
     final semantics = tester.ensureSemantics();
@@ -168,7 +169,7 @@ void main() {
     for (final step in [
       'Abre Quoin en el PC',
       'Escanea el código',
-      'Compara y confirma',
+      'Compara y acepta en el PC',
     ]) {
       await tester.scrollUntilVisible(
         find.text(step),
@@ -180,9 +181,20 @@ void main() {
 
     await tester.tap(find.text('Escanear el código'));
     await settle(tester);
+    final labels = scanLabels(scannedWith!);
+    expect(
+      [labels.step, labels.title, labels.searching, labels.torch],
+      [
+        'Paso 2 de 3',
+        'Escanea el código del PC',
+        'Buscando el código…',
+        'Linterna',
+      ],
+      reason: 'the scanner speaks the language of the app, not of the system',
+    );
     expect(find.text('Paso 3 de 3'), findsOneWidget);
     await tester.scrollUntilVisible(
-      find.text('Compara y confirma'),
+      find.text('Compara y acepta en el PC'),
       200,
       scrollable: verticalLists.last,
     );
@@ -190,8 +202,13 @@ void main() {
     await tester.scrollUntilVisible(code, 200, scrollable: verticalLists.last);
     expect(find.bySemanticsLabel(RegExp(r'^Código: \d{3} \d{3}$')), findsOne);
     expect(find.textContaining('segundos'), findsNothing);
+    expect(
+      find.textContaining('muestra ahora'),
+      findsNothing,
+      reason: 'the PC shows the number only once the phone sends its name',
+    );
 
-    await tester.tap(find.text('No coincide'));
+    await tester.tap(find.text('Cancelar'));
     await settle(tester);
     expect(find.text('Paso 1 de 3'), findsOneWidget);
     expect(pc.log, isNot(contains('POST /v1/pair')));
