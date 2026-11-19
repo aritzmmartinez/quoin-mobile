@@ -109,7 +109,8 @@ flows: `docs/ARCHITECTURE.md`.
 
 - Against Quoin from `pnpm dev` with a temporary database, never the real Docker or `data/quoin.sqlite`.
 - One server only, bound to `127.0.0.1` with its own ports (web and sync), never `localhost` or the defaults another `pnpm dev` may hold. Before scanning a QR, check which process listens on those ports and that the real database's mtime has not moved.
-- Before every tap or screenshot, check Quoin (`dev.aritzmmartinez.quoin`) has the focus (`dumpsys window`, `mCurrentFocus`); if not, stop and say so.
+- Never install the real app (`dev.aritzmmartinez.quoin`) or run `flutter install` against the phone (A34); only Quoin dev. The real app is installed by Aritz, signed with the upload key (`docs/release.md`, Signing).
+- Before every tap or screenshot, check Quoin dev (`dev.aritzmmartinez.quoin.dev`) has the focus (`dumpsys window`, `mCurrentFocus`); if not, stop and say so.
 - No blind coordinates: find each element with `uiautomator dump` by its text and tap that; if it is not there, stop.
 - No screenshot without asking first; only with Quoin in front, deleted after the test.
-- Sample data and screenshots only on the `.dev` install (`flutter run --android-project-arg=dev=true`): its own app, data and pairings beside the real one. Its focus is exactly `dev.aritzmmartinez.quoin.dev`; if the real package is in front, stop. A plain debug run lands on the real install.
+- Sample data and screenshots only on the `.dev` install (`flutter run`): its own app, data and pairings beside the real one. Its focus is exactly `dev.aritzmmartinez.quoin.dev`; if the real package is in front, stop. A debug or profile run always installs Quoin dev; `-Pdev=true` is only needed for a release build of it.
