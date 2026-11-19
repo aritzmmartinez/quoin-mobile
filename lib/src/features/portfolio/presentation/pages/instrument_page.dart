@@ -11,14 +11,14 @@ import 'package:quoin/src/core/theme/quoin_tokens.dart';
 import 'package:quoin/src/core/theme/quoin_type.dart';
 import 'package:quoin/src/features/portfolio/domain/entities/instrument_detail.dart';
 import 'package:quoin/src/features/portfolio/presentation/providers/portfolio_providers.dart';
+import 'package:quoin/src/features/portfolio/presentation/widgets/fact_grid.dart';
 import 'package:quoin/src/features/portfolio/presentation/widgets/ledger_tiles.dart';
 import 'package:quoin/src/features/portfolio/presentation/widgets/portfolio_view.dart';
 import 'package:quoin/src/features/portfolio/presentation/widgets/result_view.dart';
 import 'package:quoin/src/ui/atoms/display_figure.dart';
-import 'package:quoin/src/ui/atoms/quoin_card.dart';
+import 'package:quoin/src/ui/atoms/instrument_icon.dart';
+import 'package:quoin/src/ui/atoms/marked_span.dart';
 import 'package:quoin/src/ui/molecules/empty_state.dart';
-import 'package:quoin/src/ui/molecules/figure_block.dart';
-import 'package:quoin/src/ui/molecules/gain_badge.dart';
 import 'package:quoin/src/ui/templates/quoin_page.dart';
 import 'package:quoin/src/ui/atoms/quoin_section_label.dart';
 
@@ -44,10 +44,7 @@ class InstrumentPage extends ConsumerWidget {
                 body: l10n.instrumentNotFound,
               ),
             )
-          : QuoinPage.list(
-              title: detail.instrument.name,
-              children: _content(context, detail),
-            ),
+          : QuoinPage.list(title: '', children: _content(context, detail)),
     );
   }
 
@@ -56,133 +53,174 @@ class InstrumentPage extends ConsumerWidget {
     final format = QuoinFormat.of(context);
     final c = QuoinColors.of(context);
     final type = QuoinType.of(context);
+    final i = d.instrument;
     final position = d.position;
     final held = position != null && position.isOpen;
     final value = d.value;
     final marketValue = value?.marketValue;
     final pnl = value?.unrealizedPnL;
     final firstBuy = d.firstBuy;
-
-    Widget grid(List<Widget> blocks) => Wrap(
-      spacing: QuoinSpace.card,
-      runSpacing: QuoinSpace.card,
-      children: [
-        for (final block in blocks)
-          FractionallySizedBox(widthFactor: 0.46, child: block),
-      ],
-    );
+    final typeLabel = l10n.instrumentType(i.type);
+    final category = switch (i.exposureKind) {
+      null => null,
+      final kind => categoryLabel(l10n, kind.code),
+    };
+    final isin = i.type == 'CRYPTO' ? null : i.id;
 
     return [
-      Text(
-        '${d.instrument.id} · ${d.instrument.type}',
-        style: type.secondary.mono.copyWith(color: c.muted),
-      ),
-      const SizedBox(height: QuoinSpace.section),
-      Text(
-        l10n.instrumentValue,
-        style: type.secondary.copyWith(color: c.muted),
-      ),
-      const SizedBox(height: QuoinSpace.tight),
-      if (!held)
-        Text(l10n.instrumentClosed, style: type.row.copyWith(color: c.muted))
-      else if (marketValue == null)
-        Text(l10n.instrumentNoPrice, style: type.row.copyWith(color: c.muted))
-      else ...[
-        DisplayFigure(format.money(marketValue)),
-        if (pnl != null) ...[
-          const SizedBox(height: QuoinSpace.row),
-          Align(
-            alignment: AlignmentDirectional.centerStart,
-            child: switch (format.gain(pnl, d.unrealizedPnLPct)) {
-              final gain => GainBadge(text: gain.text, sign: gain.sign),
-            },
+      Row(
+        spacing: QuoinSpace.m,
+        children: [
+          instrumentMark(
+            type: i.type,
+            name: i.name,
+            kind: i.exposureKind,
+            extent: InstrumentIcon.large,
           ),
-        ],
-      ],
-      const SizedBox(height: QuoinSpace.section),
-      QuoinCard(
-        child: SizedBox(
-          height: 96,
-          child: Center(
-            child: Text(
-              l10n.instrumentNoHistory,
-              textAlign: TextAlign.center,
-              style: type.secondary.copyWith(color: c.muted),
-            ),
-          ),
-        ),
-      ),
-      if (position != null) ...[
-        const SizedBox(height: QuoinSpace.section),
-        grid([
-          FigureBlock(
-            label: l10n.instrumentQuantity,
-            value: format.quantity(position.quantity),
-          ),
-          FigureBlock(
-            label: l10n.instrumentCost,
-            value: format.money(position.costBasis),
-          ),
-          FigureBlock(
-            label: l10n.instrumentAverageCost,
-            value: format.money(position.averageCost),
-          ),
-          if (firstBuy != null)
-            FigureBlock(
-              label: l10n.instrumentFirstBuy,
-              value: format.date(firstBuy, d.zone),
-            ),
-          if (d.sales.isNotEmpty)
-            FigureBlock(
-              label: l10n.instrumentRealized,
-              value: format.signedMoney(position.realizedPnL).text,
-              sign: position.realizedPnL.amount.sign,
-            ),
-        ]),
-      ],
-      if (d.sales.isNotEmpty) ...[
-        QuoinSectionLabel(l10n.instrumentSales),
-        QuoinCard(
-          padding: EdgeInsets.zero,
-          child: Column(
-            children: [
-              for (final (i, sale) in d.sales.indexed) ...[
-                if (i > 0) const Divider(height: 1),
-                avcoSaleTile(
-                  context,
-                  sale,
-                  d.instrument.name,
-                  d.zone,
-                  icon: instrumentMark(
-                    type: d.instrument.type,
-                    name: d.instrument.name,
-                    kind: d.instrument.exposureKind,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              spacing: QuoinSpace.xxs,
+              children: [
+                Semantics(header: true, child: Text(i.name, style: type.title)),
+                Text.rich(
+                  TextSpan(
+                    text: [
+                      typeLabel,
+                      if (category != null && category != typeLabel) category,
+                      if (isin != null) '',
+                    ].join(' · '),
+                    children: [
+                      if (isin != null)
+                        TextSpan(text: isin, style: type.secondary.mono),
+                    ],
                   ),
+                  style: type.secondary.copyWith(color: c.muted),
                 ),
               ],
-            ],
+            ),
           ),
+        ],
+      ),
+      const SizedBox(height: QuoinSpace.section),
+      MergeSemantics(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          spacing: QuoinSpace.tight,
+          children: [
+            Text(
+              l10n.instrumentValue,
+              style: type.secondary.copyWith(color: c.muted),
+            ),
+            if (!held)
+              Text(
+                l10n.instrumentClosed,
+                style: type.row.copyWith(color: c.muted),
+              )
+            else if (marketValue == null)
+              Text(
+                l10n.instrumentNoPrice,
+                style: type.row.copyWith(color: c.muted),
+              )
+            else ...[
+              DisplayFigure(format.money(marketValue)),
+              if (pnl != null)
+                switch (format.gainLine(pnl, d.unrealizedPnLPct)) {
+                  final gain => Text.rich(
+                    TextSpan(
+                      text: gain.text,
+                      style: type.secondary.mono.copyWith(
+                        color: switch (gain.sign) {
+                          > 0 => c.positive,
+                          < 0 => c.negative,
+                          _ => c.text,
+                        },
+                      ),
+                      children: [
+                        TextSpan(
+                          text: ' ${l10n.instrumentOverCost}',
+                          style: type.secondary.copyWith(color: c.muted),
+                        ),
+                      ],
+                    ),
+                  ),
+                },
+            ],
+          ],
+        ),
+      ),
+      const SizedBox(height: QuoinSpace.m),
+      Text(
+        l10n.instrumentNoHistory,
+        style: type.secondary.copyWith(color: c.muted),
+      ),
+      if (held) ...[
+        const SizedBox(height: QuoinSpace.section),
+        FactGrid(
+          facts: [
+            (
+              label: l10n.instrumentHeld,
+              value: markedSpan(
+                unitsText(l10n, format, i.type, position.quantity),
+                format.quantity(position.quantity),
+                type.row.mono,
+              ),
+            ),
+            (
+              label: l10n.instrumentCost,
+              value: TextSpan(
+                text: format.money(position.costBasis),
+                style: type.row.mono,
+              ),
+            ),
+            (
+              label: l10n.instrumentAverageCost,
+              value: TextSpan(
+                text: format.money(position.averageCost),
+                style: type.row.mono,
+              ),
+            ),
+            if (firstBuy != null)
+              (
+                label: l10n.instrumentFirstBuy,
+                value: TextSpan(
+                  text: format.date(firstBuy, d.zone),
+                  style: type.row.tabular,
+                ),
+              ),
+          ],
         ),
       ],
+      if (d.sales.isNotEmpty) ...[
+        QuoinSectionLabel.heading(l10n.instrumentSales),
+        for (final sale in d.sales)
+          DecoratedBox(
+            decoration: BoxDecoration(
+              border: Border(top: BorderSide(color: c.borderSubtle)),
+            ),
+            child: avcoSaleTile(
+              context,
+              sale,
+              i.name,
+              d.zone,
+              icon: instrumentMark(
+                type: i.type,
+                name: i.name,
+                kind: i.exposureKind,
+              ),
+            ),
+          ),
+      ],
       if (d.movements.isNotEmpty) ...[
-        QuoinSectionLabel(l10n.instrumentMovements),
-        QuoinCard(
-          padding: EdgeInsets.zero,
-          child: Column(
-            children: [
-              for (final (i, m)
-                  in d.movements.take(_recentMovements).indexed) ...[
-                if (i > 0) const Divider(height: 1),
-                movementTile(context, m, d.zone, showInstrument: false),
-              ],
-            ],
+        QuoinSectionLabel.heading(
+          l10n.movementsTitle,
+          action: TextButton(
+            onPressed: () => context.push(Routes.movementsOf(i.id)),
+            child: Text(l10n.seeAll),
           ),
         ),
-        const SizedBox(height: QuoinSpace.m),
-        FilledButton(
-          onPressed: () => context.push(Routes.movementsOf(d.instrument.id)),
-          child: Text(l10n.seeMovements),
-        ),
+        for (final m in d.movements.take(_recentMovements))
+          movementTile(context, m, d.zone, inMonth: false),
       ],
       const SizedBox(height: QuoinSpace.section),
     ];

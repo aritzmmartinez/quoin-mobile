@@ -81,10 +81,27 @@ void main() {
     await tester.tap(find.text('Fiscal (Bizkaia)'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Base liquidable del ahorro'), findsOneWidget);
-    expect(find.text('Escala del ahorro de Bizkaia 2026'), findsOneWidget);
+    expect(find.text('Impuesto estimado de 2026'), findsOneWidget);
+    expect(
+      find.textContaining('escala de Bizkaia 2026', findRichText: true),
+      findsOneWidget,
+    );
+    expect(find.text('Cuenta este año'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.ancestor(
+          of: find.text('Aplazado por recompra'),
+          matching: find.byType(Row),
+        ),
+        matching: find.text('+25,90 €'),
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Base del ahorro'), findsOneWidget);
     expect(find.textContaining('Art.'), findsNothing);
 
+    await tester.ensureVisible(find.text('Cómo se calcula'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Cómo se calcula'));
     await tester.pumpAndSettle();
     expect(
@@ -114,15 +131,25 @@ void main() {
       200,
       scrollable: verticalLists.first,
     );
-    expect(tester.widget<SaleRow>(repurchased).badge, 'Recompra');
+    final row = tester.widget<SaleRow>(repurchased);
+    expect(row.tag, 'recompra');
+    expect(row.note?.label, 'cuenta');
+
+    await tester.tap(repurchased);
+    await tester.pumpAndSettle();
     expect(
-      find.textContaining('queda diferida en las uds recompradas'),
+      find.textContaining('Recompraste', findRichText: true),
       findsOneWidget,
     );
-    expect(find.textContaining('no deducible'), findsNothing);
+    expect(find.text('Compras que se venden (FIFO)'), findsOneWidget);
+    expect(find.text('Art. 43'), findsOneWidget);
+    expect(find.textContaining('uds'), findsNothing);
+    expect(find.text('Ver la ficha del instrumento'), findsOneWidget);
+    Navigator.of(tester.element(find.text('Art. 43'))).pop();
+    await tester.pumpAndSettle();
 
     await tester.scrollUntilVisible(
-      find.text('INGRESOS EN ESPECIE'),
+      find.text('Ingresos en especie'),
       200,
       scrollable: verticalLists.first,
     );

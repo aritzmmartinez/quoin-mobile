@@ -60,6 +60,7 @@ class RealizedReport {
     required this.hasLedger,
     required this.sales,
     required this.names,
+    required this.instruments,
     required this.events,
     required this.history,
     required this.taxYears,
@@ -72,6 +73,7 @@ class RealizedReport {
   final bool hasLedger;
   final List<SaleLine> sales;
   final Map<String, String> names;
+  final Map<String, Instrument> instruments;
   final List<LedgerEvent> events;
   final TaxHistory history;
   final List<int> taxYears;

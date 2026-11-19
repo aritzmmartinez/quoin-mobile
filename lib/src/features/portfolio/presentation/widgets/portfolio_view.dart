@@ -117,25 +117,34 @@ Widget instrumentMark({
   required String type,
   required String name,
   ExposureKind? kind,
+  double extent = InstrumentIcon.size,
 }) => switch (type) {
   'STOCK' => InstrumentIcon.circle(
     name.isEmpty ? '?' : name.characters.first.toUpperCase(),
+    extent: extent,
   ),
-  'CRYPTO' => const InstrumentIcon.coin(QuoinIcons.crypto),
+  'CRYPTO' => InstrumentIcon.coin(QuoinIcons.crypto, extent: extent),
   _ => InstrumentIcon.tile(switch (kind) {
     ExposureKind.equityFund => QuoinIcons.equityFund,
     ExposureKind.bondFund => QuoinIcons.bondFund,
     ExposureKind.commodity => QuoinIcons.commodityFund,
     ExposureKind.crypto => QuoinIcons.crypto,
     ExposureKind.company || null => QuoinIcons.fund,
-  }),
+  }, extent: extent),
 };
 
-String quantityText(AppLocalizations l10n, QuoinFormat format, Holding h) {
-  final quantity = h.position.quantity;
+String quantityText(AppLocalizations l10n, QuoinFormat format, Holding h) =>
+    unitsText(l10n, format, h.type, h.position.quantity);
+
+String unitsText(
+  AppLocalizations l10n,
+  QuoinFormat format,
+  String type,
+  Dec quantity,
+) {
   final text = format.quantity(quantity);
   final count = quantity.compareTo(Dec.one) == 0 ? 'one' : 'other';
-  return switch (h.type) {
+  return switch (type) {
     'STOCK' => l10n.positionShares(text, count),
     'ETF' || 'COMMODITY' => l10n.positionFundUnits(text, count),
     _ => l10n.positionUnits(text, count),

@@ -7,19 +7,29 @@ import 'package:quoin/src/core/theme/quoin_type.dart';
 import 'package:quoin/src/ui/atoms/quoin_icon.dart';
 
 class InstrumentIcon extends StatelessWidget {
-  const InstrumentIcon.tile(QuoinIconData this.glyph, {super.key})
-    : mark = null,
-      _round = false;
+  const InstrumentIcon.tile(
+    QuoinIconData this.glyph, {
+    super.key,
+    this.extent = size,
+  }) : mark = null,
+       _round = false;
 
-  const InstrumentIcon.circle(String this.mark, {super.key})
+  const InstrumentIcon.circle(String this.mark, {super.key, this.extent = size})
     : glyph = null,
       _round = true;
 
-  const InstrumentIcon.coin(QuoinIconData this.glyph, {super.key})
-    : mark = null,
-      _round = true;
+  const InstrumentIcon.coin(
+    QuoinIconData this.glyph, {
+    super.key,
+    this.extent = size,
+  }) : mark = null,
+       _round = true;
 
   static const double size = 40;
+
+  static const double large = 48;
+
+  final double extent;
 
   final QuoinIconData? glyph;
   final String? mark;
@@ -32,8 +42,8 @@ class InstrumentIcon extends StatelessWidget {
     final mark = this.mark;
     return ExcludeSemantics(
       child: Container(
-        width: size,
-        height: size,
+        width: extent,
+        height: extent,
         alignment: Alignment.center,
         padding: const EdgeInsets.all(QuoinSpace.xs),
         decoration: ShapeDecoration(
@@ -45,7 +55,11 @@ class InstrumentIcon extends StatelessWidget {
                 ),
         ),
         child: mark == null
-            ? QuoinIcon(glyph!, size: QuoinIconSize.tile, color: c.accent)
+            ? QuoinIcon(
+                glyph!,
+                size: extent == size ? QuoinIconSize.tile : QuoinIconSize.large,
+                color: c.accent,
+              )
             : FittedBox(
                 fit: BoxFit.scaleDown,
                 child: Text(

@@ -3,8 +3,11 @@ import 'package:quoin_core/quoin_core.dart';
 
 import 'package:quoin/src/core/l10n/gen/app_localizations.dart';
 import 'package:quoin/src/core/l10n/quoin_format.dart';
+import 'package:quoin/src/core/theme/quoin_icons.dart';
 import 'package:quoin/src/features/portfolio/domain/entities/movement.dart';
+import 'package:quoin/src/features/portfolio/presentation/widgets/portfolio_view.dart';
 import 'package:quoin/src/features/portfolio/presentation/widgets/sale_sheet.dart';
+import 'package:quoin/src/ui/atoms/instrument_icon.dart';
 import 'package:quoin/src/ui/molecules/movement_row.dart';
 import 'package:quoin/src/ui/molecules/sale_row.dart';
 
@@ -13,35 +16,54 @@ Widget movementTile(
   Movement movement,
   String zone, {
   VoidCallback? onTap,
-  bool showInstrument = true,
+  bool inMonth = true,
 }) {
   final l10n = AppLocalizations.of(context);
   final format = QuoinFormat.of(context);
   final m = movement;
-  final type = switch (m) {
+  final kind = l10n.movementType(switch (m) {
     Movement(isSwap: true) => 'SWAP',
     Movement(inKind: true, type: 'BUY' || 'DIVIDEND') => '${m.type}_IN_KIND',
     _ => m.type,
+  });
+  final amount = switch (m.amount) {
+    null => '—',
+    final amount when m.isSwap => format.money(amount),
+    final amount => format.signedMoney(amount).text,
   };
-  final amount = m.amount;
+  final marks = [
+    if (m.converted) l10n.movementConverted(m.currency),
+    if (m.noRate) l10n.movementNoRate,
+  ];
+  if (!inMonth) {
+    return MovementRow(
+      title: kind,
+      detail: [format.date(m.ts, zone), ...marks].join(' · '),
+      amount: amount,
+      quiet: m.isSwap,
+      onTap: onTap,
+    );
+  }
+
   final route = m.swapRoute;
+  final subject = route != null && route.isNotEmpty ? route : m.instrumentName;
+  final name = m.instrumentName;
   return MovementRow(
-    type: l10n.movementType(type),
-    subject: route != null && route.isNotEmpty
-        ? route
-        : showInstrument
-        ? m.instrumentName
-        : null,
-    date: format.date(m.ts, zone),
-    amount: switch (amount) {
-      null => '—',
-      _ when m.isSwap => format.money(amount),
-      _ => format.signedMoney(amount).text,
-    },
-    marks: [
-      if (m.converted) l10n.movementConverted(m.currency),
-      if (m.noRate) l10n.movementNoRate,
-    ],
+    leading: name == null
+        ? const InstrumentIcon.tile(QuoinIcons.cashFlow)
+        : instrumentMark(
+            type: m.instrumentType ?? '',
+            name: name,
+            kind: m.exposureKind,
+          ),
+    title: subject ?? kind,
+    detail: [
+      if (subject != null) kind,
+      format.dayMonth(m.ts, zone),
+      ...marks,
+    ].join(' · '),
+    amount: amount,
+    quiet: m.isSwap,
     onTap: onTap,
   );
 }
@@ -53,7 +75,6 @@ Widget avcoSaleTile(
   String zone, {
   required Widget icon,
   VoidCallback? onOpenInstrument,
-  bool inset = true,
 }) {
   final l10n = AppLocalizations.of(context);
   final format = QuoinFormat.of(context);
@@ -67,7 +88,6 @@ Widget avcoSaleTile(
     ].join(' · '),
     result: result.text,
     sign: result.sign,
-    inset: inset,
     onTap: () => showSaleSheet(
       context,
       sale: sale,

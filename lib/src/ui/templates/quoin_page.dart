@@ -18,7 +18,8 @@ class QuoinPage extends StatelessWidget {
     this.onRefresh,
   }) : children = null,
        itemCount = 0,
-       itemBuilder = null;
+       itemBuilder = null,
+       card = false;
 
   const QuoinPage.list({
     super.key,
@@ -31,7 +32,8 @@ class QuoinPage extends StatelessWidget {
     this.onRefresh,
   }) : body = null,
        itemCount = 0,
-       itemBuilder = null;
+       itemBuilder = null,
+       card = false;
 
   const QuoinPage.lazy({
     super.key,
@@ -44,6 +46,7 @@ class QuoinPage extends StatelessWidget {
     this.subheader,
     this.actions = const [],
     this.onRefresh,
+    this.card = true,
   }) : body = null,
        children = header;
 
@@ -56,6 +59,7 @@ class QuoinPage extends StatelessWidget {
   final Widget? trailing;
   final Widget? subheader;
   final List<Widget> actions;
+  final bool card;
   final Future<void> Function()? onRefresh;
 
   @override
@@ -91,10 +95,15 @@ class QuoinPage extends StatelessWidget {
                 children: [
                   ?leading,
                   Expanded(
-                    child: Semantics(
-                      header: true,
-                      child: Text(title, style: QuoinType.of(context).title),
-                    ),
+                    child: title.isEmpty
+                        ? const SizedBox.shrink()
+                        : Semantics(
+                            header: true,
+                            child: Text(
+                              title,
+                              style: QuoinType.of(context).title,
+                            ),
+                          ),
                   ),
                   ?trailing,
                 ],
@@ -162,6 +171,8 @@ class QuoinPage extends StatelessWidget {
             padding: padding,
             sliver: itemCount == 0
                 ? null
+                : !card
+                ? SliverList.builder(itemCount: itemCount, itemBuilder: build)
                 : DecoratedSliver(
                     decoration: _cardDecoration(context),
                     sliver: SliverList.builder(

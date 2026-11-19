@@ -16,6 +16,10 @@ Los datos son inventados.
 | VincularPrevia.html | Vinculación · antes de la cámara | 3 |
 | Escaner.html | Vinculación · escáner | 3 |
 | Codigo.html | Vinculación · compara el código | 3 |
+| Fiscal.html | Realizado · Fiscal | 5 |
+| FiscalVenta.html | Fiscal · detalle de una venta (hoja) | 5 |
+| Movimientos.html | Movimientos | 5 |
+| Ficha.html | Ficha del instrumento | 5 |
 
 Son una referencia de diseño, no código a copiar: los colores, radios,
 espaciados y tamaños se traducen a los tokens y componentes de la app.

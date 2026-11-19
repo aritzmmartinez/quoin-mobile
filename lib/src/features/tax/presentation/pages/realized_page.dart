@@ -115,7 +115,7 @@ class _RealizedPageState extends ConsumerState<RealizedPage> {
           detail: [l10n.realizedIntro, l10n.realizedAvcoWarning],
         ),
       ),
-      const SizedBox(height: QuoinSpace.m),
+      const SizedBox(height: QuoinSpace.section),
       Wrap(
         spacing: QuoinSpace.s,
         runSpacing: QuoinSpace.s,
@@ -185,7 +185,6 @@ class _RealizedPageState extends ConsumerState<RealizedPage> {
             line.sale,
             line.name,
             report.zone,
-            inset: false,
             icon: instrumentMark(
               type: line.instrument?.type ?? '',
               name: line.name,
@@ -205,6 +204,43 @@ class _RealizedPageState extends ConsumerState<RealizedPage> {
     final type = QuoinType.of(context);
     final years = report.taxYears;
     final year = years.contains(_taxYear) ? _taxYear! : report.defaultYear;
+    final router = GoRouter.of(context);
+    final how = InfoRow(
+      label: l10n.realizedHow,
+      onTap: () => showExplainSheet(
+        context,
+        title: l10n.realizedHow,
+        intro: l10n.taxHowIntro,
+        points: [
+          (
+            icon: QuoinIcons.oldestFirst,
+            title: l10n.taxHowFifoTitle,
+            body: l10n.taxHowFifoBody,
+            source: null,
+          ),
+          (
+            icon: QuoinIcons.buyBack,
+            title: l10n.taxHowWashTitle,
+            body: l10n.taxHowWashBody,
+            source: l10n.taxHowWashSource,
+          ),
+          (
+            icon: QuoinIcons.swap,
+            title: l10n.taxHowSwapTitle,
+            body: l10n.taxHowSwapBody,
+            source: l10n.taxHowSwapSource,
+          ),
+          (
+            icon: QuoinIcons.earlierYears,
+            title: l10n.taxHowCarryTitle,
+            body: l10n.taxHowCarryBody,
+            source: l10n.taxHowCarrySource,
+          ),
+        ],
+        detailTitle: l10n.realizedHowDetail,
+        detail: [l10n.taxHowRules, l10n.taxHowOwnRules],
+      ),
+    );
 
     return [
       for (final notice in [
@@ -215,48 +251,9 @@ class _RealizedPageState extends ConsumerState<RealizedPage> {
         Text(notice, style: type.secondary.copyWith(color: c.muted)),
         const SizedBox(height: QuoinSpace.m),
       ],
-      InfoRow(
-        label: l10n.realizedHow,
-        onTap: () => showExplainSheet(
-          context,
-          title: l10n.realizedHow,
-          intro: l10n.taxHowIntro,
-          points: [
-            (
-              icon: QuoinIcons.oldestFirst,
-              title: l10n.taxHowFifoTitle,
-              body: l10n.taxHowFifoBody,
-              source: null,
-            ),
-            (
-              icon: QuoinIcons.buyBack,
-              title: l10n.taxHowWashTitle,
-              body: l10n.taxHowWashBody,
-              source: l10n.taxHowWashSource,
-            ),
-            (
-              icon: QuoinIcons.swap,
-              title: l10n.taxHowSwapTitle,
-              body: l10n.taxHowSwapBody,
-              source: l10n.taxHowSwapSource,
-            ),
-            (
-              icon: QuoinIcons.earlierYears,
-              title: l10n.taxHowCarryTitle,
-              body: l10n.taxHowCarryBody,
-              source: l10n.taxHowCarrySource,
-            ),
-          ],
-          detailTitle: l10n.realizedHowDetail,
-          detail: [l10n.taxHowRules, l10n.taxHowOwnRules],
-        ),
-      ),
-      const SizedBox(height: QuoinSpace.m),
       if (year == null)
         Text(l10n.taxNoYears, style: type.secondary.copyWith(color: c.muted))
       else ...[
-        Text(l10n.taxYearLabel, style: type.small.copyWith(color: c.muted)),
-        const SizedBox(height: QuoinSpace.s),
         Wrap(
           spacing: QuoinSpace.s,
           runSpacing: QuoinSpace.s,
@@ -270,7 +267,12 @@ class _RealizedPageState extends ConsumerState<RealizedPage> {
           ],
         ),
         const SizedBox(height: QuoinSpace.section),
-        TaxYearPanel(report: report, view: report.taxYear(year)),
+        TaxYearPanel(
+          report: report,
+          view: report.taxYear(year),
+          how: how,
+          onOpenInstrument: (id) => router.push(Routes.instrument(id)),
+        ),
       ],
     ];
   }

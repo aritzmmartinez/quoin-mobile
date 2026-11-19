@@ -96,6 +96,8 @@ void main() {
     await closeSheet(find.text('Has recibido'));
     await tester.tap(find.text('Fiscal (Bizkaia)'));
     await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Cómo se calcula').last);
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Cómo se calcula').last);
     await tester.pumpAndSettle();
     final detail = find.text('Los criterios en detalle');
@@ -104,7 +106,7 @@ void main() {
     await tester.tap(detail);
     await tester.pumpAndSettle();
     await closeSheet(detail);
-    final repurchased = find.text('Fondo Emergentes');
+    final repurchased = find.widgetWithText(SaleRow, 'Fondo Emergentes').last;
     await tester.scrollUntilVisible(
       repurchased,
       300,
@@ -116,6 +118,16 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(repurchased);
     await tester.pumpAndSettle();
+    for (final fold in [
+      'Cómo se calcula la recompra',
+      'Dónde queda la pérdida aplazada',
+    ]) {
+      await tester.ensureVisible(find.text(fold));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(fold));
+      await tester.pumpAndSettle();
+    }
+    await closeSheet(find.text('Art. 43'));
     await scrollToEnd();
 
     GoRouter.of(tester.element(find.byType(QuoinPage).first)).go(Routes.home);

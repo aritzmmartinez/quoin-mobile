@@ -18,9 +18,7 @@ import 'package:quoin/src/ui/atoms/quoin_card.dart';
 import 'package:quoin/src/ui/atoms/quoin_chip.dart';
 import 'package:quoin/src/ui/molecules/allocation_bar.dart';
 import 'package:quoin/src/ui/molecules/empty_state.dart';
-import 'package:quoin/src/ui/molecules/figure_block.dart';
 import 'package:quoin/src/ui/molecules/group_header.dart';
-import 'package:quoin/src/ui/molecules/gain_badge.dart';
 import 'package:quoin/src/ui/molecules/icon_tile.dart';
 import 'package:quoin/src/ui/molecules/movement_row.dart';
 import 'package:quoin/src/ui/molecules/notice_row.dart';
@@ -134,36 +132,26 @@ class _ComponentGalleryPageState extends State<ComponentGalleryPage> {
               segments: const [(0, 'Ventas'), (1, 'Fiscal'), (2, 'Resumen')],
               pages: const [
                 [
-                  Wrap(
-                    spacing: QuoinSpace.section,
-                    runSpacing: QuoinSpace.card,
-                    children: [
-                      FigureBlock(
-                        label: 'Resultado',
-                        value: '+1.234,56 €',
-                        sign: 1,
-                      ),
-                      FigureBlock(label: 'Vendido', value: '12.345,00 €'),
+                  StatColumns(
+                    stats: [
+                      (label: 'Resultado', value: '+1.234,56 €', sign: 1),
+                      (label: 'Vendido', value: '12.345,00 €', sign: 0),
                     ],
                   ),
                 ],
                 [
-                  Wrap(
-                    spacing: QuoinSpace.section,
-                    runSpacing: QuoinSpace.card,
-                    children: [
-                      FigureBlock(label: 'Base', value: '8.765,43 €'),
-                      FigureBlock(label: 'Cuota', value: '1.753,09 €'),
+                  StatColumns(
+                    stats: [
+                      (label: 'Base', value: '8.765,43 €', sign: 0),
+                      (label: 'Cuota', value: '1.753,09 €', sign: 0),
                     ],
                   ),
                 ],
                 [
-                  Wrap(
-                    spacing: QuoinSpace.section,
-                    runSpacing: QuoinSpace.card,
-                    children: [
-                      FigureBlock(label: 'Coste', value: '10.000,00 €'),
-                      FigureBlock(label: 'Valor', value: '11.234,56 €'),
+                  StatColumns(
+                    stats: [
+                      (label: 'Coste', value: '10.000,00 €', sign: 0),
+                      (label: 'Valor', value: '11.234,56 €', sign: 0),
                     ],
                   ),
                 ],
@@ -256,91 +244,48 @@ class _ComponentGalleryPageState extends State<ComponentGalleryPage> {
           ),
           const SizedBox(height: QuoinSpace.m),
           _bar(context),
-          label('Bloques de cifra'),
-          const Wrap(
-            spacing: QuoinSpace.section,
-            runSpacing: QuoinSpace.card,
-            children: [
-              FigureBlock(label: 'Coste', value: '1.602,00 €'),
-              FigureBlock(label: 'Resultado', value: '+45,00 €', sign: 1),
-              FigureBlock(label: 'Pérdida', value: '−60,00 €', sign: -1),
-              FigureBlock(
-                label: 'Cuota',
-                value: 'Sin escala',
-                muted: true,
-                caption: 'Nota al pie',
-              ),
-            ],
-          ),
           label('Filas de venta'),
-          QuoinCard(
-            padding: EdgeInsets.zero,
-            child: Column(
-              children: [
-                const SaleRow(
-                  name: 'Fondo de ejemplo',
-                  when: '10 mar 2026 · 49 d',
-                  result: '+78,20 €',
-                  sign: 1,
-                  returnPct: '+12,2 %',
-                  details: [('Uds', '6'), ('Coste', '640,80 €')],
-                ),
-                const Divider(height: 1),
-                SaleRow(
-                  name: 'Acción de ejemplo',
-                  when: '20 mar 2025',
-                  result: '−150,00 €',
-                  sign: -1,
-                  badge: 'Recompra',
-                  notes: const ['Se recompraron 4 de las 10 uds vendidas.'],
-                  details: const [('Uds', '10'), ('Coste', '1000,00 €')],
-                  more: [
-                    Text(
-                      '10 uds del 10 ene 2025 a 100,00 €',
-                      style: type.secondary.mono.copyWith(color: c.body),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+          const SaleRow(
+            name: 'Fondo de ejemplo',
+            when: '10 mar 2026 · 49 días',
+            result: '+78,20 €',
+            sign: 1,
+          ),
+          SaleRow(
+            leading: const InstrumentIcon.circle('A'),
+            name: 'Acción de ejemplo',
+            when: '20 mar 2025',
+            tag: 'recompra',
+            result: '−150,00 €',
+            sign: -1,
+            note: const (label: 'cuenta', value: '−90,00 €'),
+            onTap: () {},
           ),
           label('Filas de movimiento'),
-          QuoinCard(
-            padding: EdgeInsets.zero,
-            child: Column(
-              children: [
-                MovementRow(
-                  type: 'Compra',
-                  subject: 'Fondo de ejemplo',
-                  date: '12 ene 2026',
-                  amount: '−1001,00 €',
-                  onTap: () {},
-                ),
-                const Divider(height: 1),
-                const MovementRow(
-                  type: 'Compra',
-                  subject: 'Acción en dólares',
-                  date: '2 may 2025',
-                  amount: '−201,00 €',
-                  marks: ['USD → €'],
-                ),
-                const Divider(height: 1),
-                const MovementRow(
-                  type: 'Recompensa',
-                  subject: 'Moneda de ejemplo',
-                  date: '1 oct 2025',
-                  amount: '+15,00 €',
-                ),
-                const Divider(height: 1),
-                const MovementRow(
-                  type: 'Venta',
-                  subject: 'Acción sin tipo',
-                  date: '3 nov 2025',
-                  amount: '—',
-                  marks: ['sin tipo'],
-                ),
-              ],
-            ),
+          MovementRow(
+            leading: const InstrumentIcon.tile(QuoinIcons.equityFund),
+            title: 'Fondo de ejemplo',
+            detail: 'Compra · 12 ene',
+            amount: '−1001,00 €',
+            onTap: () {},
+          ),
+          const MovementRow(
+            leading: InstrumentIcon.circle('A'),
+            title: 'Acción en dólares',
+            detail: 'Compra · 2 may · USD → €',
+            amount: '−201,00 €',
+          ),
+          const MovementRow(
+            leading: InstrumentIcon.coin(QuoinIcons.crypto),
+            title: 'Moneda → Token',
+            detail: 'Permuta · 1 oct',
+            amount: '1600,00 €',
+            quiet: true,
+          ),
+          const MovementRow(
+            title: 'Venta',
+            detail: '3 nov 2025 · sin tipo',
+            amount: '—',
           ),
           label('Tarjeta'),
           QuoinCard(
@@ -432,16 +377,6 @@ class _ComponentGalleryPageState extends State<ComponentGalleryPage> {
             ],
           ),
           ..._sync(context, label),
-          label('Badge de plusvalía'),
-          const Wrap(
-            spacing: QuoinSpace.s,
-            runSpacing: QuoinSpace.s,
-            children: [
-              GainBadge(text: '+349,15 € (+1,4 %)', sign: 1),
-              GainBadge(text: '−80,00 € (−13,8 %)', sign: -1),
-              GainBadge(text: '0,00 €', sign: 0),
-            ],
-          ),
           label('Distribución'),
           const AllocationBar(
             segments: [

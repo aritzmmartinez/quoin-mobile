@@ -24,6 +24,7 @@ RealizedReport realizedReportOf(PortfolioLedger ledger, DateTime now) {
         ),
     ],
     names: names,
+    instruments: instruments,
     events: ledger.events,
     history: computeTaxHistory(
       ledger.events,

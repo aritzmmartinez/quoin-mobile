@@ -33,6 +33,20 @@ class QuoinFormat {
       DateFormat.yMMMd(languageCode)
           .format(DateTime(date.year, date.month, date.day));
 
+  String dayMonth(DateTime instant, String zone) {
+    final d = calendarDateOf(instant, zone);
+    return DateFormat.MMMd(languageCode)
+        .format(DateTime(d.year, d.month, d.day));
+  }
+
+  String month(CalendarDate date) {
+    final text = DateFormat(
+      'LLLL y',
+      languageCode,
+    ).format(DateTime(date.year, date.month));
+    return text.isEmpty ? text : text[0].toUpperCase() + text.substring(1);
+  }
+
   String money(Money value, {bool floorNonZero = false}) {
     final amount = value.amount;
     if (floorNonZero && amount.isPositive && amount.roundTo(2).isZero) {
@@ -52,16 +66,6 @@ class QuoinFormat {
       _ => '',
     };
     return (text: '$prefix$magnitude', sign: sign);
-  }
-
-  ({String text, int sign}) gain(Money amount, Dec? fraction) {
-    final money = signedMoney(amount);
-    return (
-      text: fraction == null
-          ? money.text
-          : '${money.text} (${percent(fraction, signed: true)})',
-      sign: money.sign,
-    );
   }
 
   ({String text, int sign}) gainLine(Money amount, Dec? fraction) {

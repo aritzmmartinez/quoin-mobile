@@ -13,6 +13,7 @@ class CountEntry {
     this.note,
     this.icon,
     this.muted = false,
+    this.strong = false,
   });
 
   final String label;
@@ -20,6 +21,7 @@ class CountEntry {
   final String? note;
   final QuoinIconData? icon;
   final bool muted;
+  final bool strong;
 }
 
 class CountList extends StatelessWidget {
@@ -66,9 +68,8 @@ class CountList extends StatelessWidget {
                       children: [
                         Text(
                           entry.label,
-                          style: type.row.copyWith(
-                            color: entry.muted ? c.body : c.text,
-                          ),
+                          style: (entry.strong ? type.rowStrong : type.row)
+                              .copyWith(color: entry.muted ? c.body : c.text),
                         ),
                         if (entry.note case final note?)
                           Text(
@@ -80,9 +81,8 @@ class CountList extends StatelessWidget {
                   ),
                   Text(
                     entry.value,
-                    style: type.row.mono.copyWith(
-                      color: entry.muted ? c.body : c.text,
-                    ),
+                    style: (entry.strong ? type.rowStrong : type.row).mono
+                        .copyWith(color: entry.muted ? c.body : c.text),
                   ),
                 ],
               ),
