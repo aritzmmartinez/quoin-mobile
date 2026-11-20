@@ -124,7 +124,7 @@ Widget instrumentMark({
     extent: extent,
   ),
   'CRYPTO' => InstrumentIcon.coin(QuoinIcons.crypto, extent: extent),
-  _ => InstrumentIcon.tile(switch (kind) {
+  _ => InstrumentIcon.tile(switch (effectiveExposure(type, kind).kind) {
     ExposureKind.equityFund => QuoinIcons.equityFund,
     ExposureKind.bondFund => QuoinIcons.bondFund,
     ExposureKind.commodity => QuoinIcons.commodityFund,
