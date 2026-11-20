@@ -22,7 +22,8 @@ PortfolioOverview overviewOf(PortfolioLedger ledger, DateTime now) {
   String typeOf(String id) => instruments[id]?.type ?? '';
   final categories = {
     for (final i in ledger.instruments)
-      if (i.exposureKind case final kind?) i.id: kind.code,
+      if (effectiveExposure(i.type, i.exposureKind).kind case final kind?)
+        i.id: kind.code,
   };
 
   final holdings = sortHoldings([
