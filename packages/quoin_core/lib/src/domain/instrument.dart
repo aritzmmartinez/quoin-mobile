@@ -1,7 +1,5 @@
 import 'coded.dart';
 
-/// How an instrument decomposes. Set by hand and never inferred from a name:
-/// an ETF of gold miners has "Gold" in its name and holds companies.
 enum ExposureKind with Coded {
   company('COMPANY'),
   equityFund('EQUITY_FUND'),
@@ -17,8 +15,30 @@ enum ExposureKind with Coded {
   static ExposureKind of(String code) => byCode(values, code);
 }
 
-/// Instrument master. Keyed by its identifier: the ISIN normally, the symbol
-/// for crypto.
+enum ExposureSource { user, derived, none }
+
+final class EffectiveExposure {
+  const EffectiveExposure(this.kind, this.source);
+
+  final ExposureKind? kind;
+  final ExposureSource source;
+}
+
+EffectiveExposure effectiveExposure(String type, ExposureKind? exposureKind) {
+  if (exposureKind != null) {
+    return EffectiveExposure(exposureKind, ExposureSource.user);
+  }
+  final derived = switch (type) {
+    'STOCK' => ExposureKind.company,
+    'CRYPTO' => ExposureKind.crypto,
+    'COMMODITY' => ExposureKind.commodity,
+    _ => null,
+  };
+  return derived == null
+      ? const EffectiveExposure(null, ExposureSource.none)
+      : EffectiveExposure(derived, ExposureSource.derived);
+}
+
 final class Instrument {
   const Instrument({
     required this.id,
@@ -30,11 +50,7 @@ final class Instrument {
 
   final String id;
   final String name;
-
-  /// ETF | STOCK | CRYPTO | BOND | COMMODITY | CASH.
   final String type;
-
-  /// The broker's own class (`stock`, `fund`, `crypto`…), kept as given.
   final String? assetClass;
   final ExposureKind? exposureKind;
 }
