@@ -11,6 +11,7 @@ import 'package:quoin/src/core/theme/quoin_tokens.dart';
 import 'package:quoin/src/core/theme/quoin_type.dart';
 import 'package:quoin/src/features/portfolio/domain/entities/instrument_detail.dart';
 import 'package:quoin/src/features/portfolio/presentation/providers/portfolio_providers.dart';
+import 'package:quoin/src/features/portfolio/presentation/widgets/category_sheet.dart';
 import 'package:quoin/src/features/portfolio/presentation/widgets/fact_grid.dart';
 import 'package:quoin/src/features/portfolio/presentation/widgets/ledger_tiles.dart';
 import 'package:quoin/src/features/portfolio/presentation/widgets/portfolio_view.dart';
@@ -19,6 +20,7 @@ import 'package:quoin/src/ui/atoms/display_figure.dart';
 import 'package:quoin/src/ui/atoms/instrument_icon.dart';
 import 'package:quoin/src/ui/atoms/marked_span.dart';
 import 'package:quoin/src/ui/molecules/empty_state.dart';
+import 'package:quoin/src/ui/molecules/settings_row.dart';
 import 'package:quoin/src/ui/templates/quoin_page.dart';
 import 'package:quoin/src/ui/atoms/quoin_section_label.dart';
 
@@ -102,7 +104,14 @@ class InstrumentPage extends ConsumerWidget {
           ),
         ],
       ),
-      const SizedBox(height: QuoinSpace.section),
+      const SizedBox(height: QuoinSpace.s),
+      SettingsRow(
+        label: l10n.instrumentCategory,
+        value: categoryOf(l10n, i),
+        inset: false,
+        onTap: () => classifyInstruments(context, [i]),
+      ),
+      const SizedBox(height: QuoinSpace.m),
       MergeSemantics(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

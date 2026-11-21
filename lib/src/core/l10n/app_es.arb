@@ -223,6 +223,32 @@
   "categoryCommodity": "Materias primas",
   "categoryCrypto": "Cripto",
   "categoryOther": "Sin clasificar",
+  "categoryAutomatic": "Automática · {category}",
+  "@categoryAutomatic": {
+    "placeholders": {
+      "category": {
+        "type": "String"
+      }
+    }
+  },
+  "categoryAutomaticShort": "Automática",
+  "categoryPcOnly": "¿Materia prima o cripto? Clasifícalo en el PC, en Instrumentos.",
+  "categoryProgress": "{index} de {count}",
+  "@categoryProgress": {
+    "placeholders": {
+      "index": {
+        "type": "int"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "categorySkip": "Saltar",
+  "categoryClassify": "Clasificar",
+  "categorySaveFailed": "No se ha podido guardar la categoría",
+  "categorySaveFailedBody": "Sigue como estaba. Vuelve a intentarlo.",
+  "instrumentCategory": "Categoría",
   "quoinStepOf": "Paso {step} de {total}",
   "@quoinStepOf": {
     "description": "Etiqueta de accesibilidad de la barra de pasos.",

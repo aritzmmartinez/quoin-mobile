@@ -89,7 +89,7 @@ Future<QuoinChoice<T>?> showQuoinChoice<T>(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         for (final option in options)
-          _ChoiceRow(
+          QuoinChoiceRow(
             label: option.label,
             selected: option.value == selected,
             onTap: () => Navigator.of(sheet).pop(option),
@@ -99,8 +99,9 @@ Future<QuoinChoice<T>?> showQuoinChoice<T>(
   );
 }
 
-class _ChoiceRow extends StatelessWidget {
-  const _ChoiceRow({
+class QuoinChoiceRow extends StatelessWidget {
+  const QuoinChoiceRow({
+    super.key,
     required this.label,
     required this.selected,
     required this.onTap,
@@ -136,10 +137,12 @@ class _ChoiceRow extends StatelessWidget {
                     child: Text(label, style: QuoinType.of(context).row),
                   ),
                   if (selected)
-                    QuoinIcon(
-                      QuoinIcons.check,
-                      size: QuoinIconSize.row,
-                      color: c.accent,
+                    ExcludeSemantics(
+                      child: QuoinIcon(
+                        QuoinIcons.check,
+                        size: QuoinIconSize.row,
+                        color: c.accent,
+                      ),
                     ),
                 ],
               ),
