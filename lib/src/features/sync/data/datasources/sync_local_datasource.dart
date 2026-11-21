@@ -106,20 +106,8 @@ class SyncLocalDataSource {
     }),
   );
 
-  Future<String> stamp({int? nowMs}) => _guard(
-    () => _db.transaction(() async {
-      final device = await _db.select(_db.syncDevice).getSingle();
-      final hlc = tick(
-        device.lastHlc,
-        nowMs ?? _now().millisecondsSinceEpoch,
-        device.deviceId,
-      );
-      await _db
-          .update(_db.syncDevice)
-          .write(SyncDeviceCompanion(lastHlc: Value(hlc)));
-      return hlc;
-    }),
-  );
+  Future<String> stamp({int? nowMs}) =>
+      _guard(() => _db.stamp(nowMs ?? _now().millisecondsSinceEpoch));
 
   Future<ExchangeImport> importExchange(
     Exchange incoming, {

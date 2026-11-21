@@ -1,6 +1,6 @@
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
-import 'package:quoin_core/quoin_core.dart' show uuidV4;
+import 'package:quoin_core/quoin_core.dart' show tick, uuidV4;
 
 import 'package:quoin/src/features/portfolio/data/database/quoin_database.steps.dart';
 
@@ -60,6 +60,13 @@ class QuoinDatabase extends _$QuoinDatabase {
     }
     await _createDevice();
   }
+
+  Future<String> stamp(int nowMs) => transaction(() async {
+    final device = await select(syncDevice).getSingle();
+    final hlc = tick(device.lastHlc, nowMs, device.deviceId);
+    await update(syncDevice).write(SyncDeviceCompanion(lastHlc: Value(hlc)));
+    return hlc;
+  });
 
   Future<void> _movePrices(Migrator m, Schema3 schema) =>
       m.deleteTable('PriceSnapshot');

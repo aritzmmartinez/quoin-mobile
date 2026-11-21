@@ -42,6 +42,7 @@ extension InstrumentRowModel on InstrumentRow {
     type: type,
     assetClass: assetClass,
     exposureKind: exposureKind == null ? null : ExposureKind.of(exposureKind!),
+    exposureLeafId: exposureLeafId,
   );
 }
 
