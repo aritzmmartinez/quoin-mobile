@@ -13,6 +13,7 @@ import 'package:quoin/src/core/theme/quoin_type.dart';
 import 'package:quoin/src/features/portfolio/domain/entities/holding_order.dart';
 import 'package:quoin/src/features/portfolio/domain/entities/portfolio_overview.dart';
 import 'package:quoin/src/features/portfolio/presentation/providers/portfolio_providers.dart';
+import 'package:quoin/src/features/portfolio/presentation/widgets/category_sheet.dart';
 import 'package:quoin/src/features/portfolio/presentation/widgets/portfolio_view.dart';
 import 'package:quoin/src/features/sync/presentation/widgets/sync_actions.dart';
 import 'package:quoin/src/ui/atoms/quoin_icon.dart';
@@ -165,6 +166,19 @@ class _PortfolioPageState extends ConsumerState<PortfolioPage> {
                     final value? => format.money(value),
                     null => null,
                   },
+                  action: group.category == otherCategory
+                      ? TextButton(
+                          onPressed: () => classifyInstruments(context, [
+                            for (final h in group.holdings)
+                              Instrument(
+                                id: h.instrumentId,
+                                name: h.name,
+                                type: h.type,
+                              ),
+                          ]),
+                          child: Text(l10n.categoryClassify),
+                        )
+                      : null,
                 ),
                 for (final h in group.holdings)
                   holdingRow(context, h, detail: detail(h)),

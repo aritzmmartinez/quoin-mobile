@@ -7,6 +7,7 @@ import 'package:quoin/src/core/l10n/residence_name.dart';
 import 'package:quoin/src/core/theme/quoin_colors.dart';
 import 'package:quoin/src/core/theme/quoin_tokens.dart';
 import 'package:quoin/src/core/theme/quoin_type.dart';
+import 'package:quoin/src/features/portfolio/presentation/widgets/portfolio_view.dart';
 import 'package:quoin/src/features/sync/presentation/widgets/sync_detail_view.dart';
 import 'package:quoin/src/ui/atoms/quoin_card.dart';
 import 'package:quoin/src/ui/molecules/quoin_segmented.dart';
@@ -35,6 +36,13 @@ class ConflictCard extends StatelessWidget {
         : value is bool
         ? (value ? l10n.syncYes : l10n.syncNo)
         : '$value';
+    String exposure(Object? value) => switch (value) {
+      [final String kind, final String? leaf] => [
+        categoryLabel(l10n, kind),
+        ?leaf,
+      ].join(' · '),
+      _ => l10n.categoryAutomaticShort,
+    };
     String residence(Object? value) => value is String && value.isNotEmpty
         ? residenceName(l10n, value)
         : shown(value);
@@ -45,6 +53,18 @@ class ConflictCard extends StatelessWidget {
         residence(local),
         residence(incoming),
       ),
+      FieldConflict(
+        :final key,
+        field: 'exposure',
+        :final local,
+        :final incoming,
+      ) =>
+        (
+          _field(l10n, 'exposure'),
+          names[key],
+          exposure(local),
+          exposure(incoming),
+        ),
       FieldConflict(:final key, :final field, :final local, :final incoming) =>
         (_field(l10n, field), names[key], shown(local), shown(incoming)),
       TargetConflict() => (l10n.syncConflictTarget, null, null, null),

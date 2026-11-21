@@ -46,6 +46,7 @@ final class Instrument {
     required this.type,
     this.assetClass,
     this.exposureKind,
+    this.exposureLeafId,
   });
 
   final String id;
@@ -53,4 +54,5 @@ final class Instrument {
   final String type;
   final String? assetClass;
   final ExposureKind? exposureKind;
+  final String? exposureLeafId;
 }

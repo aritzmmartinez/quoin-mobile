@@ -13,6 +13,7 @@ import 'package:quoin/src/features/portfolio/domain/usecases/instrument_detail_o
 import 'package:quoin/src/features/portfolio/domain/usecases/load_ledger.dart';
 import 'package:quoin/src/features/portfolio/domain/usecases/load_sample_portfolio.dart';
 import 'package:quoin/src/features/portfolio/domain/usecases/movements_of.dart';
+import 'package:quoin/src/features/portfolio/domain/usecases/set_instrument_category.dart';
 
 final portfolioRepositoryProvider = Provider<PortfolioRepository>(
   (ref) => throw UnimplementedError('portfolioRepositoryProvider not bound'),
@@ -26,6 +27,10 @@ final loadSamplePortfolioProvider = Provider(
 );
 final clearPortfolioProvider = Provider(
   (ref) => ClearPortfolio(ref.watch(portfolioRepositoryProvider)),
+);
+
+final setInstrumentCategoryProvider = Provider(
+  (ref) => SetInstrumentCategory(ref.watch(portfolioRepositoryProvider)),
 );
 
 final nowProvider = Provider<DateTime Function()>((ref) => DateTime.now);

@@ -39,10 +39,12 @@ class PortfolioRows {
 }
 
 class PortfolioLocalDataSource {
-  const PortfolioLocalDataSource(this._db, this._prices);
+  PortfolioLocalDataSource(this._db, this._prices, {DateTime Function()? now})
+    : _now = now ?? DateTime.now;
 
   final QuoinDatabase _db;
   final PricesDatabase _prices;
+  final DateTime Function() _now;
 
   Future<PortfolioRows> read() => _guard(() async {
     final prices = await _prices.latestPrices().get();
@@ -79,6 +81,24 @@ class PortfolioLocalDataSource {
     });
   });
 
+  Future<void> setExposure(String id, String? kind, String? leafId) => _guard(
+    () => _db.transaction(() async {
+      final row = await (_db.select(
+        _db.instrument,
+      )..where((i) => i.id.equals(id))).getSingleOrNull();
+      if (row == null) throw StorageException('No instrument $id');
+      if (row.exposureKind == kind && row.exposureLeafId == leafId) return;
+      final hlc = await _db.stamp(_now().millisecondsSinceEpoch);
+      await (_db.update(_db.instrument)..where((i) => i.id.equals(id))).write(
+        InstrumentCompanion(
+          exposureKind: Value(kind),
+          exposureLeafId: Value(leafId),
+          exposureHlc: Value(hlc),
+        ),
+      );
+    }),
+  );
+
   Future<void> clear() => _guard(() async {
     await _db.transaction(_deleteAll);
     await _prices.transaction(_deletePrices);
@@ -98,6 +118,8 @@ class PortfolioLocalDataSource {
   Future<T> _guard<T>(Future<T> Function() body) async {
     try {
       return await body();
+    } on StorageException {
+      rethrow;
     } on Exception catch (e) {
       throw StorageException(e);
     }

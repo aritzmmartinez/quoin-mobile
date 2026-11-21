@@ -17,6 +17,7 @@ class SettingsRow extends StatelessWidget {
     this.onTap,
     this.comingSoon = false,
     this.valueIsFigure = false,
+    this.inset = true,
   }) : assert(!comingSoon || onTap == null);
 
   final QuoinIconData? icon;
@@ -25,8 +26,8 @@ class SettingsRow extends StatelessWidget {
   final String? value;
   final VoidCallback? onTap;
   final bool comingSoon;
-
   final bool valueIsFigure;
+  final bool inset;
 
   @override
   Widget build(BuildContext context) {
@@ -63,8 +64,8 @@ class SettingsRow extends StatelessWidget {
         child: InkWell(
           onTap: onTap,
           child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: QuoinSpace.card,
+            padding: EdgeInsets.symmetric(
+              horizontal: inset ? QuoinSpace.card : 0,
               vertical: QuoinSpace.m,
             ),
             child: ConstrainedBox(

@@ -35,6 +35,13 @@ class PortfolioRepositoryImpl implements PortfolioRepository {
       _write(() => _source.replaceWithSample(now));
 
   @override
+  Future<Result<void>> setExposure(
+    String id,
+    ExposureKind? kind,
+    String? leafId,
+  ) => _write(() => _source.setExposure(id, kind?.code, leafId));
+
+  @override
   Future<Result<void>> clear() => _write(_source.clear);
 
   Future<Result<void>> _write(Future<void> Function() body) async {
