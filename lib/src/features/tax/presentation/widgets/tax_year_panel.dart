@@ -9,12 +9,13 @@ import 'package:quoin/src/core/theme/quoin_type.dart';
 import 'package:quoin/src/features/portfolio/presentation/widgets/portfolio_view.dart';
 import 'package:quoin/src/features/tax/domain/entities/realized_report.dart';
 import 'package:quoin/src/features/tax/presentation/widgets/tax_sale_sheet.dart';
+import 'package:quoin/src/features/tax/presentation/widgets/territory_names.dart';
 import 'package:quoin/src/ui/atoms/display_figure.dart';
 import 'package:quoin/src/ui/molecules/count_list.dart';
 import 'package:quoin/src/ui/molecules/group_header.dart';
 import 'package:quoin/src/ui/molecules/sale_row.dart';
 
-/// One fiscal year of the Bizkaia view: the estimated tax, the chain of
+/// One fiscal year of the tax view, by the residence's territory: the estimated tax, the chain of
 /// figures from the sales' result and the income from movable capital down
 /// to the savings base, the withholdings recorded, how it is worked out, the
 /// year's FIFO sales, the deferred losses still waiting, the income pool and
@@ -49,10 +50,14 @@ class TaxYearPanel extends StatelessWidget {
     final income = view.savingsIncome;
     final withholdings = view.withholdings;
     final inKind = view.inKindIncome;
-    final exemptLimit = territoryRules(view.result.territory)
-        .dividendExemption
-        ?.limit;
-    final earlier = view.carryforward.steps.last.consumedFromCarryforward;
+    final territory = view.result.territory;
+    final comun = territory == Territory.comun;
+    final exemptLimit = territoryRules(territory).dividendExemption?.limit;
+    final gains = view.carryforward.steps.last;
+    final earlier = gains.consumedFromCarryforward;
+    final incomeStep = income.pool.steps.last;
+    final crossYear = gains.crossOffset;
+    final fromOther = gains.absorbedFromOther;
     Widget note(String text, {Color? color}) => Semantics(
       container: true,
       child: Padding(
@@ -108,22 +113,28 @@ class TaxYearPanel extends StatelessWidget {
               signed(-view.nonComputableSum),
             ),
             CountEntry(l10n.taxDeferredCounting, signed(view.integratedSum)),
-            if (earlier.isPositive) ...[
+            if (earlier.isPositive || !crossYear.isZero || fromOther.isPositive)
               CountEntry(
                 l10n.taxCountsThisYear,
                 signed(view.computableNet),
                 strong: true,
               ),
+            if (!crossYear.isZero)
+              CountEntry(l10n.taxCrossOffset, signed(crossYear)),
+            if (earlier.isPositive)
               CountEntry(l10n.taxEarlierLosses, signed(-earlier)),
-            ],
+            if (fromOther.isPositive)
+              CountEntry(l10n.taxCrossFromEarlier, signed(-fromOther)),
             CountEntry(l10n.taxGainsBalance, signed(view.netSavingsBase)),
             CountEntry(l10n.taxIncomeBalance, signed(income.pool.finalNet)),
             CountEntry(l10n.taxBase, signed(base), strong: true),
           ],
         ),
-        note(l10n.taxPools),
+        note(comun ? l10n.taxPoolsComun : l10n.taxPools),
         if (scale != null && view.scaleInherited)
-          note(l10n.taxScaleInForce(scale.year)),
+          note(
+            l10n.taxScaleInForce(scale.year, taxTerritoryName(l10n, territory)),
+          ),
         CountList(
           entries: [
             CountEntry(l10n.taxWithheld, format.money(withholdings.total)),
@@ -167,7 +178,7 @@ class TaxYearPanel extends StatelessWidget {
         ],
         if (income.count > 0 || !income.pool.finalNet.isZero) ...[
           GroupHeader(label: l10n.taxIncomeTitle),
-          note(l10n.taxIncomeBody),
+          note(comun ? l10n.taxIncomeBodyComun : l10n.taxIncomeBody),
           CountList(
             entries: [
               CountEntry(l10n.taxIncomeCount, '${income.count}'),
@@ -179,6 +190,13 @@ class TaxYearPanel extends StatelessWidget {
                 CountEntry(
                   l10n.taxIncomeExempt,
                   format.money(Money.of(income.exempt)),
+                ),
+              if (!incomeStep.crossOffset.isZero)
+                CountEntry(l10n.taxCrossOffset, signed(incomeStep.crossOffset)),
+              if (incomeStep.absorbedFromOther.isPositive)
+                CountEntry(
+                  l10n.taxCrossFromEarlier,
+                  signed(-incomeStep.absorbedFromOther),
                 ),
               CountEntry(l10n.taxIncomeFinalNet, signed(income.pool.finalNet)),
             ],
@@ -244,6 +262,7 @@ class TaxYearPanel extends StatelessWidget {
         type: instrument?.type ?? '',
         year: view.year,
         zone: report.zone,
+        territory: view.result.territory,
         today: report.today,
         icon: icon(),
         onOpenInstrument: open == null || instrument == null

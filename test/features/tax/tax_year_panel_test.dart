@@ -41,15 +41,38 @@ InterestEvent interest(String id, String ts, String gross, String withheld) =>
       externalId: id,
     );
 
+TradeEvent trade(
+  TradeType type,
+  String id,
+  String ts,
+  String instrumentId,
+  String quantity,
+  String gross,
+) => TradeEvent(
+  id: id,
+  ts: DateTime.parse(ts),
+  type: type,
+  instrumentId: instrumentId,
+  quantity: Dec.parse(quantity),
+  price: Money.of(Dec.parse(gross).dividedBy(Dec.parse(quantity))),
+  grossAmount: Money.parse(gross),
+  fees: Money.zero,
+  currency: baseCurrency,
+  account: 'test',
+  source: 'TEST',
+  externalId: id,
+);
+
 Future<void> pumpPanel(
   WidgetTester tester,
   List<LedgerEvent> events,
   int year,
-  DateTime now,
-) async {
+  DateTime now, {
+  Residence residence = Residence.bizkaia,
+}) async {
   final report = realizedReportOf(
     PortfolioLedger(
-      residence: Residence.bizkaia,
+      residence: residence,
       instruments: const [
         Instrument(id: 'STOCK', name: 'Test Stock', type: 'STOCK'),
         Instrument(id: 'COIN', name: 'Test Coin', type: 'CRYPTO'),
@@ -150,15 +173,100 @@ void main() {
       DateTime.utc(2028, 3, 1),
     );
 
+    expect(find.textContaining('escala de 2026', findRichText: true), findsOne);
     expect(
-      find.textContaining('escala de Bizkaia 2026', findRichText: true),
-      findsOne,
-    );
-    expect(
-      find.textContaining('Se aplica la escala vigente desde 2026'),
+      find.textContaining('Se aplica la escala vigente desde 2026 en Bizkaia'),
       findsOne,
     );
     expect(find.textContaining('Algún interés'), findsNothing);
     expect(find.textContaining('Los intereses de diciembre'), findsNothing);
+  });
+
+  group('régimen común', () {
+    final ledger = [
+      trade(TradeType.buy, 'b1', '2024-01-10T09:00:00Z', 'STOCK', '10', '4000'),
+      trade(
+        TradeType.sell,
+        's1',
+        '2024-06-03T09:00:00Z',
+        'STOCK',
+        '10',
+        '1000',
+      ),
+      trade(TradeType.buy, 'b2', '2025-01-10T09:00:00Z', 'STOCK', '10', '1000'),
+      trade(TradeType.sell, 's2', '2025-06-02T09:00:00Z', 'STOCK', '10', '600'),
+      dividend('d', '2025-07-01T09:00:00Z', 'STOCK', '2000', '380'),
+    ];
+
+    testWidgets('the pools cross, line by line, within one 25% a year', (
+      tester,
+    ) async {
+      await pumpPanel(
+        tester,
+        ledger,
+        2025,
+        DateTime.utc(2026, 3, 1),
+        residence: Residence.comun,
+      );
+
+      expect(find.text('285,00 €'), findsOne, reason: '1500 × 19%');
+      expect(rowWith('Cruce del año', '+400,00 €'), findsOne);
+      expect(find.text('Cruce del año'), findsNWidgets(2));
+      expect(find.text('De la otra bolsa, años anteriores'), findsOne);
+      expect(find.textContaining('hasta el 25 % de ese positivo'), findsOne);
+      expect(find.textContaining('Un saldo negativo compensa'), findsOne);
+      expect(find.text('Dividendos exentos'), findsNothing);
+      expect(find.textContaining('Art.'), findsNothing);
+    });
+
+    testWidgets('the same ledger in Bizkaia keeps the pools apart', (
+      tester,
+    ) async {
+      await pumpPanel(tester, ledger, 2025, DateTime.utc(2026, 3, 1));
+
+      expect(find.text('Cruce del año'), findsNothing);
+      expect(find.text('De la otra bolsa, años anteriores'), findsNothing);
+      expect(find.textContaining('solo dentro de su propia bolsa'), findsOne);
+    });
+
+    testWidgets('a crypto loss rebought within the year notes art. 33.5.e', (
+      tester,
+    ) async {
+      await pumpPanel(
+        tester,
+        [
+          trade(
+            TradeType.buy,
+            'b',
+            '2025-01-10T12:00:00Z',
+            'COIN',
+            '1',
+            '1000',
+          ),
+          trade(
+            TradeType.sell,
+            's',
+            '2025-03-03T12:00:00Z',
+            'COIN',
+            '1',
+            '700',
+          ),
+          trade(TradeType.buy, 'r', '2025-04-01T12:00:00Z', 'COIN', '1', '720'),
+        ],
+        2025,
+        DateTime.utc(2026, 3, 1),
+        residence: Residence.canarias,
+      );
+      await tester.ensureVisible(find.text('Test Coin'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Test Coin'));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('Podría aplicarse el art. 33.5.e'), findsOne);
+      expect(
+        find.textContaining('Criptomoneda vendida antes de 2025'),
+        findsNothing,
+      );
+    });
   });
 }

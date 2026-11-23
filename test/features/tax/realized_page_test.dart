@@ -1,9 +1,13 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/material.dart';
 import 'package:quoin/src/features/portfolio/presentation/pages/instrument_page.dart';
+import 'package:quoin/src/features/settings/data/datasources/residence_local_datasource.dart';
+import 'package:quoin/src/features/settings/data/repositories/residence_repository_impl.dart';
 import 'package:quoin/src/features/tax/presentation/pages/realized_page.dart';
 import 'package:quoin/src/ui/molecules/sale_row.dart';
 import 'package:quoin/src/ui/organisms/quoin_bottom_bar.dart';
+import 'package:quoin/src/ui/templates/quoin_page.dart';
+import 'package:quoin_core/quoin_core.dart';
 
 import '../../helpers.dart';
 
@@ -21,6 +25,78 @@ Future<void> openRealized(WidgetTester tester) async {
 }
 
 void main() {
+  for (final (:locale, :analysis, :realized, :tab, :line, :settings) in [
+    (
+      locale: 'es',
+      analysis: 'Análisis',
+      realized: 'Realizado',
+      tab: 'Fiscal (Bizkaia)',
+      line:
+          'Calculado con las reglas de Bizkaia. Puedes cambiar tu residencia '
+          'fiscal en Ajustes.',
+      settings: 'Ajustes',
+    ),
+    (
+      locale: 'en',
+      analysis: 'Analysis',
+      realized: 'Realized',
+      tab: 'Tax (Bizkaia)',
+      line:
+          "Calculated with Bizkaia's rules. You can change your tax residence "
+          'in Settings.',
+      settings: 'Settings',
+    ),
+  ]) {
+    Future<void> openTax(WidgetTester tester, {required bool chosen}) async {
+      final stores = await sampleStores();
+      if (chosen) {
+        await ResidenceRepositoryImpl(ResidenceLocalDataSource(stores.database))
+            .set(Residence.bizkaia);
+      }
+      await pumpApp(
+        tester,
+        prefs: {'locale': locale},
+        database: stores.database,
+        prices: stores.prices,
+      );
+      await tester.tap(
+        find.descendant(
+          of: find.byType(QuoinBottomBar),
+          matching: find.text(analysis),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(realized));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(tab));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('$locale: a residence never chosen says the view runs on '
+        "Bizkaia's rules and leads to Settings", (tester) async {
+      await openTax(tester, chosen: false);
+      expect(find.text(line), findsOneWidget);
+
+      await tester.tap(find.text(line));
+      await tester.pumpAndSettle();
+      expect(
+        find.descendant(
+          of: find.byType(QuoinPage),
+          matching: find.text(settings),
+        ),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('$locale: once chosen, even Bizkaia, the line is gone', (
+      tester,
+    ) async {
+      await openTax(tester, chosen: true);
+      expect(find.text(tab), findsOneWidget);
+      expect(find.text(line), findsNothing);
+    });
+  }
+
   testWidgets('home leads to the year realised so far', (tester) async {
     await pumpApp(tester, prefs: {'locale': 'es'}, sample: true);
     await tester.scrollUntilVisible(
@@ -83,7 +159,7 @@ void main() {
 
     expect(find.text('Impuesto estimado de 2026'), findsOneWidget);
     expect(
-      find.textContaining('escala de Bizkaia 2026', findRichText: true),
+      find.textContaining('escala de 2026', findRichText: true),
       findsOneWidget,
     );
     expect(find.text('Cuenta este año'), findsOneWidget);
@@ -108,9 +184,9 @@ void main() {
       find.text('Según la Norma Foral 13/2013 del IRPF de Bizkaia.'),
       findsOneWidget,
     );
-    expect(find.text('Art. 43'), findsOneWidget);
+    expect(find.text('Art. 43 NF 13/2013'), findsOneWidget);
     expect(find.text('Arts. 47.1.i y 47.1.p'), findsOneWidget);
-    expect(find.text('Art. 66'), findsOneWidget);
+    expect(find.text('Art. 66.1.b NF 13/2013'), findsOneWidget);
     final detail = find.text('Los criterios en detalle');
     await tester.ensureVisible(detail);
     await tester.pumpAndSettle();
@@ -121,7 +197,11 @@ void main() {
       findsOneWidget,
     );
     expect(find.textContaining('Criterios propios de Quoin'), findsOneWidget);
-    expect(find.textContaining('art. 47.1.i y 47.1.p'), findsOneWidget);
+    expect(find.textContaining('(Arts. 47.1.i y 47.1.p)'), findsOneWidget);
+    expect(
+      find.textContaining('Escala aplicada: Art. 76 NF 13/2013'),
+      findsOneWidget,
+    );
     Navigator.of(tester.element(detail)).pop();
     await tester.pumpAndSettle();
 
@@ -142,10 +222,11 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Compras que se venden (FIFO)'), findsOneWidget);
-    expect(find.text('Art. 43'), findsOneWidget);
+    expect(find.text('Art. 43.g NF 13/2013 de Bizkaia'), findsOneWidget);
     expect(find.textContaining('uds'), findsNothing);
     expect(find.text('Ver la ficha del instrumento'), findsOneWidget);
-    Navigator.of(tester.element(find.text('Art. 43'))).pop();
+    Navigator.of(tester.element(find.text('Art. 43.g NF 13/2013 de Bizkaia')))
+        .pop();
     await tester.pumpAndSettle();
 
     await tester.scrollUntilVisible(

@@ -106,8 +106,8 @@ PoolsResult carryforwardPools(
     final absorbed = [
       for (var i = 0; i < 2; i++)
         () {
-          final room = limit * maxDec(own[i], Dec.zero) -
-              maxDec(cross[1 - i], Dec.zero);
+          final room =
+              limit * maxDec(own[i], Dec.zero) - maxDec(cross[1 - i], Dec.zero);
           final rest = after[i] - consumed[i];
           return rest.isPositive && room.isPositive
               ? pair[1 - i].consumePending(minDec(rest, room))
