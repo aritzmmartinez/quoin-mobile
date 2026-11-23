@@ -498,6 +498,7 @@ class ImportReviewStep extends StatelessWidget {
       TradeEvent(:final grossAmount) => grossAmount,
       DividendEvent(:final grossAmount) => grossAmount,
       CashEvent(:final grossAmount) => grossAmount,
+      InterestEvent(:final grossAmount) => grossAmount,
     };
     return event.currency == baseCurrency
         ? format.money(gross)
@@ -714,7 +715,7 @@ String _typeLabel(AppLocalizations l10n, LedgerEvent event) => switch (event) {
   DividendEvent() => l10n.ledgerDividend,
   CashEvent(type: CashType.deposit) => l10n.ledgerDeposit,
   CashEvent(type: CashType.withdrawal) => l10n.ledgerWithdrawal,
-  CashEvent(type: CashType.interest) => l10n.ledgerInterest,
+  InterestEvent() => l10n.ledgerInterest,
 };
 
 String rowTypeLabel(AppLocalizations l10n, Broker broker, String type) =>

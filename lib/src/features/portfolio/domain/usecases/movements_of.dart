@@ -55,6 +55,11 @@ Money? _amount(LedgerEvent event) {
       taxWithheld,
       false,
     ),
+    InterestEvent(:final grossAmount, :final taxWithheld) => (
+      grossAmount,
+      taxWithheld,
+      false,
+    ),
     CashEvent(:final type, :final grossAmount) => (
       grossAmount,
       Money.zero,

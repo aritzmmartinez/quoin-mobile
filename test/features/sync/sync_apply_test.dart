@@ -6,6 +6,7 @@ import 'package:drift/drift.dart' show Value;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:quoin/src/core/error/exceptions.dart';
 import 'package:quoin/src/features/portfolio/data/database/quoin_database.dart';
+import 'package:quoin/src/features/portfolio/data/models/portfolio_rows.dart';
 import 'package:quoin/src/features/sync/data/datasources/sync_local_datasource.dart';
 import 'package:quoin/src/features/sync/domain/entities/exchange_import.dart';
 import 'package:quoin_core/quoin_core.dart';
@@ -775,6 +776,63 @@ void main() {
         'residence': 'araba',
         'residenceHlc': mark,
       });
+    },
+  );
+
+  test(
+    'an INTEREST with its withholding is stored, read and sent on as it came, '
+    'and the next sync sets nothing aside',
+    () async {
+      await seed(
+        db,
+        const SyncState(
+          deviceId: 'dev-a',
+          settings: SettingsRecord(residence: 'bizkaia'),
+        ),
+        null,
+      );
+      const interest = LedgerRecord(
+        source: 'TR_CSV',
+        externalId: 'i-1',
+        ts: '2026-02-01T09:00:00.000Z',
+        type: 'INTEREST',
+        grossAmount: '10',
+        taxWithheld: '1.9',
+        currency: 'EUR',
+        originalAmount: '10',
+        originalCurrency: 'EUR',
+        account: 'test',
+      );
+      final file = Exchange.of(
+        const SyncState(
+          deviceId: 'dev-b',
+          ledger: [interest],
+          settings: SettingsRecord(residence: 'bizkaia'),
+        ),
+        exportHlc: '001761600000000-0000-dev-b',
+      );
+
+      final first = await store.importExchange(
+        file,
+        dryRun: false,
+        nowMs: nowMs,
+      );
+      expect(first.status, ImportStatus.applied);
+
+      final read = (await db.select(db.ledgerEntry).getSingle()).toEntity();
+      expect(read, isA<InterestEvent>());
+      expect((read as InterestEvent).taxWithheld, Money.parse('1.9'));
+      expect((await store.export()).ledger.map((r) => r.toJson()), [
+        interest.toJson(),
+      ]);
+
+      final second = await store.importExchange(
+        file,
+        dryRun: false,
+        nowMs: nowMs,
+      );
+      expect(second.plan.setAside, isEmpty);
+      expect(second.plan.conflicts, isEmpty);
     },
   );
 

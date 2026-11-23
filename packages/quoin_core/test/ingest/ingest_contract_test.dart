@@ -193,6 +193,10 @@ Json _event(LedgerEvent e) => {
             'funding': e.funding.code,
           },
         CashEvent() => {'grossAmount': e.grossAmount.text},
+        InterestEvent() => {
+            'grossAmount': e.grossAmount.text,
+            'taxWithheld': e.taxWithheld.text,
+          },
       },
     };
 

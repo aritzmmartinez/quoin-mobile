@@ -14,6 +14,20 @@ final class UnlistedNoticeRule {
   final int windowMonths;
 }
 
+/// Dividends exempt up to [limit] euros a year. With
+/// [excludesCollectiveInvestment], those of a fund or ETF are never exempt.
+final class DividendExemptionRule {
+  const DividendExemptionRule({
+    required this.limit,
+    required this.excludesCollectiveInvestment,
+    required this.source,
+  });
+
+  final String limit;
+  final bool excludesCollectiveInvestment;
+  final String source;
+}
+
 /// Everything the tax engine reads that depends on the territory, and only
 /// that. Same table as Quoin's `TERRITORY_RULES` (core/tax/territory.ts),
 /// which says why each value is what it is.
@@ -23,6 +37,8 @@ final class TerritoryRules {
     required this.repurchase,
     required this.swapValuation,
     required this.lossCarryforwardYears,
+    required this.crossOffsetLimit,
+    required this.dividendExemption,
     required this.unlistedNotice,
   });
 
@@ -30,6 +46,12 @@ final class TerritoryRules {
   final List<RepurchaseRule> repurchase;
   final List<SwapValuationRule> swapValuation;
   final int lossCarryforwardYears;
+
+  /// Share of one savings pool's positive balance that the other pool's
+  /// negative balance may offset, as a decimal string. Zero keeps the pools
+  /// apart.
+  final String crossOffsetLimit;
+  final DividendExemptionRule? dividendExemption;
   final UnlistedNoticeRule unlistedNotice;
 }
 
@@ -41,6 +63,18 @@ TerritoryRules territoryRules(Territory territory) => switch (territory) {
 
 const _bizkaia = TerritoryRules(
   savingsScales: [
+    SavingsBaseTaxScale(
+      year: 2025,
+      source: 'Art. 76 NF 13/2013 de Bizkaia, redacción anterior a la NF '
+          '2/2025, vigente hasta 31-12-2025',
+      brackets: [
+        TaxBracket('0', '2500', '0.20'),
+        TaxBracket('2500', '10000', '0.21'),
+        TaxBracket('10000', '15000', '0.22'),
+        TaxBracket('15000', '30000', '0.23'),
+        TaxBracket('30000', null, '0.25'),
+      ],
+    ),
     SavingsBaseTaxScale(
       year: 2026,
       source: 'Art. 76 NF 13/2013 de Bizkaia, redacción NF 2/2025, efectos '
@@ -86,6 +120,17 @@ const _bizkaia = TerritoryRules(
     ),
   ],
   lossCarryforwardYears: 4,
+  // Art. 66.1 NF 13/2013 de Bizkaia: income and gains compensate only within
+  // their own pool.
+  crossOffsetLimit: '0',
+  // Art. 9.24 over Art. 34.a and b. The exemption does not reach shares bought
+  // in the two months before the payment when homogeneous ones are sold in the
+  // two after; that is not applied.
+  dividendExemption: DividendExemptionRule(
+    limit: '1500',
+    excludesCollectiveInvestment: true,
+    source: 'Art. 9.24 NF 13/2013 de Bizkaia',
+  ),
   unlistedNotice: UnlistedNoticeRule(
     assetClass: RepurchaseAssetClass.fungibleCrypto,
     windowMonths: 12,

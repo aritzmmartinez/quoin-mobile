@@ -90,4 +90,42 @@ void main() {
       ],
     );
   });
+
+  test(
+      'Bizkaia keeps its two savings pools apart and exempts stock '
+      'dividends up to 1500', () {
+    expect(rules.crossOffsetLimit, '0');
+    final exemption = rules.dividendExemption!;
+    expect(exemption.limit, '1500');
+    expect(exemption.excludesCollectiveInvestment, isTrue);
+    expect(exemption.source, 'Art. 9.24 NF 13/2013 de Bizkaia');
+  });
+
+  test('Bizkaia 2025 savings scale, before NF 2/2025', () {
+    final scale = getTaxScale(Territory.bizkaia, 2025)!;
+    expect(scale.year, 2025);
+    expect(
+      scale.source,
+      'Art. 76 NF 13/2013 de Bizkaia, redacción anterior a la NF 2/2025, '
+      'vigente hasta 31-12-2025',
+    );
+    expect(
+      [for (final b in scale.brackets) (b.from, b.to, b.rate)],
+      [
+        ('0', '2500', '0.20'),
+        ('2500', '10000', '0.21'),
+        ('10000', '15000', '0.22'),
+        ('15000', '30000', '0.23'),
+        ('30000', null, '0.25'),
+      ],
+    );
+  });
+
+  test(
+      'the scale in force is the latest not after the year, and none '
+      'before the first', () {
+    expect(getTaxScale(Territory.bizkaia, 2024), isNull);
+    expect(getTaxScale(Territory.bizkaia, 2026)!.year, 2026);
+    expect(getTaxScale(Territory.bizkaia, 2030)!.year, 2026);
+  });
 }

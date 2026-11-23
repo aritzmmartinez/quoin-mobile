@@ -126,11 +126,16 @@ final class SavingsBaseTaxScale {
   final List<TaxBracket> brackets;
 }
 
+/// The latest scale on file whose year is not after [year]; none for a year
+/// before the first, because a scale never reaches back past its own year.
 SavingsBaseTaxScale? getTaxScale(Territory territory, int year) {
+  SavingsBaseTaxScale? inForce;
   for (final scale in territoryRules(territory).savingsScales) {
-    if (scale.year == year) return scale;
+    if (scale.year <= year && (inForce == null || scale.year > inForce.year)) {
+      inForce = scale;
+    }
   }
-  return null;
+  return inForce;
 }
 
 Money computeSavingsQuota(Money netBase, SavingsBaseTaxScale scale) {

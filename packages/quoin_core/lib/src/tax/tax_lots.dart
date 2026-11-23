@@ -6,7 +6,6 @@ import '../money/money.dart';
 import 'config.dart';
 import 'deferred_loss.dart';
 import 'fifo.dart';
-import 'territory.dart';
 import 'wash_sale.dart';
 
 final class WashSaleRecipientDetail {
@@ -233,55 +232,3 @@ WashSaleDetail _washSaleDetail(
 
 Money _total(List<DeferredLossPiece> pieces) =>
     pieces.fold(Money.zero, (sum, p) => sum.add(p.amount));
-
-typedef CarryforwardStep = ({
-  int year,
-  Dec ownNet,
-  Dec consumedFromCarryforward,
-  Dec finalNet,
-  Dec pendingLossRemaining,
-});
-
-typedef CarryforwardResult = ({
-  int targetYear,
-  List<CarryforwardStep> steps,
-  Dec netSavingsBase,
-});
-
-CarryforwardResult carryforwardFrom(TaxHistory history, int year) {
-  final pending = <({int year, Dec remaining})>[];
-  final steps = <CarryforwardStep>[];
-
-  final years =
-      territoryRules(history.jurisdiction.territory).lossCarryforwardYears;
-  for (var y = year - years; y <= year; y++) {
-    final ownNet = taxYearOf(history, y).computableNet;
-    var consumed = Dec.zero;
-    var finalNet = ownNet;
-
-    if (ownNet.isNegative) {
-      pending.add((year: y, remaining: ownNet.abs()));
-    } else if (ownNet.isPositive) {
-      var remaining = ownNet;
-      for (final (i, loss) in pending.indexed) {
-        if (remaining <= Dec.zero) break;
-        if (loss.remaining <= Dec.zero) continue;
-        final applied = minDec(loss.remaining, remaining);
-        pending[i] = (year: loss.year, remaining: loss.remaining - applied);
-        remaining = remaining - applied;
-        consumed = consumed + applied;
-      }
-      finalNet = ownNet - consumed;
-    }
-
-    steps.add((
-      year: y,
-      ownNet: ownNet,
-      consumedFromCarryforward: consumed,
-      finalNet: finalNet,
-      pendingLossRemaining: sumDec(pending.map((loss) => loss.remaining)),
-    ));
-  }
-
-  return (targetYear: year, steps: steps, netSavingsBase: steps.last.finalNet);
-}

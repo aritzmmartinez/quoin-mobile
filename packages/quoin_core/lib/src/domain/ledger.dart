@@ -59,8 +59,7 @@ enum TradeType with Coded {
 
 enum CashType with Coded {
   deposit('DEPOSIT'),
-  withdrawal('WITHDRAWAL'),
-  interest('INTEREST');
+  withdrawal('WITHDRAWAL');
 
   const CashType(this.code);
 
@@ -215,6 +214,38 @@ final class CashEvent extends LedgerEvent {
   String? get instrumentId => null;
 }
 
+final class InterestEvent extends LedgerEvent {
+  const InterestEvent({
+    required super.id,
+    required super.ts,
+    required this.grossAmount,
+    required this.taxWithheld,
+    required super.currency,
+    super.fxSource,
+    super.fxDate,
+    super.fxRate,
+    super.fxDirection,
+    super.originalAmount,
+    super.originalCurrency,
+    super.valuationSource,
+    super.linkId,
+    super.linkKind,
+    required super.account,
+    required super.source,
+    super.externalId,
+    super.note,
+  });
+
+  final Money grossAmount;
+  final Money taxWithheld;
+
+  @override
+  String? get instrumentId => null;
+}
+
+/// The source of every Trade Republic row, which some tax rules read.
+const tradeRepublicSource = 'TR_CSV';
+
 bool isSwapLeg(LedgerEvent event) => event.linkKind == 'swap';
 
 /// Units that arrived without cash leaving the bank.
@@ -222,7 +253,7 @@ bool isInKind(LedgerEvent event) => switch (event) {
       TradeEvent(:final funding) ||
       DividendEvent(:final funding) =>
         funding == Funding.inKind,
-      CashEvent() => false,
+      CashEvent() || InterestEvent() => false,
     };
 
 const valuationSources = {'kraken-amountusd', 'yahoo'};
@@ -309,6 +340,7 @@ String ledgerTypeOf(LedgerEvent event) => switch (event) {
       TradeEvent(:final type) => type.code,
       DividendEvent() => 'DIVIDEND',
       CashEvent(:final type) => type.code,
+      InterestEvent() => 'INTEREST',
     };
 
 bool isUnconvertedForeign(LedgerEvent event) =>
@@ -396,6 +428,26 @@ LedgerEvent _rebuilt(
           ts: e.ts,
           type: e.type,
           grossAmount: e.grossAmount,
+          currency: e.currency,
+          fxSource: fxSource ?? e.fxSource,
+          fxDate: fxDate ?? e.fxDate,
+          fxRate: fxRate ?? e.fxRate,
+          fxDirection: fxDirection ?? e.fxDirection,
+          originalAmount: e.originalAmount,
+          originalCurrency: e.originalCurrency,
+          valuationSource: e.valuationSource,
+          linkId: e.linkId,
+          linkKind: e.linkKind,
+          account: e.account,
+          source: e.source,
+          externalId: e.externalId,
+          note: e.note,
+        ),
+      InterestEvent() => InterestEvent(
+          id: e.id,
+          ts: e.ts,
+          grossAmount: e.grossAmount,
+          taxWithheld: e.taxWithheld,
           currency: e.currency,
           fxSource: fxSource ?? e.fxSource,
           fxDate: fxDate ?? e.fxDate,

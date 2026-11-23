@@ -225,7 +225,7 @@ final class _Base {
 }
 
 const _account = 'trade-republic';
-const _source = 'TR_CSV';
+const _source = tradeRepublicSource;
 
 DiscardItem _invalidCryptoCode(TradeRepublicRow row) => DiscardItem(
       DiscardReason.invalidCryptoCode,
@@ -313,7 +313,22 @@ MappedItem mapTradeRepublicRow(TradeRepublicRow row) {
       );
 
     case 'CASH|INTEREST_PAYMENT':
-      return DomainItem(null, _cash(row, CashType.interest));
+      final base = _Base(row);
+      return DomainItem(
+        null,
+        InterestEvent(
+          id: base.id,
+          ts: base.ts,
+          grossAmount: Money.parse(_abs(row.amount)),
+          taxWithheld: Money.parse(_absOrZero(row.tax)),
+          currency: base.currency,
+          originalAmount: base.originalAmount,
+          originalCurrency: base.originalCurrency,
+          account: _account,
+          source: _source,
+          externalId: base.externalId,
+        ),
+      );
 
     case 'CASH|CUSTOMER_INPAYMENT' ||
           'CASH|TRANSFER_INSTANT_INBOUND' ||

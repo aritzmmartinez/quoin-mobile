@@ -27,6 +27,22 @@ LedgerEvent eventOf(Json row) {
   final direction = fxDirection == null ? null : FxDirection.of(fxDirection);
   final funding = Funding.of(text('funding') ?? 'CASH');
 
+  if (row['type'] == 'INTEREST') {
+    return InterestEvent(
+      id: id,
+      ts: ts,
+      grossAmount: Money.parse(row['grossAmount'] as String),
+      taxWithheld: Money.parse(row['taxWithheld'] as String),
+      currency: currency,
+      fxSource: fxSource,
+      fxDate: text('fxDate'),
+      fxRate: rate,
+      fxDirection: direction,
+      account: row['account'] as String,
+      source: row['source'] as String,
+      externalId: text('externalId'),
+    );
+  }
   if (CashType.values.any((t) => t.code == row['type'])) {
     return CashEvent(
       id: id,
