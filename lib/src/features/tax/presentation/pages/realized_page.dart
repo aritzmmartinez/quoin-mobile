@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:quoin_core/quoin_core.dart';
 
 import 'package:quoin/src/app/router.dart';
 import 'package:quoin/src/core/l10n/gen/app_localizations.dart';
@@ -205,6 +206,9 @@ class _RealizedPageState extends ConsumerState<RealizedPage> {
     final years = report.taxYears;
     final year = years.contains(_taxYear) ? _taxYear! : report.defaultYear;
     final router = GoRouter.of(context);
+    final exemptLimit = territoryRules(report.history.jurisdiction.territory)
+        .dividendExemption
+        ?.limit;
     final how = InfoRow(
       label: l10n.realizedHow,
       onTap: () => showExplainSheet(
@@ -236,6 +240,22 @@ class _RealizedPageState extends ConsumerState<RealizedPage> {
             body: l10n.taxHowCarryBody,
             source: l10n.taxHowCarrySource,
           ),
+          (
+            icon: QuoinIcons.cashFlow,
+            title: l10n.taxHowIncomeTitle,
+            body: l10n.taxHowIncomeBody,
+            source: l10n.taxHowIncomeSource,
+          ),
+          if (exemptLimit != null)
+            (
+              icon: QuoinIcons.taxRule,
+              title: l10n.taxHowExemptTitle,
+              body: l10n.taxHowExemptBody(
+                QuoinFormat.of(context)
+                    .money(Money.parse(exemptLimit), decimals: 0),
+              ),
+              source: l10n.taxHowExemptSource,
+            ),
         ],
         detailTitle: l10n.realizedHowDetail,
         detail: [l10n.taxHowRules, l10n.taxHowOwnRules],

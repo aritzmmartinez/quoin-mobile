@@ -67,6 +67,41 @@ void main() {
     expect(rows.first.isSwap, isTrue, reason: 'unpaired leg, still a swap');
   });
 
+  test('interest and dividends show net of their withholding', () {
+    final rows = movementsOf(
+      PortfolioLedger(
+        residence: Residence.bizkaia,
+        instruments: const [],
+        events: [
+          InterestEvent(
+            id: 'i',
+            ts: DateTime.parse('2026-02-01T09:00:00Z'),
+            grossAmount: Money.parse('10'),
+            taxWithheld: Money.parse('1.9'),
+            currency: baseCurrency,
+            account: 'test',
+            source: 'TEST',
+            externalId: 'i',
+          ),
+          DividendEvent(
+            id: 'd',
+            ts: DateTime.parse('2026-01-15T09:00:00Z'),
+            instrumentId: 'X',
+            grossAmount: Money.parse('20'),
+            taxWithheld: Money.parse('3.8'),
+            currency: baseCurrency,
+            account: 'test',
+            source: 'TEST',
+            externalId: 'd',
+          ),
+        ],
+        latestPrices: const {},
+        rates: const [],
+      ),
+    );
+    expect(rows.map((r) => '${r.amount}'), ['8.1', '16.2']);
+  });
+
   test('months add the cash moved, leaving swaps out', () {
     final rows = movementsOf(
       PortfolioLedger(

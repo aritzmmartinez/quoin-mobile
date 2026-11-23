@@ -5,8 +5,11 @@ import '../domain/ledger.dart';
 import '../domain/residence.dart';
 import '../fx/to_base.dart';
 import '../money/money.dart';
+import 'carryforward.dart';
 import 'config.dart';
+import 'savings_income.dart';
 import 'tax_lots.dart';
+import 'territory.dart';
 import 'wash_sale.dart';
 
 RepurchaseScope taxScopeFor(
@@ -25,7 +28,9 @@ typedef InKindIncome = ({int count, Money gross, Money withheld});
 InKindIncome inKindIncomeOf(List<LedgerEvent> events, int year, String zone) {
   final received = [
     for (final e in bookable(events))
-      if (e is DividendEvent && isInKind(e) && fiscalYearOf(e.ts, zone) == year)
+      if (e is DividendEvent &&
+          isInKindIncome(e) &&
+          fiscalYearOf(e.ts, zone) == year)
         e,
   ];
   return (
@@ -36,21 +41,44 @@ InKindIncome inKindIncomeOf(List<LedgerEvent> events, int year, String zone) {
   );
 }
 
+/// The income pool of one year: its own count, gross and exempt part, and
+/// the pool after its carryforward. [exemptSource] is null where the
+/// territory exempts no dividend.
+typedef SavingsIncomeView = ({
+  int count,
+  Dec gross,
+  Dec exempt,
+  String? exemptSource,
+  PoolResult pool,
+});
+
 /// Quoin's `buildTaxYearView` (lib/tax.ts) without the rows' names and the
 /// pending deferrals grouped by sale: the figures of one fiscal year.
 final class TaxYearView {
   const TaxYearView({
     required this.result,
     required this.carryforward,
+    required this.savingsIncome,
+    required this.savingsBase,
     required this.scale,
     required this.quota,
+    required this.withholdings,
     required this.inKindIncome,
   });
 
   final TaxYearResult result;
+
+  /// The capital-gains pool.
   final CarryforwardResult carryforward;
+  final SavingsIncomeView savingsIncome;
+
+  /// Both pools' positive final balances: what the quota applies to.
+  final Dec savingsBase;
+
+  /// The scale in force: an earlier year's when no newer one is on file.
   final SavingsBaseTaxScale? scale;
   final Money? quota;
+  final Withholdings withholdings;
   final InKindIncome inKindIncome;
 
   int get year => result.year;
@@ -71,32 +99,65 @@ final class TaxYearView {
   Dec get pendingSum => sumDec(result.pending.map((p) => p.amount.amount));
 
   Dec get netSavingsBase => carryforward.netSavingsBase;
+
+  bool get scaleInherited => scale != null && scale!.year < year;
 }
 
 TaxYearView buildTaxYearView(
   List<LedgerEvent> events,
+  List<Instrument> instruments,
   TaxHistory history,
   int year,
 ) {
-  final carry = carryforwardFrom(history, year);
-  final scale = getTaxScale(history.jurisdiction.territory, year);
+  final territory = history.jurisdiction.territory;
+  final zone = history.jurisdiction.zone;
+  final rules = territoryRules(territory);
+  final exemptionRule = rules.dividendExemption;
+  final income = savingsIncomeOf(
+    events,
+    zone,
+    exemptionRule == null
+        ? null
+        : DividendExemption(
+            rule: exemptionRule,
+            isCollective: isCollectiveInvestment(instruments),
+          ),
+  );
+  final (:pools, :savingsBase, targetYear: _) = carryforwardPools(
+    (gainsNetOf(history), income.netOf),
+    year,
+    rules.lossCarryforwardYears,
+    rules.crossOffsetLimit,
+  );
+  final scale = getTaxScale(territory, year);
   return TaxYearView(
     result: taxYearOf(history, year),
-    carryforward: carry,
+    carryforward: carryforwardFrom(history, year),
+    savingsIncome: (
+      count: savingsIncomeCountOf(events, year, zone),
+      gross: income.grossOf(year),
+      exempt: income.exemptOf(year),
+      exemptSource: exemptionRule?.source,
+      pool: pools.$2,
+    ),
+    savingsBase: savingsBase,
     scale: scale,
     quota: scale == null
         ? null
-        : carry.netSavingsBase.isPositive
-            ? computeSavingsQuota(Money.of(carry.netSavingsBase), scale)
+        : savingsBase.isPositive
+            ? computeSavingsQuota(Money.of(savingsBase), scale)
             : Money.zero,
-    inKindIncome: inKindIncomeOf(events, year, history.jurisdiction.zone),
+    withholdings: withholdingsOf(events, year, zone),
+    inKindIncome: inKindIncomeOf(events, year, zone),
   );
 }
 
 List<int> listTaxYears(List<LedgerEvent> events, String zone) => {
       for (final e in events)
-        if ((e is TradeEvent && e.type == TradeType.sell) ||
-            (e is DividendEvent && isInKind(e)))
+        if (isSavingsIncome(e))
+          incomeYearOf(e, zone)
+        else if ((e is TradeEvent && e.type == TradeType.sell) ||
+            isInKindIncome(e))
           fiscalYearOf(e.ts, zone),
     }.toList()
       ..sort((a, b) => b.compareTo(a));

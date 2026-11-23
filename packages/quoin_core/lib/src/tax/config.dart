@@ -2,6 +2,7 @@ import '../calendar/calendar_date.dart';
 import '../decimal/dec.dart';
 import '../domain/residence.dart';
 import '../money/money.dart';
+import 'territory.dart';
 
 enum RepurchaseAssetClass {
   listedSecurity('listed-security'),
@@ -31,70 +32,46 @@ RepurchaseAssetClass repurchaseAssetClassOf(String instrumentType) =>
 
 enum RepurchaseLetter { g, i }
 
+/// Which purchases in the window count: [all] reads "hubiera adquirido"
+/// literally, so units received in kind (a reward, a saveback) are an
+/// acquisition; [cashOnly] leaves them out of the window and out of the
+/// recipients of the deferral. Homogeneity is always the instrument id.
+enum RepurchaseAcquisitions { all, cashOnly }
+
 /// Art. 43 NF 13/2013 de Bizkaia, pérdidas no computables por recompra: one
-/// entry per letter over one engine. Same table as Quoin's `REPURCHASE_RULES`
-/// (core/tax/config.ts), which says why each field is what it is.
+/// entry per letter over one engine. A territory's rules live in
+/// [territoryRules].
 ///
 /// [from] and [to] are Madrid calendar days of the transmission, inclusive.
 final class RepurchaseRule {
   const RepurchaseRule({
-    required this.territory,
     required this.letter,
     required this.assetClass,
     required this.windowMonths,
-    required this.cashOnly,
+    required this.acquisitions,
     required this.from,
     required this.to,
     required this.source,
   });
 
-  final Territory territory;
   final RepurchaseLetter letter;
   final RepurchaseAssetClass assetClass;
   final int windowMonths;
-
-  /// Whether units received in kind are left out of the window; false reads
-  /// "hubiera adquirido" literally. Homogeneity is always the instrument id.
-  final bool cashOnly;
+  final RepurchaseAcquisitions acquisitions;
   final String? from;
   final String? to;
   final String source;
 }
 
-const repurchaseRules = [
-  RepurchaseRule(
-    territory: Territory.bizkaia,
-    letter: RepurchaseLetter.g,
-    assetClass: RepurchaseAssetClass.listedSecurity,
-    windowMonths: 2,
-    cashOnly: false,
-    from: null,
-    to: null,
-    source: 'Art. 43.g NF 13/2013 de Bizkaia',
-  ),
-  RepurchaseRule(
-    territory: Territory.bizkaia,
-    letter: RepurchaseLetter.i,
-    assetClass: RepurchaseAssetClass.fungibleCrypto,
-    windowMonths: 2,
-    cashOnly: false,
-    from: '2025-01-01',
-    to: null,
-    source: 'Art. 43.i NF 13/2013, redacción de la NF 6/2025, de 12 de '
-        'diciembre (BOB 15/12/2025)',
-  ),
-];
-
 RepurchaseRule? repurchaseRuleFor(
   Territory territory,
   RepurchaseAssetClass assetClass,
   CalendarDate saleDay, [
-  List<RepurchaseRule> rules = repurchaseRules,
+  List<RepurchaseRule>? rules,
 ]) {
   final day = saleDay.toString();
-  for (final rule in rules) {
-    if (rule.territory == territory &&
-        rule.assetClass == assetClass &&
+  for (final rule in rules ?? territoryRules(territory).repurchase) {
+    if (rule.assetClass == assetClass &&
         (rule.from == null || rule.from!.compareTo(day) <= 0) &&
         (rule.to == null || day.compareTo(rule.to!) <= 0)) {
       return rule;
@@ -103,11 +80,30 @@ RepurchaseRule? repurchaseRuleFor(
   return null;
 }
 
-const unlistedNoticeWindowMonths = 12;
+/// The period a territory values a crypto swap at the greater of its two
+/// sides, and the norm that says so. [from] and [to] are calendar days of the
+/// swap in the residence's zone, inclusive; null is open.
+final class SwapValuationRule {
+  const SwapValuationRule({this.from, this.to, required this.source});
 
-/// Art. 66 NF 13/2013 de Bizkaia: losses offset the savings base for four
-/// years.
-const lossCarryforwardYears = 4;
+  final String? from;
+  final String? to;
+  final String source;
+}
+
+SwapValuationRule? swapValuationRuleFor(
+  Territory territory,
+  String swapDay, [
+  List<SwapValuationRule>? rules,
+]) {
+  for (final rule in rules ?? territoryRules(territory).swapValuation) {
+    if ((rule.from == null || rule.from!.compareTo(swapDay) <= 0) &&
+        (rule.to == null || swapDay.compareTo(rule.to!) <= 0)) {
+      return rule;
+    }
+  }
+  return null;
+}
 
 final class TaxBracket {
   const TaxBracket(this.from, this.to, this.rate);
@@ -119,44 +115,27 @@ final class TaxBracket {
 
 final class SavingsBaseTaxScale {
   const SavingsBaseTaxScale({
-    required this.territory,
     required this.year,
     required this.source,
     required this.brackets,
   });
 
-  final Territory territory;
   final int year;
 
   final String source;
   final List<TaxBracket> brackets;
 }
 
-const taxScales = [
-  SavingsBaseTaxScale(
-    territory: Territory.bizkaia,
-    year: 2026,
-    source:
-        'Art. 76 NF 13/2013 de Bizkaia, redacción NF 2/2025, efectos 1-1-2026',
-    brackets: [
-      TaxBracket('0', '7500', '0.19'),
-      TaxBracket('7500', '15000', '0.20'),
-      TaxBracket('15000', '30000', '0.22'),
-      TaxBracket('30000', '50000', '0.24'),
-      TaxBracket('50000', '90000', '0.255'),
-      TaxBracket('90000', '120000', '0.26'),
-      TaxBracket('120000', '240000', '0.265'),
-      TaxBracket('240000', '300000', '0.27'),
-      TaxBracket('300000', null, '0.28'),
-    ],
-  ),
-];
-
+/// The latest scale on file whose year is not after [year]; none for a year
+/// before the first, because a scale never reaches back past its own year.
 SavingsBaseTaxScale? getTaxScale(Territory territory, int year) {
-  for (final scale in taxScales) {
-    if (scale.territory == territory && scale.year == year) return scale;
+  SavingsBaseTaxScale? inForce;
+  for (final scale in territoryRules(territory).savingsScales) {
+    if (scale.year <= year && (inForce == null || scale.year > inForce.year)) {
+      inForce = scale;
+    }
   }
-  return null;
+  return inForce;
 }
 
 Money computeSavingsQuota(Money netBase, SavingsBaseTaxScale scale) {

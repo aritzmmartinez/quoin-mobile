@@ -5,6 +5,7 @@ import '../domain/residence.dart';
 import '../sort.dart';
 import 'config.dart';
 import 'fifo.dart';
+import 'territory.dart';
 
 typedef WashSaleWindow = ({CalendarDate start, CalendarDate end});
 
@@ -20,12 +21,12 @@ final class RepurchaseScope {
   const RepurchaseScope({
     required this.jurisdiction,
     required this.assetClasses,
-    this.rules = repurchaseRules,
+    this.rules,
   });
 
   final Jurisdiction jurisdiction;
   final Map<String, RepurchaseAssetClass> assetClasses;
-  final List<RepurchaseRule> rules;
+  final List<RepurchaseRule>? rules;
 }
 
 typedef WashSaleRecipient = ({
@@ -99,7 +100,8 @@ final class WashSaleAssessor {
     final window = washSaleWindow(sale.trade.ts, rule.windowMonths, _zone);
     final inWindow = [
       for (final buy in _buys[sale.trade.instrumentId] ?? const <TradeEvent>[])
-        if ((!rule.cashOnly || !isInKind(buy)) &&
+        if ((rule.acquisitions == RepurchaseAcquisitions.all ||
+                !isInKind(buy)) &&
             isWithin(calendarDateOf(buy.ts, _zone), window.start, window.end))
           buy,
     ];
@@ -174,9 +176,11 @@ final class WashSaleAssessor {
   }
 
   UnlistedRepurchaseNotice? unlistedNotice(FifoSale sale) {
+    final notice = territoryRules(_scope.jurisdiction.territory).unlistedNotice;
+    if (assetClassOf(sale.trade.instrumentId) != notice.assetClass) return null;
     final saleAt = _at(sale.trade.id, -1);
     final start = calendarDateOf(sale.trade.ts, _zone);
-    final end = addCalendarMonths(start, unlistedNoticeWindowMonths);
+    final end = addCalendarMonths(start, notice.windowMonths);
     for (final buy in _buys[sale.trade.instrumentId] ?? const <TradeEvent>[]) {
       if (_at(buy.id, 0) > saleAt &&
           isWithin(calendarDateOf(buy.ts, _zone), start, end)) {

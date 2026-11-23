@@ -620,6 +620,19 @@
   "taxHowCarryTitle": "Pérdidas de años anteriores",
   "taxHowCarryBody": "Se compensan con las ganancias de este año, hasta cuatro años después de la pérdida.",
   "taxHowCarrySource": "Art. 66",
+  "taxHowIncomeTitle": "Rendimientos en su propia bolsa",
+  "taxHowIncomeBody": "Intereses y dividendos se compensan solo entre sí, nunca con el resultado de las ventas, y un saldo negativo se arrastra a los años siguientes. La base del ahorro suma los saldos positivos de las dos bolsas.",
+  "taxHowIncomeSource": "Art. 66.1",
+  "taxHowExemptTitle": "Dividendos exentos",
+  "taxHowExemptBody": "Los dividendos de acciones están exentos hasta {limit} al año; los de ETF y fondos, no.",
+  "@taxHowExemptBody": {
+    "placeholders": {
+      "limit": {
+        "type": "String"
+      }
+    }
+  },
+  "taxHowExemptSource": "Art. 9.24",
   "realizedIntro": "Cada venta cerrada, con el coste que consumió en el momento de venderla. Las comisiones de compra ya van dentro del coste y las de venta se restan del bruto.",
   "realizedAvcoWarning": "Cálculo AVCO (coste medio ponderado), el mismo criterio que la cartera. No coincide con el criterio fiscal FIFO: en la declaración cada venta se empareja con las compras más antiguas, así que el resultado por operación será otro.",
   "realizedSortDate": "Fecha",
@@ -666,7 +679,7 @@
   },
   "saleCostBasis": "El coste usa el precio medio de tus compras.",
   "saleOpenInstrument": "Ver la ficha del instrumento",
-  "taxNoYears": "No hay ventas registradas todavía en ningún año.",
+  "taxNoYears": "No hay ventas ni rendimientos registrados todavía en ningún año.",
   "taxLotsTitle": "Compras que se venden (FIFO)",
   "taxLotLine": "{units} del {date}",
   "@taxLotLine": {
@@ -888,10 +901,40 @@
   "taxHowRepurchase": "Cómo se calcula la recompra",
   "taxWhereDeferred": "Dónde queda la pérdida aplazada",
   "taxInKindTitle": "Ingresos en especie",
-  "taxInKindBody": "Recompensas de Kraken y saveback de Trade Republic recibidos en participaciones. Clasificación fiscal pendiente de verificar: no se suman a ninguna cifra de esta vista.",
+  "taxInKindBody": "Ingresos recibidos en participaciones que no entran en la bolsa de rendimientos (como las recompensas de cripto). Clasificación fiscal pendiente de verificar: no se suman a ninguna cifra de esta vista.",
   "taxInKindCount": "Recepciones",
   "taxInKindGross": "Valor al recibirlas",
   "taxInKindWithheld": "Retenido",
+  "taxGainsBalance": "Saldo de ganancias y pérdidas",
+  "taxIncomeBalance": "Saldo de rendimientos del capital mobiliario",
+  "taxPools": "Los rendimientos del capital mobiliario y las ganancias y pérdidas se compensan solo dentro de su propia bolsa: la base es la suma de los saldos positivos.",
+  "taxWithheld": "Retenciones registradas",
+  "taxWithheldNote": "Las retenciones son pagos a cuenta de todo el IRPF, no solo de la base del ahorro, y no se restan de la cuota. Suma lo retenido este año en intereses y dividendos cobrados en efectivo y en el saveback de Trade Republic, sin separar retenciones españolas y extranjeras.",
+  "taxInterestWithoutWithholding": "Algún interés de este año no tiene retención registrada. Los intereses importados antes de esta versión pueden no traer su retención aunque la tuvieran: compruébalos con el extracto del bróker.",
+  "taxScaleInForce": "Se aplica la escala vigente desde {year}. Si Bizkaia aprueba una nueva para este año, la cuota cambiará.",
+  "@taxScaleInForce": {
+    "placeholders": {
+      "year": {
+        "type": "int"
+      }
+    }
+  },
+  "taxIncomeTitle": "Rendimientos del capital mobiliario",
+  "taxIncomeBody": "Intereses y dividendos cobrados en efectivo, y el saveback de Trade Republic, que el bróker declara como rendimiento de cuenta. Importes en bruto. Se compensan solo entre sí, y un saldo negativo se arrastra a los años siguientes.",
+  "taxIncomeCount": "Cobros",
+  "taxIncomeGross": "Bruto del año",
+  "taxIncomeExempt": "Dividendos exentos",
+  "taxIncomeFinalNet": "Saldo tras el arrastre",
+  "taxDecemberInterest": "Los intereses de diciembre se cobran el 1 de enero y cuentan para este año.",
+  "taxExemptNote": "Los dividendos de acciones están exentos hasta {limit} al año; los de ETF y fondos, no. Salen del saldo, pero sus retenciones siguen en las registradas. No se comprueba la regla de los dos meses.",
+  "@taxExemptNote": {
+    "placeholders": {
+      "limit": {
+        "type": "String"
+      }
+    }
+  },
+  "taxEmptyYearIncome": "Este año no tiene ventas, pero sí rendimientos: sus cifras están en el resumen y más abajo.",
   "taxHowRules": "Mismas ventas, con criterio FIFO en vez de AVCO, que es el que exige la declaración foral de Bizkaia (NF 13/2013) y no el de la pestaña de Ventas. Las pérdidas con recompra en los dos meses anteriores o posteriores se difieren según el Art. 43 (letra g para valores homogéneos y, en las transmisiones desde el 1 de enero de 2025, letra i para criptoactivos del mismo tipo), en la proporción recomprada, y se integran cuando se transmiten los recomprados; la compensación con años anteriores sigue el Art. 66. La aritmética de la recompra sigue las consultas de la DGT V1403-21, V1117-21 y V3282-18 sobre la norma estatal paralela, que no vinculan a la Hacienda Foral.",
   "taxHowOwnRules": "En una permuta, el valor de transmisión es el mayor de los dos lados (art. 47.1.i y 47.1.p). Criterios propios de Quoin, no de la norma ni de la DGT: el valor de adquisición de lo recibido es ese mismo valor, un criterio razonado que la norma no dice literalmente; una unidad recomprada cuenta para una sola venta, la más antigua primero; las uds que reciben el diferido se toman por orden de compra, de la más antigua a la más reciente, y después las compradas tras la venta; y dentro de una compra, el diferido se reparte a partes iguales entre las uds que siguen en cartera.",
   "taxNoRate": "Sin tipo de cambio: {names}. Sus operaciones no se han podido convertir a euros y no entran en este cálculo. Revísalo antes de usar estas cifras en la declaración.",

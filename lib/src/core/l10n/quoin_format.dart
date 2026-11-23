@@ -47,12 +47,16 @@ class QuoinFormat {
     return text.isEmpty ? text : text[0].toUpperCase() + text.substring(1);
   }
 
-  String money(Money value, {bool floorNonZero = false}) {
+  String money(Money value, {bool floorNonZero = false, int decimals = 2}) {
     final amount = value.amount;
     if (floorNonZero && amount.isPositive && amount.roundTo(2).isZero) {
       return '<${money(Money.parse('0.01'))}';
     }
-    final number = _number(amount.abs(), minDecimals: 2, maxDecimals: 2);
+    final number = _number(
+      amount.abs(),
+      minDecimals: decimals,
+      maxDecimals: decimals,
+    );
     final sign = amount.isNegative ? '-' : '';
     return _es ? '$sign$number$_nbsp€' : '$sign€$number';
   }

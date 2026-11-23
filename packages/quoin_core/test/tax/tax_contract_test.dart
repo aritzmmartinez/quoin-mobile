@@ -133,7 +133,7 @@ Json evaluate(Json input) {
         '$year': () {
           final taxYear = taxYearOf(history, year);
           final carry = carryforwardFrom(history, year);
-          final view = buildTaxYearView(events, history, year);
+          final view = buildTaxYearView(events, instruments, history, year);
           final scale = view.scale;
           return {
             'taxYear': {
@@ -166,6 +166,13 @@ Json evaluate(Json input) {
               'computableNet': '${view.computableNet}',
               'pendingSum': view.pendingSum.toFixed(2),
               'netSavingsBase': '${view.netSavingsBase}',
+              'savingsIncome': {
+                'count': view.savingsIncome.count,
+                'gross': view.savingsIncome.gross.toFixed(2),
+                'exempt': view.savingsIncome.exempt.toFixed(2),
+                'finalNet': '${view.savingsIncome.pool.finalNet}',
+              },
+              'savingsBase': '${view.savingsBase}',
               'scale': scale == null
                   ? null
                   : {
@@ -176,6 +183,11 @@ Json evaluate(Json input) {
                       ],
                     },
               'quota': view.quota?.toString(),
+              'withholdings': {
+                'total': view.withholdings.total.amount.toFixed(2),
+                'interestWithoutWithholding':
+                    view.withholdings.interestWithoutWithholding,
+              },
               'inKindIncome': {
                 'count': view.inKindIncome.count,
                 'gross': view.inKindIncome.gross.amount.toFixed(2),

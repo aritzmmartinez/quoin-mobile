@@ -9,8 +9,17 @@ import 'package:quoin/src/features/portfolio/data/repositories/portfolio_reposit
 import 'package:quoin/src/features/portfolio/domain/entities/portfolio_ledger.dart';
 import 'package:quoin/src/features/portfolio/domain/usecases/get_portfolio_overview.dart';
 import 'package:quoin/src/features/portfolio/domain/usecases/movements_of.dart';
+import 'package:quoin/src/features/import/data/models/ledger_companions.dart';
 import 'package:quoin_core/quoin_core.dart'
-    show Residence, dayOf, otherCategory, rateDayFor, shiftDay;
+    show
+        InterestEvent,
+        Money,
+        Residence,
+        baseCurrency,
+        dayOf,
+        otherCategory,
+        rateDayFor,
+        shiftDay;
 
 import '../../helpers.dart';
 
@@ -51,6 +60,28 @@ void main() {
       throwsA(anything),
     );
   });
+
+  test(
+    'an interest keeps its withholding from the write to the read',
+    () async {
+      final interest = InterestEvent(
+        id: 'i-1',
+        ts: DateTime.utc(2026, 2, 1, 9),
+        grossAmount: Money.parse('10'),
+        taxWithheld: Money.parse('1.9'),
+        currency: baseCurrency,
+        account: 'test',
+        source: 'TEST',
+        externalId: 'i-1',
+      );
+      await db.into(db.ledgerEntry).insert(interest.toInsert(testNow));
+
+      final read = (await load()).events.single as InterestEvent;
+      expect(read.grossAmount, Money.parse('10'));
+      expect(read.taxWithheld, Money.parse('1.9'));
+      expect((await db.select(db.ledgerEntry).getSingle()).taxWithheld, '1.9');
+    },
+  );
 
   test('instants are stored as ISO-8601 UTC text', () async {
     await repository.loadSample(testNow);

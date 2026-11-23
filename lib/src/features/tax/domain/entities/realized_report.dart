@@ -86,5 +86,8 @@ class RealizedReport {
 
   String nameOf(String instrumentId) => names[instrumentId] ?? instrumentId;
 
-  TaxYearView taxYear(int year) => buildTaxYearView(events, history, year);
+  int get currentYear => int.parse(today.substring(0, 4));
+
+  TaxYearView taxYear(int year) =>
+      buildTaxYearView(events, instruments.values.toList(), history, year);
 }

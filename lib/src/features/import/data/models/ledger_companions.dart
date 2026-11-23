@@ -46,6 +46,10 @@ extension LedgerEventWrite on LedgerEvent {
         ),
       ),
       CashEvent e => (e.grossAmount, const LedgerEntryCompanion()),
+      InterestEvent e => (
+        e.grossAmount,
+        LedgerEntryCompanion(taxWithheld: Value(e.taxWithheld.text)),
+      ),
     };
     return extra.copyWith(
       id: Value(id),

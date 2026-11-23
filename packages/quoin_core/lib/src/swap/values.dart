@@ -3,45 +3,7 @@ import '../domain/ledger.dart';
 import '../domain/residence.dart';
 import '../fx/to_base.dart';
 import '../money/money.dart';
-
-/// The period a territory values a crypto swap at the greater of its two
-/// sides, and the norm that says so.
-final class SwapValuationRule {
-  const SwapValuationRule({
-    required this.territory,
-    this.from,
-    this.to,
-    required this.source,
-  });
-
-  final Territory territory;
-  final String? from;
-  final String? to;
-  final String source;
-}
-
-const List<SwapValuationRule> swapValuationRules = [
-  SwapValuationRule(
-    territory: Territory.bizkaia,
-    source: 'Arts. 47.1.i, 45.1 y 45.3 NF 13/2013 de Bizkaia; '
-        'Art. 47.1.p, redacción de la NF 6/2025',
-  ),
-];
-
-SwapValuationRule? swapValuationRuleFor(
-  Territory territory,
-  String swapDay, [
-  List<SwapValuationRule> rules = swapValuationRules,
-]) {
-  for (final rule in rules) {
-    if (rule.territory == territory &&
-        (rule.from == null || rule.from!.compareTo(swapDay) <= 0) &&
-        (rule.to == null || swapDay.compareTo(rule.to!) <= 0)) {
-      return rule;
-    }
-  }
-  return null;
-}
+import '../tax/config.dart';
 
 final class SwapLegValue {
   const SwapLegValue({required this.gross, required this.fees});
@@ -114,7 +76,7 @@ typedef TradeAmounts = SwapLegValue Function(TradeEvent trade);
 TradeAmounts tradeAmounts(
   List<LedgerEvent> events,
   Jurisdiction jurisdiction, [
-  List<SwapValuationRule> rules = swapValuationRules,
+  List<SwapValuationRule>? rules,
 ]) {
   final groups = <String, List<TradeEvent>>{};
   for (final event in events) {

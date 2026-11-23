@@ -2,7 +2,6 @@ import '../calendar/day.dart';
 import '../decimal/dec.dart';
 import '../domain/ledger.dart';
 import '../money/money.dart';
-import 'config.dart';
 import 'fifo.dart';
 import 'wash_sale.dart';
 
@@ -75,11 +74,7 @@ DeferredLossWalk walkDeferredLosses(
     UnlistedRepurchaseNotice? notice;
     final rule = assessor.ruleFor(sale);
     if (rule == null) {
-      notice = isLoss &&
-              assessor.assetClassOf(sale.trade.instrumentId) ==
-                  RepurchaseAssetClass.fungibleCrypto
-          ? assessor.unlistedNotice(sale)
-          : null;
+      notice = isLoss ? assessor.unlistedNotice(sale) : null;
     } else if (isLoss || carriedIn.isNotEmpty) {
       assessment = assessor.assess(sale, rule);
     }
