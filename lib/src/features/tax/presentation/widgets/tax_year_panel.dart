@@ -15,8 +15,9 @@ import 'package:quoin/src/ui/molecules/group_header.dart';
 import 'package:quoin/src/ui/molecules/sale_row.dart';
 
 /// One fiscal year of the Bizkaia view: the estimated tax, the chain of
-/// figures from the sales' result down to the savings base, how it is
-/// worked out, the year's FIFO sales, the deferred losses still waiting and
+/// figures from the sales' result and the income from movable capital down
+/// to the savings base, the withholdings recorded, how it is worked out, the
+/// year's FIFO sales, the deferred losses still waiting, the income pool and
 /// the income in kind, which no figure adds.
 class TaxYearPanel extends StatelessWidget {
   const TaxYearPanel({
@@ -41,16 +42,25 @@ class TaxYearPanel extends StatelessWidget {
     String signed(Dec value) => format.signedMoney(Money.of(value)).text;
 
     final year = view.year;
-    final base = view.netSavingsBase;
+    final base = view.savingsBase;
     final quota = view.quota;
+    final scale = view.scale;
     final pending = view.result.pending;
+    final income = view.savingsIncome;
+    final withholdings = view.withholdings;
     final inKind = view.inKindIncome;
+    final exemptLimit = territoryRules(view.result.territory)
+        .dividendExemption
+        ?.limit;
     final earlier = view.carryforward.steps.last.consumedFromCarryforward;
-    Widget note(String text) => Semantics(
+    Widget note(String text, {Color? color}) => Semantics(
       container: true,
       child: Padding(
         padding: const EdgeInsets.only(bottom: QuoinSpace.s),
-        child: Text(text, style: type.secondary.copyWith(color: c.muted)),
+        child: Text(
+          text,
+          style: type.secondary.copyWith(color: color ?? c.muted),
+        ),
       ),
     );
 
@@ -81,7 +91,7 @@ class TaxYearPanel extends StatelessWidget {
                         text: signed(base),
                         style: type.secondary.mono.copyWith(color: c.body),
                       ),
-                      TextSpan(text: ' · ${l10n.taxScaleOf(year)}'),
+                      TextSpan(text: ' · ${l10n.taxScaleOf(scale!.year)}'),
                     ],
                   ),
                   style: type.secondary.tabular.copyWith(color: c.muted),
@@ -106,9 +116,22 @@ class TaxYearPanel extends StatelessWidget {
               ),
               CountEntry(l10n.taxEarlierLosses, signed(-earlier)),
             ],
+            CountEntry(l10n.taxGainsBalance, signed(view.netSavingsBase)),
+            CountEntry(l10n.taxIncomeBalance, signed(income.pool.finalNet)),
             CountEntry(l10n.taxBase, signed(base), strong: true),
           ],
         ),
+        note(l10n.taxPools),
+        if (scale != null && view.scaleInherited)
+          note(l10n.taxScaleInForce(scale.year)),
+        CountList(
+          entries: [
+            CountEntry(l10n.taxWithheld, format.money(withholdings.total)),
+          ],
+        ),
+        note(l10n.taxWithheldNote),
+        if (withholdings.interestWithoutWithholding)
+          note(l10n.taxInterestWithoutWithholding, color: c.body),
         const SizedBox(height: QuoinSpace.gutter),
         how,
         GroupHeader(
@@ -116,7 +139,11 @@ class TaxYearPanel extends StatelessWidget {
           total: '${view.sales.length}',
         ),
         if (view.sales.isEmpty)
-          note(l10n.taxEmptyYear)
+          note(
+            income.count > 0 || inKind.count > 0
+                ? l10n.taxEmptyYearIncome
+                : l10n.taxEmptyYear,
+          )
         else
           for (final gain in view.sales) _saleRow(context, gain),
         if (pending.isNotEmpty) ...[
@@ -137,6 +164,32 @@ class TaxYearPanel extends StatelessWidget {
                 ),
             ],
           ),
+        ],
+        if (income.count > 0 || !income.pool.finalNet.isZero) ...[
+          GroupHeader(label: l10n.taxIncomeTitle),
+          note(l10n.taxIncomeBody),
+          CountList(
+            entries: [
+              CountEntry(l10n.taxIncomeCount, '${income.count}'),
+              CountEntry(
+                l10n.taxIncomeGross,
+                format.money(Money.of(income.gross)),
+              ),
+              if (income.exemptSource != null)
+                CountEntry(
+                  l10n.taxIncomeExempt,
+                  format.money(Money.of(income.exempt)),
+                ),
+              CountEntry(l10n.taxIncomeFinalNet, signed(income.pool.finalNet)),
+            ],
+          ),
+          if (income.exemptSource != null && exemptLimit != null)
+            note(
+              l10n.taxExemptNote(
+                format.money(Money.parse(exemptLimit), decimals: 0),
+              ),
+            ),
+          if (year == report.currentYear) note(l10n.taxDecemberInterest),
         ],
         if (inKind.count > 0) ...[
           GroupHeader(label: l10n.taxInKindTitle),
