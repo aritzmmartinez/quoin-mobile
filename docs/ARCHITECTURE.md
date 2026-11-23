@@ -195,6 +195,12 @@ so `sync` does not import `import`; a failure is reported for that effect and
 never undoes the import. Price histories are not an effect the phone runs:
 it asks the PC for them after each sync (below).
 
+**The residence.** It is chosen in Settings and written only there
+(`features/settings`, `SetResidence`), with its mark, so it travels like any
+other field; the ledger reads it. Choosing the one already stored marks it only
+if it never had a mark, so a phone that keeps Bizkaia on purpose says so to the
+PC. What is stored with a day (prices, `activeFrom`, rates) is not recomputed.
+
 **A residence this version does not know.** Sync carries the residence as the
 text it came as, so a territory a newer Quoin adds is stored and sent on
 unchanged, and the node stays complete. `Residence` stays what Quoin defines

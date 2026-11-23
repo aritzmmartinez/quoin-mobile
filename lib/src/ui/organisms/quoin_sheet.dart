@@ -103,11 +103,13 @@ class QuoinChoiceRow extends StatelessWidget {
   const QuoinChoiceRow({
     super.key,
     required this.label,
+    this.detail,
     required this.selected,
     required this.onTap,
   });
 
   final String label;
+  final String? detail;
   final bool selected;
   final VoidCallback onTap;
 
@@ -134,7 +136,19 @@ class QuoinChoiceRow extends StatelessWidget {
                 spacing: QuoinSpace.m,
                 children: [
                   Expanded(
-                    child: Text(label, style: QuoinType.of(context).row),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      spacing: QuoinSpace.xxs,
+                      children: [
+                        Text(label, style: QuoinType.of(context).row),
+                        if (detail case final detail?)
+                          Text(
+                            detail,
+                            style: QuoinType.of(context).secondary
+                                .copyWith(color: c.muted),
+                          ),
+                      ],
+                    ),
                   ),
                   if (selected)
                     ExcludeSemantics(

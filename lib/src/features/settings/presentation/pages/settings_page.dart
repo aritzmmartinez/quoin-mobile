@@ -6,10 +6,12 @@ import 'package:go_router/go_router.dart';
 import 'package:quoin/src/app/router.dart';
 import 'package:quoin/src/core/error/result.dart';
 import 'package:quoin/src/core/l10n/gen/app_localizations.dart';
+import 'package:quoin/src/core/l10n/residence_name.dart';
 import 'package:quoin/src/core/theme/quoin_icons.dart';
 import 'package:quoin/src/core/theme/quoin_tokens.dart';
 import 'package:quoin/src/features/portfolio/presentation/providers/portfolio_providers.dart';
 import 'package:quoin/src/features/settings/presentation/providers/settings_providers.dart';
+import 'package:quoin/src/features/settings/presentation/widgets/residence_sheet.dart';
 import 'package:quoin/src/features/sync/presentation/widgets/sync_settings_section.dart';
 import 'package:quoin/src/ui/molecules/settings_row.dart';
 import 'package:quoin/src/ui/organisms/quoin_sheet.dart';
@@ -26,6 +28,10 @@ class SettingsPage extends ConsumerWidget {
     final themeMode = ref.watch(themeModeProvider);
     final locale = ref.watch(localeProvider);
     final version = ref.watch(appVersionProvider).value;
+    final residence = switch (ref.watch(residenceProvider).value) {
+      Ok(:final value) => value,
+      Err() || null => null,
+    };
 
     final themes = {
       ThemeMode.system: l10n.optionSystem,
@@ -98,6 +104,20 @@ class SettingsPage extends ConsumerWidget {
           ],
         ),
         const SizedBox(height: QuoinSpace.gutter),
+        SettingsSection(
+          title: l10n.settingsTax,
+          rows: [
+            SettingsRow(
+              icon: QuoinIcons.residence,
+              label: l10n.settingsResidence,
+              value: residence == null ? null : residenceName(l10n, residence),
+              onTap: residence == null
+                  ? null
+                  : () => _chooseResidence(context, ref, residence),
+            ),
+          ],
+        ),
+        const SizedBox(height: QuoinSpace.gutter),
         const SyncSettingsSection(),
         const SizedBox(height: QuoinSpace.gutter),
         SettingsSection(
@@ -159,6 +179,31 @@ class SettingsPage extends ConsumerWidget {
         ],
       ],
     );
+  }
+}
+
+Future<void> _chooseResidence(
+  BuildContext context,
+  WidgetRef ref,
+  String current,
+) async {
+  final picked = await showResidenceSheet(context, current);
+  if (picked == null) return;
+  final result = await ref.read(setResidenceProvider)(picked);
+  // The zone and the rules of every ledger screen follow the residence.
+  ref.invalidate(ledgerProvider);
+  if (!context.mounted) return;
+  switch (result) {
+    case Ok():
+      break;
+    case Err():
+      final l10n = AppLocalizations.of(context);
+      showQuoinToast(
+        context,
+        tone: QuoinToastTone.negative,
+        title: l10n.settingsResidenceFailed,
+        body: l10n.settingsResidenceFailedBody,
+      );
   }
 }
 

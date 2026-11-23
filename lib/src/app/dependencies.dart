@@ -17,7 +17,9 @@ import 'package:quoin/src/features/portfolio/data/database/quoin_database.dart';
 import 'package:quoin/src/features/portfolio/data/datasources/portfolio_local_datasource.dart';
 import 'package:quoin/src/features/portfolio/data/repositories/portfolio_repository_impl.dart';
 import 'package:quoin/src/features/portfolio/presentation/providers/portfolio_providers.dart';
+import 'package:quoin/src/features/settings/data/datasources/residence_local_datasource.dart';
 import 'package:quoin/src/features/settings/data/datasources/settings_local_datasource.dart';
+import 'package:quoin/src/features/settings/data/repositories/residence_repository_impl.dart';
 import 'package:quoin/src/features/settings/data/repositories/settings_repository_impl.dart';
 import 'package:quoin/src/features/settings/presentation/providers/settings_providers.dart';
 import 'package:quoin/src/features/sync/data/datasources/device_identity_datasource.dart';
@@ -41,6 +43,10 @@ List<Override> dependencies(
     (ref) => SettingsRepositoryImpl(ref.watch(settingsLocalDataSourceProvider)),
   ),
   quoinDatabaseProvider.overrideWithValue(database),
+  residenceRepositoryProvider.overrideWith(
+    (ref) =>
+        ResidenceRepositoryImpl(ref.watch(residenceLocalDataSourceProvider)),
+  ),
   pricesDatabaseProvider.overrideWithValue(prices),
   supportDirectoryProvider.overrideWithValue(support),
   portfolioRepositoryProvider.overrideWith(

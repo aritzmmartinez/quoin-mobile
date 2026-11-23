@@ -8,9 +8,13 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:quoin/src/app/runtime_packages.dart';
 import 'package:quoin/src/core/error/result.dart';
 import 'package:quoin/src/features/settings/domain/entities/preferences.dart';
+import 'package:quoin/src/features/portfolio/presentation/providers/portfolio_providers.dart';
+import 'package:quoin/src/features/settings/domain/repositories/residence_repository.dart';
 import 'package:quoin/src/features/settings/domain/repositories/settings_repository.dart';
+import 'package:quoin/src/features/settings/domain/usecases/get_residence.dart';
 import 'package:quoin/src/features/settings/domain/usecases/get_preferences.dart';
 import 'package:quoin/src/features/settings/domain/usecases/set_language.dart';
+import 'package:quoin/src/features/settings/domain/usecases/set_residence.dart';
 import 'package:quoin/src/features/settings/domain/usecases/set_theme.dart';
 
 final settingsRepositoryProvider = Provider<SettingsRepository>(
@@ -26,6 +30,24 @@ final setThemeProvider = Provider(
 final setLanguageProvider = Provider(
   (ref) => SetLanguage(ref.watch(settingsRepositoryProvider)),
 );
+
+final residenceRepositoryProvider = Provider<ResidenceRepository>(
+  (ref) => throw UnimplementedError('residenceRepositoryProvider not bound'),
+);
+
+final getResidenceProvider = Provider(
+  (ref) => GetResidence(ref.watch(residenceRepositoryProvider)),
+);
+final setResidenceProvider = Provider(
+  (ref) => SetResidence(ref.watch(residenceRepositoryProvider)),
+);
+
+/// The residence as stored. It follows `ledgerProvider` because every write
+/// that can change it (a sync, a choice here) invalidates the ledger.
+final residenceProvider = FutureProvider<Result<String>>((ref) {
+  ref.watch(ledgerProvider);
+  return ref.watch(getResidenceProvider)();
+});
 
 final themeModeProvider = NotifierProvider<ThemeModeNotifier, ThemeMode>(
   ThemeModeNotifier.new,

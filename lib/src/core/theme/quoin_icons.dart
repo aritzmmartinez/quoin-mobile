@@ -30,6 +30,7 @@ abstract final class QuoinIcons {
   static const currency = QuoinIconData._(HugeIcons.strokeRoundedEuro);
   static const language = QuoinIconData._(HugeIcons.strokeRoundedGlobe);
   static const theme = QuoinIconData._(HugeIcons.strokeRoundedMoon02);
+  static const residence = QuoinIconData._(HugeIcons.strokeRoundedLocation01);
   static const dataSources = QuoinIconData._(HugeIcons.strokeRoundedUpload01);
   static const concentration = QuoinIconData._(
     HugeIcons.strokeRoundedDashboardSpeed01,
