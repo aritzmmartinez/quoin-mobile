@@ -6,6 +6,7 @@ import '../money/money.dart';
 import 'config.dart';
 import 'deferred_loss.dart';
 import 'fifo.dart';
+import 'territory.dart';
 import 'wash_sale.dart';
 
 final class WashSaleRecipientDetail {
@@ -251,7 +252,9 @@ CarryforwardResult carryforwardFrom(TaxHistory history, int year) {
   final pending = <({int year, Dec remaining})>[];
   final steps = <CarryforwardStep>[];
 
-  for (var y = year - lossCarryforwardYears; y <= year; y++) {
+  final years =
+      territoryRules(history.jurisdiction.territory).lossCarryforwardYears;
+  for (var y = year - years; y <= year; y++) {
     final ownNet = taxYearOf(history, y).computableNet;
     var consumed = Dec.zero;
     var finalNet = ownNet;

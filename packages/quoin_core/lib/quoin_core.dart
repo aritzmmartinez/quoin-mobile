@@ -47,5 +47,6 @@ export 'src/tax/config.dart';
 export 'src/tax/deferred_loss.dart';
 export 'src/tax/fifo.dart';
 export 'src/tax/tax_lots.dart';
+export 'src/tax/territory.dart';
 export 'src/tax/wash_sale.dart';
 export 'src/tax/year_view.dart';
