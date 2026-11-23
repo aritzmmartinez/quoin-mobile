@@ -901,7 +901,7 @@
   "taxHowRepurchase": "Cómo se calcula la recompra",
   "taxWhereDeferred": "Dónde queda la pérdida aplazada",
   "taxInKindTitle": "Ingresos en especie",
-  "taxInKindBody": "Recompensas de Kraken recibidas en participaciones. Clasificación fiscal pendiente de verificar: no se suman a ninguna cifra de esta vista.",
+  "taxInKindBody": "Ingresos recibidos en participaciones que no entran en la bolsa de rendimientos (como las recompensas de cripto). Clasificación fiscal pendiente de verificar: no se suman a ninguna cifra de esta vista.",
   "taxInKindCount": "Recepciones",
   "taxInKindGross": "Valor al recibirlas",
   "taxInKindWithheld": "Retenido",

@@ -331,7 +331,7 @@
   "taxHowRepurchase": "How the repurchase is worked out",
   "taxWhereDeferred": "Where the deferred loss goes",
   "taxInKindTitle": "Income received in kind",
-  "taxInKindBody": "Kraken rewards, received as units. Tax classification pending verification: none of it is added to any figure in this view.",
+  "taxInKindBody": "Income received as units that does not enter the income pool (such as crypto rewards). Tax classification pending verification: none of it is added to any figure in this view.",
   "taxInKindCount": "Receipts",
   "taxInKindGross": "Value on receipt",
   "taxInKindWithheld": "Withheld",
