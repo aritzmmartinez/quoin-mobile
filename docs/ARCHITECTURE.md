@@ -88,8 +88,9 @@ a write invalidates `ledgerProvider` alone. Home and Cartera run the web's home
 chain through `quoin_core` (`overviewOf`): positions, prices in euros, market
 values, summary, allocation and top positions. Movimientos (`movementsOf`) and
 the instrument page (`instrumentDetailOf`) read the same ledger; Realizado
-(`features/tax`, `realizedReportOf`) puts the AVCO sales next to the Bizkaia
-tax history, and builds a fiscal year's view when it is chosen.
+(`features/tax`, `realizedReportOf`) puts the AVCO sales next to the tax
+history of the residence's territory (Bizkaia, or régimen común for `comun` and
+`canarias`), and builds a fiscal year's view when it is chosen.
 
 ## Import
 

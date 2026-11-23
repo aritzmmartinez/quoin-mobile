@@ -1303,6 +1303,8 @@
   "syncFieldThesis": "Tesis",
   "syncFieldResidence": "Residencia fiscal",
   "residenceBizkaia": "Bizkaia",
+  "residenceComun": "Régimen común",
+  "residenceCanarias": "Canarias",
   "syncReviewSnack": "Tu PC tiene cambios por revisar",
   "syncFailedTitle": "No se ha podido sincronizar",
   "syncPricesPendingTitle": "Precios pendientes",

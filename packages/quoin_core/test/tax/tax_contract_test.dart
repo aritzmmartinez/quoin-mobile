@@ -41,7 +41,8 @@ Json gain(RealizedGainDetail g) {
     'washSale': wash == null || a == null
         ? null
         : {
-            'letter': wash.letter.name,
+            'source': wash.source,
+            'assetClass': wash.assetClass.code,
             'windowMonths': wash.windowMonths,
             'window': window(a.window),
             'before': '${a.before}',
@@ -62,8 +63,8 @@ Json gain(RealizedGainDetail g) {
           },
     'repurchaseWindow': switch (g.repurchaseWindow) {
       null => null,
-      (:final letter, window: final w) => {
-          'letter': letter.name,
+      (:final source, window: final w) => {
+          'source': source,
           'window': window(w),
         },
     },
@@ -132,7 +133,6 @@ Json evaluate(Json input) {
       for (final year in (input['years'] as List<dynamic>).cast<int>())
         '$year': () {
           final taxYear = taxYearOf(history, year);
-          final carry = carryforwardFrom(history, year);
           final view = buildTaxYearView(events, instruments, history, year);
           final scale = view.scale;
           return {
@@ -145,18 +145,9 @@ Json evaluate(Json input) {
               'computableNet': '${taxYear.computableNet}',
             },
             'carryforward': {
-              'targetYear': carry.targetYear,
-              'steps': [
-                for (final s in carry.steps)
-                  {
-                    'year': s.year,
-                    'ownNet': '${s.ownNet}',
-                    'consumedFromCarryforward': '${s.consumedFromCarryforward}',
-                    'finalNet': '${s.finalNet}',
-                    'pendingLossRemaining': '${s.pendingLossRemaining}',
-                  },
-              ],
-              'netSavingsBase': '${carry.netSavingsBase}',
+              'targetYear': year,
+              'steps': view.carryforward.steps.map(step).toList(),
+              'netSavingsBase': '${view.netSavingsBase}',
             },
             'view': {
               'affectedCount': view.affectedCount,

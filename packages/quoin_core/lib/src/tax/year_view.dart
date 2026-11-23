@@ -41,9 +41,6 @@ InKindIncome inKindIncomeOf(List<LedgerEvent> events, int year, String zone) {
   );
 }
 
-/// The income pool of one year: its own count, gross and exempt part, and
-/// the pool after its carryforward. [exemptSource] is null where the
-/// territory exempts no dividend.
 typedef SavingsIncomeView = ({
   int count,
   Dec gross,
@@ -52,8 +49,6 @@ typedef SavingsIncomeView = ({
   PoolResult pool,
 });
 
-/// Quoin's `buildTaxYearView` (lib/tax.ts) without the rows' names and the
-/// pending deferrals grouped by sale: the figures of one fiscal year.
 final class TaxYearView {
   const TaxYearView({
     required this.result,
@@ -68,14 +63,9 @@ final class TaxYearView {
 
   final TaxYearResult result;
 
-  /// The capital-gains pool.
-  final CarryforwardResult carryforward;
+  final PoolResult carryforward;
   final SavingsIncomeView savingsIncome;
-
-  /// Both pools' positive final balances: what the quota applies to.
   final Dec savingsBase;
-
-  /// The scale in force: an earlier year's when no newer one is on file.
   final SavingsBaseTaxScale? scale;
   final Money? quota;
   final Withholdings withholdings;
@@ -98,7 +88,7 @@ final class TaxYearView {
 
   Dec get pendingSum => sumDec(result.pending.map((p) => p.amount.amount));
 
-  Dec get netSavingsBase => carryforward.netSavingsBase;
+  Dec get netSavingsBase => carryforward.finalNet;
 
   bool get scaleInherited => scale != null && scale!.year < year;
 }
@@ -132,7 +122,7 @@ TaxYearView buildTaxYearView(
   final scale = getTaxScale(territory, year);
   return TaxYearView(
     result: taxYearOf(history, year),
-    carryforward: carryforwardFrom(history, year),
+    carryforward: pools.$1,
     savingsIncome: (
       count: savingsIncomeCountOf(events, year, zone),
       gross: income.grossOf(year),

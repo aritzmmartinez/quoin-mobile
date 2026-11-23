@@ -16,13 +16,12 @@ void main() {
   });
 
   test(
-      'Bizkaia repurchase rules: letter g for listed securities, letter i '
+      'Bizkaia repurchase rules: Art. 43.g for listed securities, Art. 43.i '
       'for crypto from 2025', () {
     expect(
       [
         for (final r in rules.repurchase)
           (
-            r.letter,
             r.assetClass,
             r.windowMonths,
             r.acquisitions,
@@ -33,7 +32,6 @@ void main() {
       ],
       [
         (
-          RepurchaseLetter.g,
           RepurchaseAssetClass.listedSecurity,
           2,
           RepurchaseAcquisitions.all,
@@ -42,7 +40,6 @@ void main() {
           'Art. 43.g NF 13/2013 de Bizkaia',
         ),
         (
-          RepurchaseLetter.i,
           RepurchaseAssetClass.fungibleCrypto,
           2,
           RepurchaseAcquisitions.all,
@@ -127,5 +124,59 @@ void main() {
     expect(getTaxScale(Territory.bizkaia, 2024), isNull);
     expect(getTaxScale(Territory.bizkaia, 2026)!.year, 2026);
     expect(getTaxScale(Territory.bizkaia, 2030)!.year, 2026);
+  });
+
+  group('régimen común', () {
+    final comun = territoryRules(Territory.comun);
+
+    test('Canarias is régimen común on its own clock', () {
+      final canarias = jurisdictionOf(Residence.canarias);
+      expect(canarias.territory, Territory.comun);
+      expect(canarias.zone, 'Atlantic/Canary');
+      expect(jurisdictionOf(Residence.comun).zone, 'Europe/Madrid');
+    });
+
+    test('art. 33.5.f for listed securities only, no rule for crypto', () {
+      expect(
+        [
+          for (final r in comun.repurchase)
+            (r.assetClass, r.windowMonths, r.from, r.to, r.source),
+        ],
+        [
+          (
+            RepurchaseAssetClass.listedSecurity,
+            2,
+            null,
+            null,
+            'Art. 33.5.f Ley 35/2006 del IRPF',
+          ),
+        ],
+      );
+      expect(comun.unlistedNotice.windowMonths, 12);
+    });
+
+    test('crosses the pools up to 25%, carries four years, no exemption', () {
+      expect(comun.crossOffsetLimit, '0.25');
+      expect(comun.lossCarryforwardYears, 4);
+      expect(comun.dividendExemption, isNull);
+      expect(comun.citations.gainsCarryforward, 'art. 49.1.b LIRPF');
+    });
+
+    test('the Ley 7/2024 scale from 2025 and none before', () {
+      expect(getTaxScale(Territory.comun, 2024), isNull);
+      expect(
+        [
+          for (final b in getTaxScale(Territory.comun, 2026)!.brackets)
+            (b.from, b.to, b.rate),
+        ],
+        [
+          ('0', '6000', '0.19'),
+          ('6000', '50000', '0.21'),
+          ('50000', '200000', '0.23'),
+          ('200000', '300000', '0.27'),
+          ('300000', null, '0.30'),
+        ],
+      );
+    });
   });
 }

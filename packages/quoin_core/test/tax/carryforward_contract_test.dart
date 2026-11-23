@@ -6,15 +6,6 @@ import '../support/ledger_rows.dart';
 NetOf netOf(Json nets) =>
     (year) => Dec.parse((nets['$year'] as String?) ?? '0');
 
-Json step(PoolStep s) => {
-      'year': s.year,
-      'ownNet': '${s.ownNet}',
-      'crossOffset': '${s.crossOffset}',
-      'consumedFromCarryforward': '${s.consumedFromCarryforward}',
-      'finalNet': '${s.finalNet}',
-      'pendingLossRemaining': '${s.pendingLossRemaining}',
-    };
-
 Json pool(PoolResult p) => {
       'steps': p.steps.map(step).toList(),
       'finalNet': '${p.finalNet}',
@@ -53,36 +44,5 @@ void main() {
         }
       });
     }
-  });
-
-  // No contract pins a positive limit yet; régimen común will.
-  test(
-      'a positive cross limit lets a loss in one pool take that share of '
-      "the other's gain", () {
-    final result = carryforwardPools(
-      (netOf({'2026': '-100'}), netOf({'2026': '200'})),
-      2026,
-      4,
-      '0.25',
-    );
-    final (gains, income) = result.pools;
-    expect(gains.steps.last.crossOffset, Dec.parse('50'));
-    expect(gains.finalNet, Dec.parse('-50'));
-    expect(gains.steps.last.pendingLossRemaining, Dec.parse('50'));
-    expect(income.steps.last.crossOffset, Dec.parse('-50'));
-    expect(income.finalNet, Dec.parse('150'));
-    expect(result.savingsBase, Dec.parse('150'));
-  });
-
-  test('a positive cross limit never takes more than the loss', () {
-    final (gains, income) = carryforwardPools(
-      (netOf({'2026': '300'}), netOf({'2026': '-10'})),
-      2026,
-      4,
-      '0.25',
-    ).pools;
-    expect(gains.finalNet, Dec.parse('290'));
-    expect(income.finalNet, Dec.parse('0'));
-    expect(income.steps.last.pendingLossRemaining, Dec.zero);
   });
 }

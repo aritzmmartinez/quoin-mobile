@@ -499,6 +499,8 @@
   "syncFieldThesis": "Thesis",
   "syncFieldResidence": "Tax residence",
   "residenceBizkaia": "Bizkaia",
+  "residenceComun": "Common regime",
+  "residenceCanarias": "Canary Islands",
   "syncReviewSnack": "Your PC has changes to review",
   "syncFailedTitle": "Could not sync",
   "syncPricesPendingTitle": "Prices pending",

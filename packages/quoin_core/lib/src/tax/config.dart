@@ -15,9 +15,9 @@ enum RepurchaseAssetClass {
 }
 
 /// The class an instrument's type puts it in for the repurchase rule. A bond
-/// held directly yields income from movable capital, outside Art. 43, and a
-/// commodity held directly would fall under a letter that is not modelled, so
-/// no rule covers them.
+/// held directly yields income from movable capital, outside the repurchase
+/// rule, and a commodity held directly would fall under a rule that is not
+/// modelled, so none covers them.
 RepurchaseAssetClass repurchaseAssetClassOf(String instrumentType) =>
     switch (instrumentType) {
       'ETF' || 'STOCK' => RepurchaseAssetClass.listedSecurity,
@@ -30,22 +30,20 @@ RepurchaseAssetClass repurchaseAssetClassOf(String instrumentType) =>
         ),
     };
 
-enum RepurchaseLetter { g, i }
-
 /// Which purchases in the window count: [all] reads "hubiera adquirido"
 /// literally, so units received in kind (a reward, a saveback) are an
 /// acquisition; [cashOnly] leaves them out of the window and out of the
 /// recipients of the deferral. Homogeneity is always the instrument id.
 enum RepurchaseAcquisitions { all, cashOnly }
 
-/// Art. 43 NF 13/2013 de Bizkaia, pérdidas no computables por recompra: one
-/// entry per letter over one engine. A territory's rules live in
+/// Pérdidas no computables por recompra: one entry per asset class and
+/// period over one engine, cited by its [source]. A territory's rules live in
 /// [territoryRules].
 ///
-/// [from] and [to] are Madrid calendar days of the transmission, inclusive.
+/// [from] and [to] are calendar days of the transmission in the residence's
+/// zone, inclusive.
 final class RepurchaseRule {
   const RepurchaseRule({
-    required this.letter,
     required this.assetClass,
     required this.windowMonths,
     required this.acquisitions,
@@ -54,7 +52,6 @@ final class RepurchaseRule {
     required this.source,
   });
 
-  final RepurchaseLetter letter;
   final RepurchaseAssetClass assetClass;
   final int windowMonths;
   final RepurchaseAcquisitions acquisitions;
