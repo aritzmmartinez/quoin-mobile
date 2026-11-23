@@ -14,7 +14,7 @@ dependencies:
     sdk: flutter
   quoin_core:
     path: packages/quoin_core
-  flutter_riverpod: ^3.4.3
+  flutter_riverpod: ^3.5.0
   go_router: ^18.1.1
   intl: ^0.20.3
   package_info_plus: ^10.2.2
