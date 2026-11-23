@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
 import 'package:flutter/services.dart';
 
+import 'package:quoin/src/core/theme/quoin_tokens.dart';
 import 'package:quoin/src/core/theme/quoin_colors.dart';
 import 'package:quoin/src/core/theme/quoin_icons.dart';
 import 'package:quoin/src/core/theme/quoin_type.dart';
@@ -17,26 +18,36 @@ class QuoinBarItem {
   final String label;
 }
 
+enum QuoinBarActionPlacement { center, leading, trailing, above }
+
 class QuoinBottomBar extends StatelessWidget {
   const QuoinBottomBar({
     super.key,
     required this.items,
     required this.currentIndex,
+    this.position,
     required this.onSelected,
     required this.addIcon,
     required this.addLabel,
     required this.onAdd,
+    this.placement = QuoinBarActionPlacement.trailing,
   }) : assert(items.length == 4);
+
+  static const double gap = 10;
 
   final List<QuoinBarItem> items;
   final int currentIndex;
+
+  final ValueListenable<double>? position;
   final ValueChanged<int> onSelected;
   final QuoinIconData addIcon;
   final String addLabel;
   final VoidCallback onAdd;
+  final QuoinBarActionPlacement placement;
 
   @override
   Widget build(BuildContext context) {
+    final inline = placement == QuoinBarActionPlacement.center;
     Widget item(int i) => Expanded(
       child: _BarButton(
         item: items[i],
@@ -47,34 +58,82 @@ class QuoinBottomBar extends StatelessWidget {
         },
       ),
     );
+
+    final pill = QuoinBarSurface(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: QuoinSpace.m),
+        child: LayoutBuilder(
+          builder: (context, box) {
+            final inlineWidth = inline ? _InlineAddButton.size : 0.0;
+            return Stack(
+              children: [
+                _SlidingPill(
+                  index: currentIndex,
+                  position: position,
+                  tabWidth: (box.maxWidth - inlineWidth) / 4,
+                  inlineWidth: inlineWidth,
+                ),
+                Row(
+                  children: [
+                    item(0),
+                    item(1),
+                    if (inline)
+                      _InlineAddButton(
+                        icon: addIcon,
+                        label: addLabel,
+                        onTap: onAdd,
+                      ),
+                    item(2),
+                    item(3),
+                  ],
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+    final detached = _DetachedAddButton(
+      icon: addIcon,
+      label: addLabel,
+      onTap: onAdd,
+    );
+
     return SafeArea(
       top: false,
-      minimum: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+      minimum: const EdgeInsets.fromLTRB(
+        QuoinSpace.card,
+        0,
+        QuoinSpace.card,
+        QuoinSpace.m,
+      ),
+      // The bar keeps its height: text inside it scales only to 1.3.
       child: MediaQuery.withClampedTextScaling(
         maxScaleFactor: 1.3,
-        child: QuoinBarSurface(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: LayoutBuilder(
-              builder: (context, box) => Stack(
-                children: [
-                  _SlidingPill(
-                    index: currentIndex,
-                    tabWidth: (box.maxWidth - _AddButton.size) / 4,
-                  ),
-                  Row(
-                    children: [
-                      item(0),
-                      item(1),
-                      _AddButton(icon: addIcon, label: addLabel, onTap: onAdd),
-                      item(2),
-                      item(3),
-                    ],
-                  ),
-                ],
-              ),
+        child: QuoinGlassLayer(
+          child: switch (placement) {
+            QuoinBarActionPlacement.center => pill,
+            QuoinBarActionPlacement.leading => Row(
+              spacing: gap,
+              children: [
+                detached,
+                Expanded(child: pill),
+              ],
             ),
-          ),
+            QuoinBarActionPlacement.trailing => Row(
+              spacing: gap,
+              children: [
+                Expanded(child: pill),
+                detached,
+              ],
+            ),
+            QuoinBarActionPlacement.above => Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              spacing: gap,
+              children: [detached, pill],
+            ),
+          },
         ),
       ),
     );
@@ -82,10 +141,19 @@ class QuoinBottomBar extends StatelessWidget {
 }
 
 class _SlidingPill extends StatefulWidget {
-  const _SlidingPill({required this.index, required this.tabWidth});
+  const _SlidingPill({
+    required this.index,
+    required this.position,
+    required this.tabWidth,
+    required this.inlineWidth,
+  });
 
   final int index;
+  final ValueListenable<double>? position;
   final double tabWidth;
+
+  /// The add button's width when it sits between the second and third tab.
+  final double inlineWidth;
 
   @override
   State<_SlidingPill> createState() => _SlidingPillState();
@@ -104,8 +172,20 @@ class _SlidingPillState extends State<_SlidingPill>
   );
 
   @override
+  void initState() {
+    super.initState();
+    widget.position?.addListener(_follow);
+  }
+
+  void _follow() => _position.value = widget.position!.value;
+
+  @override
   void didUpdateWidget(_SlidingPill old) {
     super.didUpdateWidget(old);
+    if (widget.position != old.position) {
+      old.position?.removeListener(_follow);
+      widget.position?.addListener(_follow);
+    }
     if (widget.index == old.index) return;
     final target = widget.index.toDouble();
     if (MediaQuery.disableAnimationsOf(context)) {
@@ -119,6 +199,7 @@ class _SlidingPillState extends State<_SlidingPill>
 
   @override
   void dispose() {
+    widget.position?.removeListener(_follow);
     _position.dispose();
     super.dispose();
   }
@@ -131,7 +212,7 @@ class _SlidingPillState extends State<_SlidingPill>
       builder: (context, pill) {
         final t = _position.value;
         final start =
-            t * widget.tabWidth + _AddButton.size * clampDouble(t - 1, 0, 1);
+            t * widget.tabWidth + widget.inlineWidth * clampDouble(t - 1, 0, 1);
         return PositionedDirectional(
           start: start,
           top: 0,
@@ -141,10 +222,13 @@ class _SlidingPillState extends State<_SlidingPill>
         );
       },
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 8),
+        padding: const EdgeInsets.symmetric(
+          horizontal: QuoinSpace.xxs,
+          vertical: QuoinSpace.s,
+        ),
         child: DecoratedBox(
           decoration: ShapeDecoration(
-            color: c.text.withValues(alpha: 0.08),
+            color: c.selected,
             shape: const StadiumBorder(),
           ),
         ),
@@ -177,7 +261,7 @@ class _BarButton extends StatelessWidget {
           height: double.infinity,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
-            spacing: 4,
+            spacing: QuoinSpace.xs,
             children: [
               QuoinIcon(item.icon, size: 22, color: color),
               Text(
@@ -194,8 +278,8 @@ class _BarButton extends StatelessWidget {
   }
 }
 
-class _AddButton extends StatelessWidget {
-  const _AddButton({
+class _InlineAddButton extends StatelessWidget {
+  const _InlineAddButton({
     required this.icon,
     required this.label,
     required this.onTap,
@@ -224,7 +308,46 @@ class _AddButton extends StatelessWidget {
             child: SizedBox.square(
               dimension: size,
               child: Center(
-                child: QuoinIcon(icon, size: 20, color: c.onAccent),
+                child: QuoinIcon(
+                  icon,
+                  size: QuoinIconSize.tile,
+                  color: c.onAccent,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The add button as a glass circle of its own, as high as the pill.
+class _DetachedAddButton extends StatelessWidget {
+  const _DetachedAddButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final QuoinIconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: label,
+      child: Semantics(
+        button: true,
+        child: Pressable(
+          onTap: onTap,
+          child: QuoinBarSurface.circle(
+            child: Center(
+              child: QuoinIcon(
+                icon,
+                size: QuoinIconSize.large,
+                color: QuoinColors.of(context).text,
               ),
             ),
           ),

@@ -1,0 +1,872 @@
+{
+  "_meta": {
+    "description": "This file contains a serialized version of schema entities for drift.",
+    "version": "1.3.0"
+  },
+  "options": {
+    "store_date_time_values_as_text": true
+  },
+  "entities": [
+    {
+      "id": 0,
+      "references": [],
+      "type": "table",
+      "data": {
+        "name": "Instrument",
+        "was_declared_in_moor": true,
+        "columns": [
+          {
+            "name": "id",
+            "getter_name": "id",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": "NOT NULL PRIMARY KEY",
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": [
+              "primary-key"
+            ]
+          },
+          {
+            "name": "name",
+            "getter_name": "name",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": "NOT NULL",
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "type",
+            "getter_name": "type",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": "NOT NULL",
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "assetClass",
+            "getter_name": "assetClass",
+            "moor_type": "string",
+            "nullable": true,
+            "customConstraints": "",
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "quoteSymbol",
+            "getter_name": "quoteSymbol",
+            "moor_type": "string",
+            "nullable": true,
+            "customConstraints": "",
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "exposureKind",
+            "getter_name": "exposureKind",
+            "moor_type": "string",
+            "nullable": true,
+            "customConstraints": "",
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "exposureLeafId",
+            "getter_name": "exposureLeafId",
+            "moor_type": "string",
+            "nullable": true,
+            "customConstraints": "",
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "ter",
+            "getter_name": "ter",
+            "moor_type": "string",
+            "nullable": true,
+            "customConstraints": "",
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "hedgedToBase",
+            "getter_name": "hedgedToBase",
+            "moor_type": "bool",
+            "nullable": false,
+            "customConstraints": "NOT NULL DEFAULT 0",
+            "default_dart": "const CustomExpression('0')",
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "thesis",
+            "getter_name": "thesis",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": "NOT NULL DEFAULT 'CORE' CHECK (thesis IN ('CORE', 'CONVICTION', 'TACTICAL'))",
+            "default_dart": "const CustomExpression('\\'CORE\\'')",
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "createdAt",
+            "getter_name": "createdAt",
+            "moor_type": "dateTime",
+            "nullable": false,
+            "customConstraints": "NOT NULL",
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          }
+        ],
+        "is_virtual": false,
+        "without_rowid": false,
+        "constraints": []
+      }
+    },
+    {
+      "id": 1,
+      "references": [
+        0
+      ],
+      "type": "table",
+      "data": {
+        "name": "LedgerEntry",
+        "was_declared_in_moor": true,
+        "columns": [
+          {
+            "name": "id",
+            "getter_name": "id",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": "NOT NULL PRIMARY KEY",
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": [
+              "primary-key"
+            ]
+          },
+          {
+            "name": "ts",
+            "getter_name": "ts",
+            "moor_type": "dateTime",
+            "nullable": false,
+            "customConstraints": "NOT NULL",
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "type",
+            "getter_name": "type",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": "NOT NULL",
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "instrumentId",
+            "getter_name": "instrumentId",
+            "moor_type": "string",
+            "nullable": true,
+            "customConstraints": "REFERENCES Instrument(id)ON UPDATE CASCADE ON DELETE SET NULL",
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": [
+              {
+                "foreign_key": {
+                  "to": {
+                    "table": "Instrument",
+                    "column": "id"
+                  },
+                  "initially_deferred": false,
+                  "on_update": "cascade",
+                  "on_delete": "setNull"
+                }
+              }
+            ]
+          },
+          {
+            "name": "quantity",
+            "getter_name": "quantity",
+            "moor_type": "string",
+            "nullable": true,
+            "customConstraints": "",
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "price",
+            "getter_name": "price",
+            "moor_type": "string",
+            "nullable": true,
+            "customConstraints": "",
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "grossAmount",
+            "getter_name": "grossAmount",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": "NOT NULL",
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "fees",
+            "getter_name": "fees",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": "NOT NULL DEFAULT '0'",
+            "default_dart": "const CustomExpression('\\'0\\'')",
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "taxWithheld",
+            "getter_name": "taxWithheld",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": "NOT NULL DEFAULT '0'",
+            "default_dart": "const CustomExpression('\\'0\\'')",
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "currency",
+            "getter_name": "currency",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": "NOT NULL",
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "fxSource",
+            "getter_name": "fxSource",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": "NOT NULL DEFAULT 'IDENTITY' CONSTRAINT LedgerEntry_fxSource_check CHECK (fxSource IN ('IDENTITY', 'BROKER', 'ECB', 'MARKET', 'MANUAL'))",
+            "default_dart": "const CustomExpression('\\'IDENTITY\\'')",
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "fxDate",
+            "getter_name": "fxDate",
+            "moor_type": "string",
+            "nullable": true,
+            "customConstraints": "",
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "fxRate",
+            "getter_name": "fxRate",
+            "moor_type": "string",
+            "nullable": true,
+            "customConstraints": "",
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "fxDirection",
+            "getter_name": "fxDirection",
+            "moor_type": "string",
+            "nullable": true,
+            "customConstraints": "CONSTRAINT LedgerEntry_fxDirection_check CHECK (fxDirection IN ('QUOTE_PER_BASE', 'BASE_PER_QUOTE'))",
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "originalAmount",
+            "getter_name": "originalAmount",
+            "moor_type": "string",
+            "nullable": true,
+            "customConstraints": "",
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "originalCurrency",
+            "getter_name": "originalCurrency",
+            "moor_type": "string",
+            "nullable": true,
+            "customConstraints": "",
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "valuationSource",
+            "getter_name": "valuationSource",
+            "moor_type": "string",
+            "nullable": true,
+            "customConstraints": "",
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "linkId",
+            "getter_name": "linkId",
+            "moor_type": "string",
+            "nullable": true,
+            "customConstraints": "",
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "linkKind",
+            "getter_name": "linkKind",
+            "moor_type": "string",
+            "nullable": true,
+            "customConstraints": "",
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "funding",
+            "getter_name": "funding",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": "NOT NULL DEFAULT 'CASH' CONSTRAINT LedgerEntry_funding_check CHECK (funding IN ('CASH', 'IN_KIND'))",
+            "default_dart": "const CustomExpression('\\'CASH\\'')",
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "account",
+            "getter_name": "account",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": "NOT NULL DEFAULT 'trade-republic'",
+            "default_dart": "const CustomExpression('\\'trade-republic\\'')",
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "source",
+            "getter_name": "source",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": "NOT NULL DEFAULT 'MANUAL'",
+            "default_dart": "const CustomExpression('\\'MANUAL\\'')",
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "externalId",
+            "getter_name": "externalId",
+            "moor_type": "string",
+            "nullable": true,
+            "customConstraints": "",
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "note",
+            "getter_name": "note",
+            "moor_type": "string",
+            "nullable": true,
+            "customConstraints": "",
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "createdAt",
+            "getter_name": "createdAt",
+            "moor_type": "dateTime",
+            "nullable": false,
+            "customConstraints": "NOT NULL",
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          }
+        ],
+        "is_virtual": false,
+        "without_rowid": false,
+        "constraints": [
+          "CONSTRAINT LedgerEntry_type_check CHECK(type IN ('BUY', 'SELL', 'DIVIDEND', 'DEPOSIT', 'WITHDRAWAL', 'INTEREST'))"
+        ]
+      }
+    },
+    {
+      "id": 2,
+      "references": [
+        1
+      ],
+      "type": "index",
+      "data": {
+        "on": 1,
+        "name": "LedgerEntry_source_externalId_key",
+        "sql": "CREATE UNIQUE INDEX \"LedgerEntry_source_externalId_key\" ON \"LedgerEntry\" (\"source\", \"externalId\");",
+        "unique": true,
+        "columns": []
+      }
+    },
+    {
+      "id": 3,
+      "references": [
+        1
+      ],
+      "type": "index",
+      "data": {
+        "on": 1,
+        "name": "LedgerEntry_ts_idx",
+        "sql": "CREATE INDEX \"LedgerEntry_ts_idx\" ON \"LedgerEntry\" (\"ts\");",
+        "unique": false,
+        "columns": []
+      }
+    },
+    {
+      "id": 4,
+      "references": [
+        1
+      ],
+      "type": "index",
+      "data": {
+        "on": 1,
+        "name": "LedgerEntry_instrumentId_idx",
+        "sql": "CREATE INDEX \"LedgerEntry_instrumentId_idx\" ON \"LedgerEntry\" (\"instrumentId\");",
+        "unique": false,
+        "columns": []
+      }
+    },
+    {
+      "id": 5,
+      "references": [
+        0
+      ],
+      "type": "table",
+      "data": {
+        "name": "PriceSnapshot",
+        "was_declared_in_moor": true,
+        "columns": [
+          {
+            "name": "id",
+            "getter_name": "id",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": "NOT NULL PRIMARY KEY",
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": [
+              "primary-key"
+            ]
+          },
+          {
+            "name": "instrumentId",
+            "getter_name": "instrumentId",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": "NOT NULL REFERENCES Instrument(id)ON UPDATE CASCADE ON DELETE RESTRICT",
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": [
+              {
+                "foreign_key": {
+                  "to": {
+                    "table": "Instrument",
+                    "column": "id"
+                  },
+                  "initially_deferred": false,
+                  "on_update": "cascade",
+                  "on_delete": "restrict"
+                }
+              }
+            ]
+          },
+          {
+            "name": "price",
+            "getter_name": "price",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": "NOT NULL",
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "currency",
+            "getter_name": "currency",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": "NOT NULL",
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "asOf",
+            "getter_name": "asOf",
+            "moor_type": "dateTime",
+            "nullable": false,
+            "customConstraints": "NOT NULL",
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "source",
+            "getter_name": "source",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": "NOT NULL DEFAULT 'YAHOO'",
+            "default_dart": "const CustomExpression('\\'YAHOO\\'')",
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "createdAt",
+            "getter_name": "createdAt",
+            "moor_type": "dateTime",
+            "nullable": false,
+            "customConstraints": "NOT NULL",
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          }
+        ],
+        "is_virtual": false,
+        "without_rowid": false,
+        "constraints": []
+      }
+    },
+    {
+      "id": 6,
+      "references": [
+        5
+      ],
+      "type": "index",
+      "data": {
+        "on": 5,
+        "name": "PriceSnapshot_instrumentId_idx",
+        "sql": "CREATE INDEX \"PriceSnapshot_instrumentId_idx\" ON \"PriceSnapshot\" (\"instrumentId\");",
+        "unique": false,
+        "columns": []
+      }
+    },
+    {
+      "id": 7,
+      "references": [
+        5
+      ],
+      "type": "index",
+      "data": {
+        "on": 5,
+        "name": "PriceSnapshot_asOf_idx",
+        "sql": "CREATE INDEX \"PriceSnapshot_asOf_idx\" ON \"PriceSnapshot\" (\"asOf\");",
+        "unique": false,
+        "columns": []
+      }
+    },
+    {
+      "id": 8,
+      "references": [
+        5
+      ],
+      "type": "index",
+      "data": {
+        "on": 5,
+        "name": "PriceSnapshot_instrumentId_asOf_key",
+        "sql": "CREATE UNIQUE INDEX \"PriceSnapshot_instrumentId_asOf_key\" ON \"PriceSnapshot\" (\"instrumentId\", \"asOf\");",
+        "unique": true,
+        "columns": []
+      }
+    },
+    {
+      "id": 9,
+      "references": [],
+      "type": "table",
+      "data": {
+        "name": "FxRate",
+        "was_declared_in_moor": true,
+        "columns": [
+          {
+            "name": "id",
+            "getter_name": "id",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": "NOT NULL PRIMARY KEY",
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": [
+              "primary-key"
+            ]
+          },
+          {
+            "name": "base",
+            "getter_name": "base",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": "NOT NULL",
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "quote",
+            "getter_name": "quote",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": "NOT NULL",
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "day",
+            "getter_name": "day",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": "NOT NULL",
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "rate",
+            "getter_name": "rate",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": "NOT NULL",
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "source",
+            "getter_name": "source",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": "NOT NULL",
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "createdAt",
+            "getter_name": "createdAt",
+            "moor_type": "dateTime",
+            "nullable": false,
+            "customConstraints": "NOT NULL",
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          }
+        ],
+        "is_virtual": false,
+        "without_rowid": false,
+        "constraints": []
+      }
+    },
+    {
+      "id": 10,
+      "references": [
+        9
+      ],
+      "type": "index",
+      "data": {
+        "on": 9,
+        "name": "FxRate_quote_idx",
+        "sql": "CREATE INDEX \"FxRate_quote_idx\" ON \"FxRate\" (\"quote\");",
+        "unique": false,
+        "columns": []
+      }
+    },
+    {
+      "id": 11,
+      "references": [
+        9
+      ],
+      "type": "index",
+      "data": {
+        "on": 9,
+        "name": "FxRate_source_base_quote_day_key",
+        "sql": "CREATE UNIQUE INDEX \"FxRate_source_base_quote_day_key\" ON \"FxRate\" (\"source\", \"base\", \"quote\", \"day\");",
+        "unique": true,
+        "columns": []
+      }
+    },
+    {
+      "id": 12,
+      "references": [],
+      "type": "table",
+      "data": {
+        "name": "Settings",
+        "was_declared_in_moor": true,
+        "columns": [
+          {
+            "name": "id",
+            "getter_name": "id",
+            "moor_type": "int",
+            "nullable": false,
+            "customConstraints": "NOT NULL PRIMARY KEY DEFAULT 1 CHECK (id = 1)",
+            "default_dart": "const CustomExpression('1')",
+            "default_client_dart": null,
+            "dsl_features": [
+              "primary-key"
+            ]
+          },
+          {
+            "name": "residence",
+            "getter_name": "residence",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": "NOT NULL",
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          }
+        ],
+        "is_virtual": false,
+        "without_rowid": false,
+        "constraints": []
+      }
+    }
+  ],
+  "fixed_sql": [
+    {
+      "name": "Instrument",
+      "sql": [
+        {
+          "dialect": "sqlite",
+          "sql": "CREATE TABLE IF NOT EXISTS \"Instrument\" (\"id\" TEXT NOT NULL PRIMARY KEY, \"name\" TEXT NOT NULL, \"type\" TEXT NOT NULL, \"assetClass\" TEXT, \"quoteSymbol\" TEXT, \"exposureKind\" TEXT, \"exposureLeafId\" TEXT, \"ter\" TEXT, \"hedgedToBase\" INTEGER NOT NULL DEFAULT 0, \"thesis\" TEXT NOT NULL DEFAULT 'CORE' CHECK (thesis IN ('CORE', 'CONVICTION', 'TACTICAL')), \"createdAt\" TEXT NOT NULL);"
+        }
+      ]
+    },
+    {
+      "name": "LedgerEntry",
+      "sql": [
+        {
+          "dialect": "sqlite",
+          "sql": "CREATE TABLE IF NOT EXISTS \"LedgerEntry\" (\"id\" TEXT NOT NULL PRIMARY KEY, \"ts\" TEXT NOT NULL, \"type\" TEXT NOT NULL, \"instrumentId\" TEXT REFERENCES Instrument(id)ON UPDATE CASCADE ON DELETE SET NULL, \"quantity\" TEXT, \"price\" TEXT, \"grossAmount\" TEXT NOT NULL, \"fees\" TEXT NOT NULL DEFAULT '0', \"taxWithheld\" TEXT NOT NULL DEFAULT '0', \"currency\" TEXT NOT NULL, \"fxSource\" TEXT NOT NULL DEFAULT 'IDENTITY' CONSTRAINT LedgerEntry_fxSource_check CHECK (fxSource IN ('IDENTITY', 'BROKER', 'ECB', 'MARKET', 'MANUAL')), \"fxDate\" TEXT, \"fxRate\" TEXT, \"fxDirection\" TEXT CONSTRAINT LedgerEntry_fxDirection_check CHECK (fxDirection IN ('QUOTE_PER_BASE', 'BASE_PER_QUOTE')), \"originalAmount\" TEXT, \"originalCurrency\" TEXT, \"valuationSource\" TEXT, \"linkId\" TEXT, \"linkKind\" TEXT, \"funding\" TEXT NOT NULL DEFAULT 'CASH' CONSTRAINT LedgerEntry_funding_check CHECK (funding IN ('CASH', 'IN_KIND')), \"account\" TEXT NOT NULL DEFAULT 'trade-republic', \"source\" TEXT NOT NULL DEFAULT 'MANUAL', \"externalId\" TEXT, \"note\" TEXT, \"createdAt\" TEXT NOT NULL, CONSTRAINT LedgerEntry_type_check CHECK(type IN ('BUY', 'SELL', 'DIVIDEND', 'DEPOSIT', 'WITHDRAWAL', 'INTEREST')));"
+        }
+      ]
+    },
+    {
+      "name": "LedgerEntry_source_externalId_key",
+      "sql": [
+        {
+          "dialect": "sqlite",
+          "sql": "CREATE UNIQUE INDEX LedgerEntry_source_externalId_key ON LedgerEntry (source, externalId)"
+        }
+      ]
+    },
+    {
+      "name": "LedgerEntry_ts_idx",
+      "sql": [
+        {
+          "dialect": "sqlite",
+          "sql": "CREATE INDEX LedgerEntry_ts_idx ON LedgerEntry (ts)"
+        }
+      ]
+    },
+    {
+      "name": "LedgerEntry_instrumentId_idx",
+      "sql": [
+        {
+          "dialect": "sqlite",
+          "sql": "CREATE INDEX LedgerEntry_instrumentId_idx ON LedgerEntry (instrumentId)"
+        }
+      ]
+    },
+    {
+      "name": "PriceSnapshot",
+      "sql": [
+        {
+          "dialect": "sqlite",
+          "sql": "CREATE TABLE IF NOT EXISTS \"PriceSnapshot\" (\"id\" TEXT NOT NULL PRIMARY KEY, \"instrumentId\" TEXT NOT NULL REFERENCES Instrument(id)ON UPDATE CASCADE ON DELETE RESTRICT, \"price\" TEXT NOT NULL, \"currency\" TEXT NOT NULL, \"asOf\" TEXT NOT NULL, \"source\" TEXT NOT NULL DEFAULT 'YAHOO', \"createdAt\" TEXT NOT NULL);"
+        }
+      ]
+    },
+    {
+      "name": "PriceSnapshot_instrumentId_idx",
+      "sql": [
+        {
+          "dialect": "sqlite",
+          "sql": "CREATE INDEX PriceSnapshot_instrumentId_idx ON PriceSnapshot (instrumentId)"
+        }
+      ]
+    },
+    {
+      "name": "PriceSnapshot_asOf_idx",
+      "sql": [
+        {
+          "dialect": "sqlite",
+          "sql": "CREATE INDEX PriceSnapshot_asOf_idx ON PriceSnapshot (asOf)"
+        }
+      ]
+    },
+    {
+      "name": "PriceSnapshot_instrumentId_asOf_key",
+      "sql": [
+        {
+          "dialect": "sqlite",
+          "sql": "CREATE UNIQUE INDEX PriceSnapshot_instrumentId_asOf_key ON PriceSnapshot (instrumentId, asOf)"
+        }
+      ]
+    },
+    {
+      "name": "FxRate",
+      "sql": [
+        {
+          "dialect": "sqlite",
+          "sql": "CREATE TABLE IF NOT EXISTS \"FxRate\" (\"id\" TEXT NOT NULL PRIMARY KEY, \"base\" TEXT NOT NULL, \"quote\" TEXT NOT NULL, \"day\" TEXT NOT NULL, \"rate\" TEXT NOT NULL, \"source\" TEXT NOT NULL, \"createdAt\" TEXT NOT NULL);"
+        }
+      ]
+    },
+    {
+      "name": "FxRate_quote_idx",
+      "sql": [
+        {
+          "dialect": "sqlite",
+          "sql": "CREATE INDEX FxRate_quote_idx ON FxRate (quote)"
+        }
+      ]
+    },
+    {
+      "name": "FxRate_source_base_quote_day_key",
+      "sql": [
+        {
+          "dialect": "sqlite",
+          "sql": "CREATE UNIQUE INDEX FxRate_source_base_quote_day_key ON FxRate (source, base, quote, day)"
+        }
+      ]
+    },
+    {
+      "name": "Settings",
+      "sql": [
+        {
+          "dialect": "sqlite",
+          "sql": "CREATE TABLE IF NOT EXISTS \"Settings\" (\"id\" INTEGER NOT NULL PRIMARY KEY DEFAULT 1 CHECK (id = 1), \"residence\" TEXT NOT NULL);"
+        }
+      ]
+    }
+  ]
+}

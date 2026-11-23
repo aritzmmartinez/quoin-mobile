@@ -1,12 +1,20 @@
+import 'dart:collection';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
+import 'package:quoin/src/app/runtime_packages.dart';
 import 'package:quoin/src/core/error/result.dart';
 import 'package:quoin/src/features/settings/domain/entities/preferences.dart';
+import 'package:quoin/src/features/portfolio/presentation/providers/portfolio_providers.dart';
+import 'package:quoin/src/features/settings/domain/repositories/residence_repository.dart';
 import 'package:quoin/src/features/settings/domain/repositories/settings_repository.dart';
+import 'package:quoin/src/features/settings/domain/usecases/get_residence.dart';
 import 'package:quoin/src/features/settings/domain/usecases/get_preferences.dart';
 import 'package:quoin/src/features/settings/domain/usecases/set_language.dart';
+import 'package:quoin/src/features/settings/domain/usecases/set_residence.dart';
 import 'package:quoin/src/features/settings/domain/usecases/set_theme.dart';
 
 final settingsRepositoryProvider = Provider<SettingsRepository>(
@@ -22,6 +30,24 @@ final setThemeProvider = Provider(
 final setLanguageProvider = Provider(
   (ref) => SetLanguage(ref.watch(settingsRepositoryProvider)),
 );
+
+final residenceRepositoryProvider = Provider<ResidenceRepository>(
+  (ref) => throw UnimplementedError('residenceRepositoryProvider not bound'),
+);
+
+final getResidenceProvider = Provider(
+  (ref) => GetResidence(ref.watch(residenceRepositoryProvider)),
+);
+final setResidenceProvider = Provider(
+  (ref) => SetResidence(ref.watch(residenceRepositoryProvider)),
+);
+
+/// The residence as stored. It follows `ledgerProvider` because every write
+/// that can change it (a sync, a choice here) invalidates the ledger.
+final residenceProvider = FutureProvider<Result<String>>((ref) {
+  ref.watch(ledgerProvider);
+  return ref.watch(getResidenceProvider)();
+});
 
 final themeModeProvider = NotifierProvider<ThemeModeNotifier, ThemeMode>(
   ThemeModeNotifier.new,
@@ -65,3 +91,23 @@ class LocaleNotifier extends Notifier<Locale?> {
 final appVersionProvider = FutureProvider<String>(
   (ref) async => (await PackageInfo.fromPlatform()).version,
 );
+
+final licensesProvider = FutureProvider<Map<String, List<LicenseEntry>>>(
+  (ref) async => runtimeLicenses(await LicenseRegistry.licenses.toList()),
+);
+
+Map<String, List<LicenseEntry>> runtimeLicenses(List<LicenseEntry> entries) {
+  final byPackage = SplayTreeMap<String, List<LicenseEntry>>(
+    (a, b) => switch (a.toLowerCase().compareTo(b.toLowerCase())) {
+      0 => a.compareTo(b),
+      final order => order,
+    },
+  );
+  for (final entry in entries) {
+    for (final package in entry.packages) {
+      if (devPackages.contains(package)) continue;
+      (byPackage[package] ??= []).add(entry);
+    }
+  }
+  return byPackage;
+}

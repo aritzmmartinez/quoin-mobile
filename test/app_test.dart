@@ -102,6 +102,37 @@ void main() {
     expect(_pageTitle('Settings'), findsOneWidget);
   });
 
+  testWidgets('choosing a tax residence in Settings stores it with its mark', (
+    tester,
+  ) async {
+    final database = memoryDatabase();
+    addTearDown(database.close);
+    await pumpApp(tester, prefs: {'locale': 'es'}, database: database);
+    await tester.tap(_tab('Ajustes'));
+    await tester.pumpAndSettle();
+    final row = find.text('Residencia fiscal');
+    await tester.ensureVisible(row);
+    await tester.pumpAndSettle();
+    expect(find.text('Bizkaia'), findsOneWidget);
+
+    await tester.tap(row);
+    await tester.pumpAndSettle();
+    expect(
+      find.text(
+        'La deducción por rentas obtenidas en Ceuta y Melilla no se '
+        'calcula.',
+      ),
+      findsOneWidget,
+    );
+    await tester.tap(find.text('Canarias'));
+    await tester.pumpAndSettle();
+
+    final stored = await database.select(database.settings).getSingle();
+    expect(stored.residence, 'canarias');
+    expect(stored.residenceHlc, isNotNull);
+    expect(find.text('Canarias'), findsOneWidget);
+  });
+
   testWidgets('a preference that fails to save warns and still applies', (
     tester,
   ) async {
@@ -126,11 +157,9 @@ void main() {
     await pumpApp(tester, prefs: {'locale': 'es'});
     await tester.tap(_tab('Ajustes'));
     await tester.pumpAndSettle();
-    await tester.scrollUntilVisible(
-      find.text('Galería de componentes'),
-      200,
-      scrollable: find.byType(Scrollable).last,
-    );
+    // To the end of the list, so the row sits clear of the bar.
+    await tester.drag(find.byType(Scrollable).last, const Offset(0, -2000));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Galería de componentes'));
     await tester.pumpAndSettle();
     expect(_pageTitle('Galería de componentes'), findsOneWidget);

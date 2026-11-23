@@ -1,0 +1,531 @@
+import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:drift/drift.dart' show Value;
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
+import 'package:quoin/src/app/router.dart';
+import 'package:quoin/src/features/sync/presentation/widgets/qr_scanner_view.dart';
+import 'package:quoin/src/features/portfolio/data/database/quoin_database.dart'
+    hide SettingsRow;
+import 'package:http/testing.dart';
+import 'package:quoin/src/features/sync/data/datasources/pc_finder_datasource.dart';
+import 'package:quoin/src/features/sync/data/datasources/sync_remote_datasource.dart';
+import 'package:quoin/src/features/sync/domain/usecases/pull_prices.dart';
+import 'package:quoin/src/features/sync/presentation/pages/sync_page.dart';
+import 'package:quoin/src/features/sync/presentation/providers/sync_providers.dart';
+import 'package:quoin/src/ui/molecules/settings_row.dart';
+import 'package:quoin/src/ui/organisms/quoin_bottom_bar.dart';
+import 'package:quoin/src/ui/templates/quoin_page.dart';
+import 'package:quoin_core/quoin_core.dart';
+
+import '../../helpers.dart';
+import 'fake_pc.dart';
+
+const pcFund = 'XX00TEST0002';
+const phoneFund = 'XX00TEST0001';
+
+void main() {
+  late FakePc pc;
+  late QuoinDatabase db;
+
+  setUp(() {
+    db = memoryDatabase();
+    pc = FakePc(
+      const SyncState(
+        deviceId: 'dev-pc',
+        instruments: [
+          InstrumentRecord(
+            id: pcFund,
+            name: 'PC Fund',
+            type: 'ETF',
+            quoteSymbol: 'PCF.DE',
+            quoteSymbolHlc: '001761600000000-0000-dev-pc',
+          ),
+        ],
+        settings: SettingsRecord(residence: 'bizkaia'),
+      ),
+    );
+    fakeQr = jsonEncode({
+      'v': 1,
+      'host': 'pc.test',
+      'port': 3443,
+      'sha256': 'ab' * 32,
+      'token': FakePc.qrToken,
+      'name': 'Test PC',
+    });
+  });
+
+  Future<void> open(
+    WidgetTester tester, {
+    ClientFor? clientFor,
+    PcFinderDataSource? finder,
+  }) async {
+    await pumpApp(
+      tester,
+      prefs: {'locale': 'es'},
+      database: db,
+      finder: finder,
+      overrides: [
+        syncRemoteDataSourceProvider.overrideWithValue(
+          SyncRemoteDataSource(
+            clientFor: clientFor ?? (_) => pc.client,
+            wait: (_) async {},
+          ),
+        ),
+        pullPricesProvider.overrideWith(
+          (ref) => PullPrices(
+            ref.watch(syncRepositoryProvider),
+            ref.watch(ensureRatesFromProvider),
+            wait: (_) async {},
+          ),
+        ),
+      ],
+    );
+    await tester.tap(
+      find.descendant(
+        of: find.byType(QuoinBottomBar),
+        matching: find.text('Ajustes'),
+      ),
+    );
+    await tester.pumpAndSettle();
+  }
+
+  Future<void> settle(WidgetTester tester) async {
+    for (var i = 0; i < 200; i++) {
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 10)),
+      );
+      await tester.pump();
+      if (i > 5 &&
+          find.byType(CircularProgressIndicator).evaluate().isEmpty &&
+          find.textContaining('Actualizando precios').evaluate().isEmpty) {
+        break;
+      }
+    }
+    await tester.pumpAndSettle();
+  }
+
+  Future<void> tapVisible(WidgetTester tester, Finder finder) async {
+    await tester.scrollUntilVisible(
+      finder,
+      200,
+      scrollable: find
+          .descendant(
+            of: find.byType(QuoinPage),
+            matching: find.byType(Scrollable),
+          )
+          .last,
+    );
+    await tester.tap(finder);
+    await settle(tester);
+  }
+
+  Future<void> openRow(WidgetTester tester, String label) async {
+    tester
+        .widget<SettingsRow>(
+          find.ancestor(
+            of: find.text(label),
+            matching: find.byType(SettingsRow),
+          ),
+        )
+        .onTap!();
+    await tester.pumpAndSettle();
+  }
+
+  Future<void> pairFromSettings(WidgetTester tester) async {
+    await tapVisible(tester, find.text('Vincular con tu PC'));
+    expect(find.text('Paso 1 de 3'), findsOneWidget);
+    await tester.tap(find.text('Escanear el código'));
+    await settle(tester);
+    expect(find.text('Paso 3 de 3'), findsOneWidget);
+    expect(find.text('Conectado con Test PC'), findsOneWidget);
+    expect(find.widgetWithText(TextField, 'Mi móvil'), findsOneWidget);
+    await tester.enterText(find.byType(TextField), 'Móvil de prueba');
+    await tester.tap(find.text('Continuar'));
+    await settle(tester);
+  }
+
+  testWidgets('pairing walks the same three steps, at 200 % too, and '
+      '«Cancelar» goes back to the start without pairing', (tester) async {
+    tester.platformDispatcher.textScaleFactorTestValue = 2;
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+    final semantics = tester.ensureSemantics();
+    await open(tester);
+    GoRouter.of(tester.element(find.byType(QuoinPage).first))
+        .push<void>(Routes.pair)
+        .ignore();
+    await settle(tester);
+
+    expect(find.text('Paso 1 de 3'), findsOneWidget);
+    expect(
+      find.text('Conecta el móvil con Quoin en tu ordenador'),
+      findsOneWidget,
+    );
+    for (final step in [
+      'Abre Quoin en el PC',
+      'Escanea el código',
+      'Compara y acepta en el PC',
+    ]) {
+      await tester.scrollUntilVisible(
+        find.text(step),
+        200,
+        scrollable: verticalLists.last,
+      );
+    }
+    expect(pc.log, isNot(contains('POST /v1/pair')));
+
+    await tester.tap(find.text('Escanear el código'));
+    await settle(tester);
+    final labels = scanLabels(scannedWith!);
+    expect(
+      [labels.step, labels.title, labels.searching, labels.torch],
+      [
+        'Paso 2 de 3',
+        'Escanea el código del PC',
+        'Buscando el código…',
+        'Linterna',
+      ],
+      reason: 'the scanner speaks the language of the app, not of the system',
+    );
+    expect(find.text('Paso 3 de 3'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('Compara y acepta en el PC'),
+      200,
+      scrollable: verticalLists.last,
+    );
+    final code = find.textContaining(RegExp(r'^\d{3} \d{3}$'));
+    await tester.scrollUntilVisible(code, 200, scrollable: verticalLists.last);
+    expect(find.bySemanticsLabel(RegExp(r'^Código: \d{3} \d{3}$')), findsOne);
+    expect(find.textContaining('segundos'), findsNothing);
+    expect(
+      find.textContaining('muestra ahora'),
+      findsNothing,
+      reason: 'the PC shows the number only once the phone sends its name',
+    );
+
+    await tester.tap(find.text('Cancelar'));
+    await settle(tester);
+    expect(find.text('Paso 1 de 3'), findsOneWidget);
+    expect(pc.log, isNot(contains('POST /v1/pair')));
+    semantics.dispose();
+  });
+
+  testWidgets('pairs, previews the first sync, then syncs on confirmation', (
+    tester,
+  ) async {
+    await db
+        .into(db.instrument)
+        .insert(
+          InstrumentCompanion.insert(
+            id: phoneFund,
+            name: 'Phone Fund',
+            type: 'ETF',
+            createdAt: DateTime.utc(2026, 1, 5),
+          ),
+        );
+    await open(tester);
+    await pairFromSettings(tester);
+
+    expect(
+      (pc.bodies['POST /v1/pair']!.single! as Map<String, Object?>)['name'],
+      'Móvil de prueba',
+    );
+    expect(find.text('Primera vez con Test PC'), findsOneWidget);
+    expect(find.text('Del PC a este móvil'), findsOneWidget);
+    expect(find.text('Instrumentos nuevos'), findsNWidgets(2));
+    expect(find.text('PC Fund'), findsOneWidget);
+    expect(find.text('Phone Fund'), findsOneWidget);
+    expect(pc.log, isNot(contains('POST /v1/sync')));
+
+    await tester.scrollUntilVisible(
+      find.text('Sincronizar'),
+      200,
+      scrollable: verticalLists.first,
+    );
+    await tester.tap(find.text('Sincronizar'));
+    await settle(tester);
+
+    expect(find.text('Sincronizado'), findsOneWidget);
+    expect(pc.log, contains('POST /v1/sync'));
+    expect([for (final i in pc.device.state.instruments) i.id]..sort(), [
+      phoneFund,
+      pcFund,
+    ]);
+
+    await tester.tap(find.byTooltip('Atrás'));
+    await settle(tester);
+    expect(find.text('Test PC'), findsOneWidget);
+    expect(find.textContaining('Última: '), findsOneWidget);
+    expect(find.textContaining('· 2 instrumentos'), findsOneWidget);
+
+    await openRow(tester, 'Test PC');
+    expect(find.text('Última sincronización'.toUpperCase()), findsOneWidget);
+    expect(find.text('PC Fund'), findsOneWidget);
+    expect(find.text('Phone Fund'), findsOneWidget);
+    expect(find.textContaining('XX00TEST'), findsNothing);
+  });
+
+  testWidgets('says when prices are still pending on the PC', (tester) async {
+    pc.prices[pcFund] = List.filled(growable: true, 4, {
+      'instrumentId': pcFund,
+      'kind': 'pending',
+    });
+    await open(tester);
+    await pairFromSettings(tester);
+    await tester.tap(find.text('Sincronizar'));
+    await settle(tester);
+
+    expect(
+      find.text(
+        'Precios pendientes; se completarán en la próxima sincronización',
+      ),
+      findsOneWidget,
+    );
+  });
+
+  Future<void> makeConflict(WidgetTester tester) async {
+    await open(tester);
+    await pairFromSettings(tester);
+    await tester.tap(find.text('Sincronizar'));
+    await settle(tester);
+    await tester.tap(find.byTooltip('Atrás'));
+    await settle(tester);
+
+    final fund = await (db.select(
+      db.instrument,
+    )..where((i) => i.id.equals(pcFund))).getSingle();
+    final device = await db.select(db.syncDevice).getSingle();
+    await (db.update(db.instrument)..where((i) => i.id.equals(pcFund))).write(
+      InstrumentCompanion(
+        ter: const Value('0.0020'),
+        terHlc: Value(
+          // After the phone's own export marks, which run on the real clock.
+          '${(DateTime.now().millisecondsSinceEpoch + 3600000).toString().padLeft(15, '0')}'
+          '-0000-${device.deviceId}',
+        ),
+      ),
+    );
+    final state = pc.device.state;
+    pc.device = LocalDevice(
+      state: SyncState(
+        deviceId: state.deviceId,
+        peers: state.peers,
+        instruments: [
+          for (final i in state.instruments)
+            i.id == pcFund
+                ? InstrumentRecord.fromJson({
+                    ...i.toJson(),
+                    'ter': '0.0030',
+                    'terHlc': '001761600200000-0000-dev-pc',
+                  })
+                : i,
+        ],
+        settings: state.settings,
+      ),
+      lastHlc: '001761600200000-0000-dev-pc',
+    );
+    expect(fund.ter, isNull);
+  }
+
+  testWidgets('a pull that finds a conflict says so, and Revisar opens it', (
+    tester,
+  ) async {
+    await makeConflict(tester);
+    await tester.tap(
+      find.descendant(
+        of: find.byType(QuoinBottomBar),
+        matching: find.text('Cartera'),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.fling(verticalLists.first, const Offset(0, 400), 1000);
+    final toast = find.text('Tu PC tiene cambios por revisar');
+    for (var i = 0; i < 300 && toast.evaluate().isEmpty; i++) {
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 10)),
+      );
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(toast, findsOneWidget);
+    await tester.tap(find.text('Revisar'));
+    await settle(tester);
+    expect(find.byType(SyncPage), findsOneWidget);
+    expect(toast, findsNothing);
+  });
+
+  testWidgets('a conflict is settled by choosing a side', (tester) async {
+    await makeConflict(tester);
+
+    await tapVisible(tester, find.text('Sincronizar ahora'));
+    expect(find.text('TER'), findsOneWidget);
+    expect(find.text('PC Fund'), findsOneWidget);
+    expect(find.textContaining(pcFund), findsNothing);
+    expect(find.text('Este móvil: 0.0020'), findsOneWidget);
+    expect(find.text('PC: 0.0030'), findsOneWidget);
+    final apply = find.widgetWithText(FilledButton, 'Aplicar y sincronizar');
+    expect(tester.widget<FilledButton>(apply).onPressed, isNull);
+
+    await tester.tap(find.text('PC').last);
+    await tester.pumpAndSettle();
+    await tester.tap(apply);
+    await settle(tester);
+
+    expect(find.text('Sincronizado'), findsOneWidget);
+    await tester.tap(find.text('Conflictos resueltos'));
+    await tester.pumpAndSettle();
+    expect(find.text('PC Fund · TER → PC'), findsOneWidget);
+    expect(find.textContaining(pcFund), findsNothing);
+    final settled = await (db.select(
+      db.instrument,
+    )..where((i) => i.id.equals(pcFund))).getSingle();
+    expect(settled.ter, '0.0030');
+  });
+
+  testWidgets('a PC that shares its identity says so, at 200 % too, and '
+      'unpairing says to revoke on the PC as well', (tester) async {
+    tester.platformDispatcher.textScaleFactorTestValue = 2;
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+    await pumpApp(tester, prefs: {'locale': 'es'}, database: db);
+    Map<String, Object?> pc(String sha, String name, {bool shared = false}) => {
+      'host': 'pc.test',
+      'port': 3443,
+      'sha256': sha,
+      'token': FakePc.deviceToken,
+      'pcName': name,
+      'pairedAt': '2026-11-01T09:00:00.000Z',
+      'lastSyncAt': null,
+      'confirmed': true,
+      'pcDeviceId': 'dev-pc',
+      'shared': shared,
+    };
+    await const FlutterSecureStorage().write(
+      key: 'pairings',
+      value: jsonEncode({
+        'pcs': [
+          pc('ab' * 32, 'Test PC'),
+          pc('cd' * 32, 'Copia PC', shared: true),
+        ],
+        'pricesFrom': null,
+      }),
+    );
+    ProviderScope.containerOf(tester.element(find.byType(QuoinBottomBar)))
+        .invalidate(pairingsProvider);
+    await tester.tap(
+      find.descendant(
+        of: find.byType(QuoinBottomBar),
+        matching: find.text('Ajustes'),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.text('Copia PC'),
+      200,
+      scrollable: find
+          .descendant(
+            of: find.byType(QuoinPage),
+            matching: find.byType(Scrollable),
+          )
+          .last,
+    );
+    expect(find.text('Comparte identidad con Test PC'), findsOneWidget);
+    await openRow(tester, 'Copia PC');
+    expect(
+      find.textContaining('la misma identidad de sincronización'),
+      findsOneWidget,
+    );
+    expect(find.text('Comprobar de nuevo'), findsOneWidget);
+
+    await openRow(tester, 'Desvincular');
+    expect(find.textContaining('revócalo también'), findsOneWidget);
+  });
+
+  testWidgets('a PC that cannot be found is shown in Settings with the way '
+      'out', (tester) async {
+    await open(tester);
+    await pairFromSettings(tester);
+    await tester.tap(find.text('Sincronizar'));
+    await settle(tester);
+    await tester.tap(find.byTooltip('Atrás'));
+    await settle(tester);
+
+    pc.offline = true;
+    await tapVisible(tester, find.text('Sincronizar ahora'));
+    expect(find.textContaining('Tu PC no está en esta red'), findsOneWidget);
+    expect(find.textContaining('redes de invitados aisladas'), findsOneWidget);
+    expect(find.text('Volver a escanear'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Atrás'));
+    await settle(tester);
+    expect(find.text('Tu PC no está en esta red'), findsOneWidget);
+    await openRow(tester, 'Test PC');
+    expect(find.text('Buscar en la red'), findsOneWidget);
+    expect(find.text('Volver a escanear'), findsOneWidget);
+    expect(find.text('Desvincular'), findsOneWidget);
+  });
+
+  testWidgets('«Buscar en la red» shows the search on the row of the PC and '
+      'syncs where the PC answers now', (tester) async {
+    fakeQr = jsonEncode({
+      'v': 1,
+      'host': '192.168.1.20',
+      'port': 3443,
+      'sha256': 'ab' * 32,
+      'token': FakePc.qrToken,
+      'name': 'Test PC',
+    });
+    String? answersAt = '192.168.1.20';
+    final gate = Completer<void>();
+    final offline = MockClient(
+      (_) async => throw const SocketException('No route to host'),
+    );
+    await open(
+      tester,
+      clientFor: (e) => e.host == answersAt ? pc.client : offline,
+      finder: PcFinderDataSource(
+        localIps: () async => const ['192.168.1.50'],
+        probe: (host, port, pins, stop) async {
+          if (host != answersAt) return null;
+          await gate.future;
+          return (sha256: 'ab' * 32, versions: const [1]);
+        },
+      ),
+    );
+    await pairFromSettings(tester);
+    await tester.tap(find.text('Sincronizar'));
+    await settle(tester);
+    await tester.tap(find.byTooltip('Atrás'));
+    await settle(tester);
+
+    answersAt = null;
+    await tapVisible(tester, find.text('Sincronizar ahora'));
+    await tester.tap(find.byTooltip('Atrás'));
+    await settle(tester);
+    expect(find.text('Tu PC no está en esta red'), findsOneWidget);
+
+    answersAt = '192.168.1.40';
+    await openRow(tester, 'Test PC');
+    await openRow(tester, 'Buscar en la red');
+    for (var i = 0; i < 100; i++) {
+      if (find.text('Buscando en la red…').evaluate().isNotEmpty) break;
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 10)),
+      );
+      await tester.pump();
+    }
+    expect(find.text('Buscando en la red…'), findsOneWidget);
+
+    gate.complete();
+    await settle(tester);
+    expect(find.text('Buscando en la red…'), findsNothing);
+    expect(find.text('Tu PC no está en esta red'), findsNothing);
+    expect(find.textContaining("Última:"), findsOneWidget);
+  });
+}

@@ -1,0 +1,48 @@
+import 'package:quoin_core/quoin_core.dart';
+
+import 'package:quoin/src/core/error/result.dart';
+import 'package:quoin/src/features/sync/domain/entities/exchange_import.dart';
+import 'package:quoin/src/features/sync/domain/entities/pairing.dart';
+import 'package:quoin/src/features/sync/domain/entities/pc_state.dart';
+import 'package:quoin/src/features/sync/domain/entities/sync_outcome.dart';
+
+abstract interface class SyncRepository {
+  Future<Result<Pairings>> pairings();
+  Future<Result<void>> savePairings(Pairings pairings);
+  Future<Result<LastSync?>> lastSync(String sha256);
+  Future<Result<void>> saveLastSync(String sha256, LastSync last);
+  Future<Result<void>> dropLastSync(String sha256);
+  Future<Result<String>> claim();
+  Future<Result<List<int>>> hello(SyncEndpoint endpoint);
+  Future<Result<Map<String, FoundPc>>> find(
+    List<SyncEndpoint> lost, {
+    required bool held,
+  });
+  Future<Result<String>> pair(
+    PairingQr qr, {
+    required String deviceId,
+    required String name,
+  });
+  Future<Result<PcState>> fetch(Pairing pairing, String deviceId);
+  Future<Result<ExchangeImport>> importExchange(
+    Exchange incoming, {
+    Resolutions resolutions,
+    required bool dryRun,
+  });
+  Future<Result<Exchange>> export();
+  Future<Result<PushResult>> push(
+    Pairing pairing,
+    String deviceId,
+    Exchange exchange, {
+    required String etag,
+  });
+  Future<Result<String>> zone();
+  Future<Result<List<PriceHolding>>> priceHoldings();
+  Future<Result<List<PriceAnswer>>> fetchPrices(
+    Pairing pairing,
+    String deviceId,
+    List<PriceHolding> holdings,
+  );
+  Future<Result<Map<String, String>>> savePrices(List<PriceAnswer> answers);
+  Future<Result<void>> dropPrices(String instrumentId);
+}

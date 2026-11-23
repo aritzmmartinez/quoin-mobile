@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:quoin/src/core/theme/quoin_colors.dart';
 import 'package:quoin/src/core/theme/quoin_theme.dart';
 import 'package:quoin/src/ui/molecules/quoin_segmented.dart';
 
@@ -55,4 +56,45 @@ void main() {
       },
     );
   }
+
+  testWidgets('with a position, indicator and labels follow it', (
+    tester,
+  ) async {
+    final position = ValueNotifier(0.5);
+    addTearDown(position.dispose);
+    await tester.pumpWidget(
+      _app(
+        QuoinSegmented<int>(
+          segments: segments.take(2).toList(),
+          selected: 0,
+          position: position,
+          onChanged: (_) {},
+        ),
+      ),
+    );
+    final c = QuoinColors.of(tester.element(find.text('Ventas')));
+    Color? colour(String label) => tester
+        .widget<AnimatedDefaultTextStyle>(
+          find
+              .ancestor(
+                of: find.text(label),
+                matching: find.byType(AnimatedDefaultTextStyle),
+              )
+              .first,
+        )
+        .style
+        .color;
+    final half = Color.lerp(c.muted, c.onAccent, 0.5);
+    expect(colour('Ventas'), half);
+    expect(colour('Fiscal'), half);
+    expect(
+      tester.widget<AnimatedAlign>(find.byType(AnimatedAlign)).alignment,
+      Alignment.center,
+    );
+
+    position.value = 1;
+    await tester.pump();
+    expect(colour('Fiscal'), c.onAccent);
+    expect(colour('Ventas'), c.muted);
+  });
 }

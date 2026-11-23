@@ -6,14 +6,18 @@ import 'package:go_router/go_router.dart';
 import 'package:quoin/src/app/router.dart';
 import 'package:quoin/src/core/error/result.dart';
 import 'package:quoin/src/core/l10n/gen/app_localizations.dart';
+import 'package:quoin/src/core/l10n/residence_name.dart';
 import 'package:quoin/src/core/theme/quoin_icons.dart';
 import 'package:quoin/src/core/theme/quoin_tokens.dart';
-import 'package:quoin/src/core/theme/quoin_type.dart';
+import 'package:quoin/src/features/portfolio/presentation/providers/portfolio_providers.dart';
 import 'package:quoin/src/features/settings/presentation/providers/settings_providers.dart';
-import 'package:quoin/src/ui/atoms/quoin_icon.dart';
+import 'package:quoin/src/features/settings/presentation/widgets/residence_sheet.dart';
+import 'package:quoin/src/features/sync/presentation/widgets/sync_settings_section.dart';
 import 'package:quoin/src/ui/molecules/settings_row.dart';
+import 'package:quoin/src/ui/organisms/quoin_sheet.dart';
 import 'package:quoin/src/ui/organisms/settings_section.dart';
 import 'package:quoin/src/ui/templates/quoin_page.dart';
+import 'package:quoin/src/ui/organisms/quoin_toast.dart';
 
 class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});
@@ -24,6 +28,10 @@ class SettingsPage extends ConsumerWidget {
     final themeMode = ref.watch(themeModeProvider);
     final locale = ref.watch(localeProvider);
     final version = ref.watch(appVersionProvider).value;
+    final residence = switch (ref.watch(residenceProvider).value) {
+      Ok(:final value) => value,
+      Err() || null => null,
+    };
 
     final themes = {
       ThemeMode.system: l10n.optionSystem,
@@ -97,6 +105,22 @@ class SettingsPage extends ConsumerWidget {
         ),
         const SizedBox(height: QuoinSpace.gutter),
         SettingsSection(
+          title: l10n.settingsTax,
+          rows: [
+            SettingsRow(
+              icon: QuoinIcons.residence,
+              label: l10n.settingsResidence,
+              value: residence == null ? null : residenceName(l10n, residence),
+              onTap: residence == null
+                  ? null
+                  : () => _chooseResidence(context, ref, residence),
+            ),
+          ],
+        ),
+        const SizedBox(height: QuoinSpace.gutter),
+        const SyncSettingsSection(),
+        const SizedBox(height: QuoinSpace.gutter),
+        SettingsSection(
           title: l10n.settingsAbout,
           rows: [
             SettingsRow(
@@ -113,13 +137,7 @@ class SettingsPage extends ConsumerWidget {
             SettingsRow(
               icon: QuoinIcons.thirdPartyLicenses,
               label: l10n.settingsThirdPartyLicenses,
-              onTap: () => showLicensePage(
-                context: context,
-                applicationName: l10n.appTitle,
-                applicationVersion: version,
-                applicationLegalese: l10n.aboutLegalese,
-                useRootNavigator: true,
-              ),
+              onTap: () => context.push(Routes.licenses),
             ),
           ],
         ),
@@ -133,11 +151,59 @@ class SettingsPage extends ConsumerWidget {
                 label: 'Galería de componentes',
                 onTap: () => context.push(Routes.gallery),
               ),
+              SettingsRow(
+                icon: QuoinIcons.sampleData,
+                label: 'Cargar cartera de ejemplo',
+                onTap: () => _debugWrite(
+                  context,
+                  ref,
+                  ref.read(loadSamplePortfolioProvider)(DateTime.now()),
+                ),
+              ),
+              SettingsRow(
+                icon: QuoinIcons.upload,
+                label: 'Importar lote de ejemplo',
+                onTap: () => context.push(Routes.importSample),
+              ),
+              SettingsRow(
+                icon: QuoinIcons.clearData,
+                label: 'Vaciar cartera',
+                onTap: () => _debugWrite(
+                  context,
+                  ref,
+                  ref.read(clearPortfolioProvider)(),
+                ),
+              ),
             ],
           ),
         ],
       ],
     );
+  }
+}
+
+Future<void> _chooseResidence(
+  BuildContext context,
+  WidgetRef ref,
+  String current,
+) async {
+  final picked = await showResidenceSheet(context, current);
+  if (picked == null) return;
+  final result = await ref.read(setResidenceProvider)(picked);
+  // The zone and the rules of every ledger screen follow the residence.
+  ref.invalidate(ledgerProvider);
+  if (!context.mounted) return;
+  switch (result) {
+    case Ok():
+      break;
+    case Err():
+      final l10n = AppLocalizations.of(context);
+      showQuoinToast(
+        context,
+        tone: QuoinToastTone.negative,
+        title: l10n.settingsResidenceFailed,
+        body: l10n.settingsResidenceFailedBody,
+      );
   }
 }
 
@@ -148,11 +214,33 @@ Future<void> _save(BuildContext context, Future<Result<void>> saving) async {
     case Ok():
       break;
     case Err():
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(AppLocalizations.of(context).settingsSaveFailed),
-          duration: const Duration(seconds: 3),
-        ),
+      final l10n = AppLocalizations.of(context);
+      showQuoinToast(
+        context,
+        tone: QuoinToastTone.negative,
+        title: l10n.settingsSaveFailed,
+        body: l10n.settingsSaveFailedBody,
+      );
+  }
+}
+
+/// Debug only, so not localised: invented data is never shown in release.
+Future<void> _debugWrite(
+  BuildContext context,
+  WidgetRef ref,
+  Future<Result<void>> writing,
+) async {
+  final result = await writing;
+  ref.invalidate(ledgerProvider);
+  if (!context.mounted) return;
+  switch (result) {
+    case Ok():
+      showQuoinToast(context, tone: QuoinToastTone.positive, title: 'Hecho');
+    case Err():
+      showQuoinToast(
+        context,
+        tone: QuoinToastTone.negative,
+        title: 'No se ha podido escribir en la base',
       );
   }
 }
@@ -163,35 +251,15 @@ Future<void> _choose<T>(
   required Map<T, String> options,
   required T current,
   required Future<void> Function(T) onSelected,
-}) {
-  return showModalBottomSheet<void>(
-    context: context,
-    useRootNavigator: true,
-    builder: (sheet) => SafeArea(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Text(
-              title,
-              style: QuoinType.of(sheet).row
-                  .copyWith(fontWeight: FontWeight.w600),
-            ),
-          ),
-          for (final MapEntry(:key, :value) in options.entries)
-            ListTile(
-              title: Text(value),
-              trailing: key == current
-                  ? const QuoinIcon(QuoinIcons.check, size: 18)
-                  : null,
-              onTap: () {
-                Navigator.of(sheet).pop();
-                onSelected(key);
-              },
-            ),
-        ],
-      ),
-    ),
+}) async {
+  final picked = await showQuoinChoice(
+    context,
+    title: title,
+    options: [
+      for (final MapEntry(:key, :value) in options.entries)
+        (value: key, label: value),
+    ],
+    selected: current,
   );
+  if (picked != null) await onSelected(picked.value);
 }

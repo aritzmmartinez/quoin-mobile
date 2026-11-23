@@ -91,7 +91,7 @@ class QuoinTextField extends StatelessWidget {
         suffixIcon: unit == null
             ? null
             : Padding(
-                padding: const EdgeInsets.only(right: 20),
+                padding: const EdgeInsets.only(right: QuoinSpace.gutter),
                 child: Center(
                   widthFactor: 1,
                   child: Text(unit!, style: text.copyWith(color: c.muted)),
@@ -109,11 +109,11 @@ class QuoinTextField extends StatelessWidget {
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
-      spacing: 6,
+      spacing: QuoinSpace.tight,
       children: [
         ExcludeSemantics(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
+            padding: const EdgeInsets.symmetric(horizontal: QuoinSpace.xs),
             child: Text(label!, style: type.secondary.copyWith(color: c.muted)),
           ),
         ),

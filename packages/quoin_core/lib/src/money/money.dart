@@ -1,7 +1,5 @@
 import '../decimal/dec.dart';
 
-/// The currency every projection reports in. An amount quoted in another one
-/// is converted at an ECB rate or left unvalued, never mixed.
 const String baseCurrency = 'EUR';
 
 final class Money implements Comparable<Money> {
@@ -12,6 +10,8 @@ final class Money implements Comparable<Money> {
   static final Money zero = Money._(Dec.zero);
 
   static Money parse(String text) => Money._(Dec.parse(text));
+
+  factory Money.of(Dec amount) => Money._(amount);
 
   static Money? tryParse(String text) {
     final value = Dec.tryParse(text);
@@ -45,6 +45,8 @@ final class Money implements Comparable<Money> {
 
   @override
   String toString() => amount.toString();
+
+  String get text => amount.text;
 
   double toDouble() => amount.toDouble();
 }

@@ -10,7 +10,7 @@ flows: `docs/ARCHITECTURE.md`.
 - `lib/src/core`: `error/` (exceptions, failures, Result), `theme/`, `l10n/`.
 - `lib/src/ui`: shared widgets by atomic level: `atoms/`, `molecules/`, `organisms/`, `templates/`.
 - `lib/src/features/<feature>/{data,domain,presentation}`: features are portfolio, import, analysis, tax, settings, sync.
-- `packages/quoin_core`: pure Dart domain shared with `../quoin` (`Dec`, `Money`).
+- `packages/quoin_core`: pure Dart domain shared with `../quoin`: `Dec`, `Money`, calendar, ledger, fx, swap, the portfolio projections, realised gains and the tax view by territory (Bizkaia, régimen común). Golden cases in `test/contract/` are copied from `../quoin/test/contract/` and never edited.
 
 ## Architecture
 
@@ -18,18 +18,33 @@ flows: `docs/ARCHITECTURE.md`.
 - Domain imports only `dart:`, `quoin_core`, `core/error` and domain: no Flutter, Riverpod or storage.
 - Presentation never imports data; only `app/` sees both.
 - Shared domain logic goes in `quoin_core`; features use it, never copy it.
+- The AVCO loop is `walkAvco`; `computePositions` and `computeRealizedGains` share it, as in Quoin. The tax view is FIFO (`walkFifo`), a separate walk.
 - Create only the folders a feature uses; no empty folders.
 - Data sources throw `core/error/exceptions.dart` types only.
 - Repositories catch them and return `Result<T>` (`Ok`/`Err` with a sealed `Failure`); no dartz.
 - Presentation handles a `Result` with an exhaustive `switch`.
 - Models convert with `toEntity()` and never extend the entity.
-- State and injection: Riverpod only (no get_it, bloc, provider), no code generation.
+- State and injection: Riverpod only (no get_it, bloc, provider), no code generation for them.
+- Local store: drift, only in `data/`. Tables in `features/portfolio/data/database/schema.drift`, same names, CHECKs and unique keys as `../quoin/prisma/schema.prisma`; instants as ISO-8601 UTC text (`build.yaml`). Migrations by hand in `QuoinDatabase.migration`, one step per version against that version's frozen schema in `quoin_database.steps.dart`, never the live tables. To add a version: raise `schemaVersion`, run `dart run drift_dev make-migrations` (saves the schema in `drift_schemas/`, regenerates the steps and `test/drift/`), write the step, never edit a saved schema.
+- drift's `*.g.dart` is committed; CI regenerates it and fails on any diff.
+- Sync: each device is a complete node; merge, `applyPlan` and `planCounts` are pure in `quoin_core`, checked against `sync.json`. Details: `docs/ARCHITECTURE.md`.
+- Marks (HLC) are issued by `tick`/`stamp` only; a field is marked when its value changes, never when it is saved unchanged. `seen` per peer decides what is news.
+- A conflict is settled by `keep`/`take` keyed by `conflictKey`; any open conflict or unknown resolution writes nothing.
+- A ledger row with another content on both sides is set aside, never conflicted; compare exact text, `ts` by instant, never re-serialise `Dec`.
+- `SyncLocalDataSource.importExchange` reads, merges and writes in one transaction; `apply` writes exactly what `applyPlan` says. Effects run after the commit (`RunEffects`), never in a data source; sync does not import the import feature.
+- A residence the app does not know is stored and synced as it came; reading the ledger or planning an import returns `UnsupportedResidenceFailure`, never Bizkaia, and no zone is invented for it.
+- The sample data never syncs; a copied database claims a new device id before any sync; Kraken rows without USD are valued on the PC only.
+- Every request to the PC goes through `PinnedClient` (the QR's SHA-256 pin, no trusted roots); never a plain client.
+- The pairing and its device token live only in `flutter_secure_storage`; price histories only in `PricesDatabase` (`files/prices/`). Both, and `install_id`, are left out of Android backup in `backup_rules.xml` and `data_extraction_rules.xml`: a restored phone must never arrive paired.
+- The QR scanner is `packages/qrscan`, a fork of qrscan 1.2.4 (MIT): its `LICENSE` and notice stay as they came, and `FORK.md` lists every change and the upstream version it starts from. Only `qr_scanner_view.dart` imports it; tests override `qrScannerProvider`.
+- The fork changes only the scanner's look (`ScanOverlayView`, `activity_second.xml`, its icons) and how labels and fonts reach it: every visible string comes from Flutter (`ScanLabels`), in the app's language, and nothing native is written in English. Camera, decoder and permissions stay upstream's.
+- Anything new that leaves the phone changes `docs/privacy.md` first (source of the privacy policy and Play's Data safety form).
 - One provider per link: data source → repository → use case → screen state.
 - A repository's provider is typed abstract in presentation and bound in `app/dependencies.dart`.
 - `ui/` widgets take data and callbacks: no features, providers or router.
 - A widget used by one feature goes in its `presentation/widgets`.
 - Pages are `presentation/pages/*_page.dart` with a `*Page` class.
-- A `Failure` the user can act on is shown, translated (a SnackBar for a failed save).
+- A `Failure` the user can act on is shown, translated (a toast for a failed save).
 - Imports are package imports (`always_use_package_imports`), so the layer test can read them.
 - Routing: `go_router` with `StatefulShellRoute`.
 
@@ -38,7 +53,8 @@ flows: `docs/ARCHITECTURE.md`.
 - Amounts and quantities are `Dec` or `Money`, never `double`.
 - Doubles only for chart coordinates and the projection loop, via `toDouble()` at the edge.
 - Build them from text only (`Money.parse`, `Dec.parse`), never from a `double`.
-- Operate through their methods; there are no operators on purpose.
+- `Money` has no operators on purpose: operate through its methods. `Dec` is the numeric type and has them.
+- Ratios (weights, returns) are `Dec` rounded to six places, as the web stores them.
 - `Dec` is decimal.js (40 digits, ROUND_HALF_UP); if a case in `packages/quoin_core/test/contract/decimal.json` fails, the port is wrong.
 - No real portfolio data in the repo: fixtures, tests or screenshots.
 
@@ -55,17 +71,20 @@ flows: `docs/ARCHITECTURE.md`.
 - Theme follows the system unless the user picks one.
 - Layout reference: `docs/design/Quoin Terminal.dc.html`; its figures and names are invented.
 - Shape set in the component themes in `quoin_theme.dart`, not per screen: pills (`StadiumBorder`) for buttons, chips, segmented, fields and bar; cards 24; sheets 28 on top (`QuoinRadius`).
-- Icon tiles: circle for entities (position, broker), `RoundedSuperellipseBorder` for functions.
+- Icon tiles: circle for entities (broker), `RoundedSuperellipseBorder` for functions. An instrument's mark (`InstrumentIcon`): its shape by `type` (STOCK a circle with the initial, CRYPTO a circle with the «₿» coin whatever the coin; the rest a tile with the glyph of its `exposureKind`, a crypto fund the same «₿» coin). The globe and the «₿» are drawn in `quoin_icons.dart` on the set's grid and stroke. Every icon tile and circle sits on `iconTile`.
+- Position rows go in a `PositionList`: the list decides whether the figures go beside the name or under it, for all its rows.
 - Text input: `QuoinTextField` only; label above, required except `.search`; unit suffix in Geist Mono.
 - A hint is short and never carries what the user needs; the search hint is «Buscar», its description is the accessibility label.
+- Chips: `QuoinChip.code` (Geist Mono) for ranges and codes, `QuoinChip.text` (Geist) for filters that are words, such as categories.
 - Segmented controls: `QuoinSegmented` (honours reduce motion).
+- Toasts: `showQuoinToast` only, never a `SnackBar` (a test checks it): a block across the top under the status bar, a short title and the detail under it. Positive and negative on the signals' solid fills (`positiveSolid`, `negativeSolid`) with `onSignal` ink; anything else neutral, on `accent`.
 - No ink ripples (`NoSplash` in the theme): a pressed control changes colour (themed `highlightColor`, button overlays) or scales (`Pressable`).
 - Icons: Hugeicons stroke rounded, stroke 1.5; declared in `core/theme/quoin_icons.dart`, drawn with `ui/atoms/quoin_icon.dart`; only those two import `hugeicons` (a test checks it).
-- Bottom bar: our buttons and the central «+» on liquid glass (`liquid_glass_widgets` only in `QuoinBarSurface`); content scrolls under it (`QuoinPage.list`).
-- The bar's glass is `GlassQuality.premium` (the standard shader keeps a hard rim over dark backdrops).
+- Bottom bar: 4 equal tabs on a liquid glass pill and the «+» as its own glass circle, as high as the pill, 10 px away; where it sits is `QuoinBarActionPlacement` (trailing by default; leading, above, or inside the pill at the centre). Both shapes share one `QuoinGlassLayer` (one backdrop capture, no blending). `liquid_glass_widgets` only in `quoin_bar_surface.dart`; content scrolls under the bar (`QuoinPage.list`).
+- The bar's glass is `GlassQuality.premium` (the standard shader keeps a hard rim over dark backdrops), tinted at 82 % (`border` in dark, `surface` in light) with a hairline on top in both themes. Under it, one `QuoinBarFade` in the shell; tab lists reserve its height.
 - Bottom bar active tab: accent icon and label plus a pill that springs under it (jumps with reduce motion); a tab scales to 0.92 when pressed and clicks with `HapticFeedback.selectionClick`.
 - Navigation bar hidden natively in `MainActivity`, which passes its inset to Flutter; never `SystemChrome.setEnabledSystemUIMode`.
-- Component gallery: debug only (`kDebugMode`, Settings → Debug), the only place for invented data, not localised.
+- Component gallery and the sample portfolio: debug only (`kDebugMode`, Settings → Debug), the only places for invented data, not localised.
 - No visible string in code: Spanish template `app_es.arb`, full English; both ARBs have the same keys (a test checks it).
 - `lib/src/core/l10n/gen/` is generated by `flutter pub get`; never commit it.
 - Device preferences (theme, language) in `SharedPreferencesWithCache`, never synced, never in the database.
@@ -76,9 +95,22 @@ flows: `docs/ARCHITECTURE.md`.
 - Regenerate the sources from `docs/design/logo/quoin-mark-light.svg`: `dart run tool/branding/generate.dart` (plain Dart, no packages).
 - Regenerate icons: `dart run flutter_launcher_icons` (config in `flutter_launcher_icons.yaml`).
 - Regenerate splash: `dart run flutter_native_splash:create` (config in `flutter_native_splash.yaml`).
+- Regenerate drift code after changing `schema.drift` or a database class: `dart run build_runner build`.
 - Strict analysis (`strict-casts`, `strict-inference`, `strict-raw-types`) in the app and in `quoin_core`.
 - Use the dart-flutter plugin (MCP server and skills); if a skill contradicts this file or the prompt, this file and the prompt win, and say so.
 - Before handing back: `dart analyze` and `dart test` in `packages/quoin_core`; `flutter analyze` and `flutter test` at the root.
 - CI also runs `flutter build apk --debug`, on Flutter 3.47.8.
 - No tool or assistant marks in code, comments or docs.
-- Aritz makes the commits; write the message in `msg.txt` (ignored).
+- Comments only say why (a decision, or a trap someone would break without knowing), short; never what the code already says.
+- An upstream qrscan release is brought in by hand: diff it against the version in `packages/qrscan/FORK.md`, carry the look over, and try it on a phone (reads a QR, 16 KB pages, torch, permission denied) before it lands.
+- Aritz makes the commits; write each message in `msg-N.txt` (ignored), N the commit's place in the branch.
+
+## Testing on the phone
+
+- Against Quoin from `pnpm dev` with a temporary database, never the real Docker or `data/quoin.sqlite`.
+- One server only, bound to `127.0.0.1` with its own ports (web and sync), never `localhost` or the defaults another `pnpm dev` may hold. Before scanning a QR, check which process listens on those ports and that the real database's mtime has not moved.
+- Never install the real app (`dev.aritzmmartinez.quoin`) or run `flutter install` against the phone (A34); only Quoin dev. The real app is installed by Aritz, signed with the upload key (`docs/release.md`, Signing).
+- Before every tap or screenshot, check Quoin dev (`dev.aritzmmartinez.quoin.dev`) has the focus (`dumpsys window`, `mCurrentFocus`); if not, stop and say so.
+- No blind coordinates: find each element with `uiautomator dump` by its text and tap that; if it is not there, stop.
+- No screenshot without asking first; only with Quoin in front, deleted after the test.
+- Sample data and screenshots only on the `.dev` install (`flutter run`): its own app, data and pairings beside the real one. Its focus is exactly `dev.aritzmmartinez.quoin.dev`; if the real package is in front, stop. A debug or profile run always installs Quoin dev; `-Pdev=true` is only needed for a release build of it.

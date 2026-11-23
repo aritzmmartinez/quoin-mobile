@@ -1,6 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
+import 'package:quoin/src/app/router.dart';
 import 'package:quoin/src/ui/organisms/quoin_bottom_bar.dart';
+import 'package:quoin/src/ui/organisms/quoin_segmented_pages.dart';
+import 'package:quoin/src/ui/molecules/sale_row.dart';
 import 'package:quoin/src/ui/templates/quoin_page.dart';
 
 import 'helpers.dart';
@@ -13,12 +19,12 @@ void main() {
     tester.platformDispatcher.textScaleFactorTestValue = 2;
     addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
 
-    await pumpApp(tester, prefs: {'locale': 'es'});
+    await pumpApp(tester, prefs: {'locale': 'es'}, sample: true);
 
     Future<void> scrollToEnd() async {
       final list = find.descendant(
         of: find.byType(QuoinPage),
-        matching: find.byType(Scrollable),
+        matching: verticalLists,
       );
       if (list.evaluate().isEmpty) return;
       for (var i = 0; i < 30; i++) {
@@ -28,6 +34,7 @@ void main() {
       await tester.pumpAndSettle();
     }
 
+    await scrollToEnd();
     for (final tab in ['Cartera', 'Análisis', 'Ajustes']) {
       await tester.tap(
         find.descendant(
@@ -42,6 +49,98 @@ void main() {
     await tester.tap(find.text('Galería de componentes'));
     await tester.pumpAndSettle();
     await scrollToEnd();
+
+    Future<void> visit(String location) async {
+      unawaited(
+        GoRouter.of(tester.element(find.byType(QuoinPage).first))
+            .push(location),
+      );
+      await tester.pumpAndSettle();
+    }
+
+    for (final location in [
+      Routes.movements,
+      Routes.instrument('IE00QSAMPLE1'),
+      Routes.instrument('IE00QSAMPLE7'),
+      Routes.realized,
+      Routes.pair,
+      Routes.sync,
+      Routes.licenses,
+      Routes.license('flutter'),
+    ]) {
+      await visit(location);
+      await scrollToEnd();
+    }
+
+    await visit(Routes.realized);
+    final views = find
+        .descendant(
+          of: find.byType(QuoinSegmentedPages<int>),
+          matching: find.byType(PageView),
+        )
+        .first;
+    await tester.drag(views, const Offset(-500, 0));
+    await tester.pumpAndSettle();
+    await tester.drag(views, const Offset(500, 0));
+    await tester.pumpAndSettle();
+    Future<void> closeSheet(Finder inside) async {
+      Navigator.of(tester.element(inside)).pop();
+      await tester.pumpAndSettle();
+    }
+
+    final sale = find.byType(SaleRow).first;
+    await tester.ensureVisible(sale);
+    await tester.pumpAndSettle();
+    await tester.tap(sale);
+    await tester.pumpAndSettle();
+    await closeSheet(find.text('Has recibido'));
+    await tester.tap(find.text('Fiscal (Bizkaia)'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Cómo se calcula').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Cómo se calcula').last);
+    await tester.pumpAndSettle();
+    final detail = find.text('Los criterios en detalle');
+    await tester.ensureVisible(detail);
+    await tester.pumpAndSettle();
+    await tester.tap(detail);
+    await tester.pumpAndSettle();
+    await closeSheet(detail);
+    final repurchased = find.widgetWithText(SaleRow, 'Fondo Emergentes').last;
+    await tester.scrollUntilVisible(
+      repurchased,
+      300,
+      scrollable: find
+          .descendant(of: find.byType(QuoinPage), matching: verticalLists)
+          .first,
+    );
+    await tester.ensureVisible(repurchased);
+    await tester.pumpAndSettle();
+    await tester.tap(repurchased);
+    await tester.pumpAndSettle();
+    for (final fold in [
+      'Cómo se calcula la recompra',
+      'Dónde queda la pérdida aplazada',
+    ]) {
+      await tester.ensureVisible(find.text(fold));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(fold));
+      await tester.pumpAndSettle();
+    }
+    await closeSheet(find.text('Art. 43.g NF 13/2013 de Bizkaia'));
+    await scrollToEnd();
+
+    GoRouter.of(tester.element(find.byType(QuoinPage).first)).go(Routes.home);
+    await tester.pumpAndSettle();
+
+    for (var i = 0; i < 3; i++) {
+      await tester.drag(find.byType(PageView).first, const Offset(-500, 0));
+      await tester.pumpAndSettle();
+    }
+    for (var i = 0; i < 3; i++) {
+      await tester.drag(find.byType(PageView).first, const Offset(500, 0));
+      await tester.pumpAndSettle();
+    }
 
     await tester.tap(find.byTooltip('Importar CSV'));
     await tester.pumpAndSettle();

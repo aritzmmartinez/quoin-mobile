@@ -1,9 +1,25 @@
+import 'package:flutter/widgets.dart';
+
+import 'dart:io';
+
+import 'package:drift/drift.dart' show driftRuntimeOptions;
+import 'package:drift/native.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart' show Override;
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:quoin/src/app/app.dart';
 import 'package:quoin/src/app/dependencies.dart';
+import 'package:quoin/src/core/l10n/gen/app_localizations.dart';
+import 'package:quoin/src/features/portfolio/data/database/prices_database.dart';
+import 'package:quoin/src/features/portfolio/data/database/quoin_database.dart';
+import 'package:quoin/src/features/portfolio/data/datasources/portfolio_local_datasource.dart';
+import 'package:quoin/src/features/portfolio/presentation/providers/portfolio_providers.dart';
 import 'package:quoin/src/features/settings/data/datasources/settings_local_datasource.dart';
 import 'package:quoin/src/features/settings/presentation/providers/settings_providers.dart';
+import 'package:quoin/src/features/sync/data/datasources/pc_finder_datasource.dart';
+import 'package:quoin/src/features/sync/presentation/providers/sync_providers.dart';
+import 'package:quoin/src/features/sync/presentation/widgets/qr_scanner_view.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
 import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
@@ -12,7 +28,14 @@ Future<SharedPreferencesWithCache> pumpApp(
   WidgetTester tester, {
   Map<String, Object> prefs = const {},
   SharedPreferencesAsyncPlatform? store,
+  QuoinDatabase? database,
+  PricesDatabase? prices,
+  bool sample = false,
+  List<Override> overrides = const [],
+  PcFinderDataSource? finder,
 }) async {
+  if (sample) (:database, :prices) = await sampleStores();
+  FlutterSecureStorage.setMockInitialValues({});
   SharedPreferencesAsyncPlatform.instance =
       store ?? InMemorySharedPreferencesAsync.withData(prefs);
   final cache = await SharedPreferencesWithCache.create(
@@ -23,8 +46,23 @@ Future<SharedPreferencesWithCache> pumpApp(
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
-        ...dependencies(cache),
+        ...dependencies(
+          cache,
+          database ?? memoryDatabase(),
+          prices ?? memoryPrices(),
+          Directory.systemTemp.createTempSync('quoin-test-'),
+        ),
         appVersionProvider.overrideWith((ref) => '0.0.0-test'),
+        nowProvider.overrideWithValue(() => testNow),
+        qrScannerProvider.overrideWithValue(fakeScanner),
+        pcFinderDataSourceProvider.overrideWithValue(
+          finder ??
+              PcFinderDataSource(
+                localIps: () async => const ['192.168.1.50'],
+                probe: (_, _, _, _) async => null,
+              ),
+        ),
+        ...overrides,
       ],
       child: const QuoinApp(),
     ),
@@ -32,3 +70,38 @@ Future<SharedPreferencesWithCache> pumpApp(
   await tester.pumpAndSettle();
   return cache;
 }
+
+final testNow = DateTime.utc(2026, 10, 30, 10);
+
+var fakeQr = '';
+
+AppLocalizations? scannedWith;
+
+Future<QrScan> fakeScanner(AppLocalizations l10n) async {
+  scannedWith = l10n;
+  return (text: fakeQr, denied: false);
+}
+
+QuoinDatabase memoryDatabase() {
+  driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
+  return QuoinDatabase(NativeDatabase.memory());
+}
+
+PricesDatabase memoryPrices() {
+  driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
+  return PricesDatabase(NativeDatabase.memory());
+}
+
+Future<({QuoinDatabase database, PricesDatabase prices})> sampleStores() async {
+  final stores = (database: memoryDatabase(), prices: memoryPrices());
+  await PortfolioLocalDataSource(
+    stores.database,
+    stores.prices,
+  ).replaceWithSample(testNow);
+  return stores;
+}
+
+final verticalLists = find.byWidgetPredicate(
+  (w) =>
+      w is Scrollable && axisDirectionToAxis(w.axisDirection) == Axis.vertical,
+);
