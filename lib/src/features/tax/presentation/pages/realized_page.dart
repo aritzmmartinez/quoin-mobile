@@ -16,6 +16,7 @@ import 'package:quoin/src/features/portfolio/presentation/widgets/result_view.da
 import 'package:quoin/src/features/tax/domain/entities/realized_report.dart';
 import 'package:quoin/src/features/tax/presentation/providers/tax_providers.dart';
 import 'package:quoin/src/features/tax/presentation/widgets/tax_year_panel.dart';
+import 'package:quoin/src/features/tax/presentation/widgets/territory_names.dart';
 import 'package:quoin/src/ui/atoms/display_figure.dart';
 import 'package:quoin/src/ui/atoms/quoin_chip.dart';
 import 'package:quoin/src/ui/molecules/empty_state.dart';
@@ -50,7 +51,12 @@ class _RealizedPageState extends ConsumerState<RealizedPage> {
                 initialIndex: widget.tax ? 1 : 0,
                 segments: [
                   (0, l10n.realizedTabSales),
-                  (1, l10n.realizedTabTax),
+                  (
+                    1,
+                    l10n.realizedTabTax(
+                      taxResidenceName(l10n, report.residence),
+                    ),
+                  ),
                 ],
                 pages: [_sales(context, report), _tax(context, report)],
               ),
@@ -205,16 +211,18 @@ class _RealizedPageState extends ConsumerState<RealizedPage> {
     final type = QuoinType.of(context);
     final years = report.taxYears;
     final year = years.contains(_taxYear) ? _taxYear! : report.defaultYear;
+    final view = year == null ? null : report.taxYear(year);
     final router = GoRouter.of(context);
-    final exemptLimit = territoryRules(report.history.jurisdiction.territory)
-        .dividendExemption
-        ?.limit;
+    final territory = report.history.jurisdiction.territory;
+    final rules = territoryRules(territory);
+    final exemption = rules.dividendExemption;
+    final comun = territory == Territory.comun;
     final how = InfoRow(
       label: l10n.realizedHow,
       onTap: () => showExplainSheet(
         context,
         title: l10n.realizedHow,
-        intro: l10n.taxHowIntro,
+        intro: comun ? l10n.taxHowIntroComun : l10n.taxHowIntro,
         points: [
           (
             icon: QuoinIcons.oldestFirst,
@@ -225,44 +233,54 @@ class _RealizedPageState extends ConsumerState<RealizedPage> {
           (
             icon: QuoinIcons.buyBack,
             title: l10n.taxHowWashTitle,
-            body: l10n.taxHowWashBody,
-            source: l10n.taxHowWashSource,
+            body: comun ? l10n.taxHowWashBodyComun : l10n.taxHowWashBody,
+            source: rules.citations.repurchase,
           ),
           (
             icon: QuoinIcons.swap,
             title: l10n.taxHowSwapTitle,
             body: l10n.taxHowSwapBody,
-            source: l10n.taxHowSwapSource,
+            source: comun ? l10n.taxHowSwapSourceComun : l10n.taxHowSwapSource,
           ),
           (
             icon: QuoinIcons.earlierYears,
             title: l10n.taxHowCarryTitle,
             body: l10n.taxHowCarryBody,
-            source: l10n.taxHowCarrySource,
+            source: rules.citations.gainsCarryforward,
           ),
           (
             icon: QuoinIcons.cashFlow,
-            title: l10n.taxHowIncomeTitle,
-            body: l10n.taxHowIncomeBody,
-            source: l10n.taxHowIncomeSource,
+            title: comun ? l10n.taxHowIncomeTitleComun : l10n.taxHowIncomeTitle,
+            body: comun ? l10n.taxHowIncomeBodyComun : l10n.taxHowIncomeBody,
+            source: rules.citations.incomeCarryforward,
           ),
-          if (exemptLimit != null)
+          if (exemption != null)
             (
               icon: QuoinIcons.taxRule,
               title: l10n.taxHowExemptTitle,
               body: l10n.taxHowExemptBody(
                 QuoinFormat.of(context)
-                    .money(Money.parse(exemptLimit), decimals: 0),
+                    .money(Money.parse(exemption.limit), decimals: 0),
               ),
-              source: l10n.taxHowExemptSource,
+              source: exemption.source,
             ),
         ],
         detailTitle: l10n.realizedHowDetail,
-        detail: [l10n.taxHowRules, l10n.taxHowOwnRules],
+        detail: [
+          comun ? l10n.taxHowRulesComun : l10n.taxHowRules,
+          l10n.taxHowOwnRules(
+            comun ? l10n.taxHowSwapSourceComun : l10n.taxHowSwapSource,
+          ),
+          if (view?.scale case final scale?) l10n.taxScaleSource(scale.source),
+        ],
       ),
     );
 
     return [
+      if (!report.residenceChosen) ...[
+        _ResidenceDefault(onTap: () => router.go(Routes.settings)),
+        const SizedBox(height: QuoinSpace.m),
+      ],
       for (final notice in [
         if (report.noRate.isNotEmpty) l10n.taxNoRate(report.noRate.join(', ')),
         if (report.unclassified.isNotEmpty)
@@ -289,11 +307,42 @@ class _RealizedPageState extends ConsumerState<RealizedPage> {
         const SizedBox(height: QuoinSpace.section),
         TaxYearPanel(
           report: report,
-          view: report.taxYear(year),
+          view: view!,
           how: how,
           onOpenInstrument: (id) => router.push(Routes.instrument(id)),
         ),
       ],
     ];
+  }
+}
+
+class _ResidenceDefault extends StatelessWidget {
+  const _ResidenceDefault({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final type = QuoinType.of(context);
+    return Semantics(
+      link: true,
+      child: InkWell(
+        onTap: onTap,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(
+            minHeight: kMinInteractiveDimension,
+          ),
+          child: Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: Text(
+              AppLocalizations.of(context).taxResidenceDefault,
+              style: type.secondary.copyWith(
+                color: QuoinColors.of(context).accent,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }

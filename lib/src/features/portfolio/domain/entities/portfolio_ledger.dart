@@ -4,6 +4,7 @@ import 'package:quoin_core/quoin_core.dart';
 class PortfolioLedger {
   const PortfolioLedger({
     required this.residence,
+    this.residenceChosen = false,
     required this.instruments,
     required this.events,
     required this.latestPrices,
@@ -11,10 +12,9 @@ class PortfolioLedger {
   });
 
   final Residence residence;
+  final bool residenceChosen;
   final List<Instrument> instruments;
   final List<LedgerEvent> events;
-
-  /// The newest price of each instrument, in its own currency.
   final Map<String, PriceSnapshot> latestPrices;
   final List<FxRate> rates;
 }

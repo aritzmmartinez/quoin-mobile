@@ -127,7 +127,7 @@ void main() {
       await tester.tap(find.text(fold));
       await tester.pumpAndSettle();
     }
-    await closeSheet(find.text('Art. 43'));
+    await closeSheet(find.text('Art. 43.g NF 13/2013 de Bizkaia'));
     await scrollToEnd();
 
     GoRouter.of(tester.element(find.byType(QuoinPage).first)).go(Routes.home);

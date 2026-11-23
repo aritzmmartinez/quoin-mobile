@@ -23,6 +23,7 @@ Future<void> showTaxSaleSheet(
   required String type,
   required int year,
   required String zone,
+  required Territory territory,
   required String today,
   required Widget icon,
   VoidCallback? onOpenInstrument,
@@ -42,6 +43,7 @@ Future<void> showTaxSaleSheet(
       type: type,
       year: year,
       zone: zone,
+      territory: territory,
       today: today,
       onOpenInstrument: onOpenInstrument == null
           ? null
@@ -60,6 +62,7 @@ class TaxSaleSheet extends StatelessWidget {
     required this.type,
     required this.year,
     required this.zone,
+    required this.territory,
     required this.today,
     this.onOpenInstrument,
   });
@@ -68,6 +71,7 @@ class TaxSaleSheet extends StatelessWidget {
   final String type;
   final int year;
   final String zone;
+  final Territory territory;
   final String today;
   final VoidCallback? onOpenInstrument;
 
@@ -138,7 +142,10 @@ class TaxSaleSheet extends StatelessWidget {
       if (until != null)
         l10n.taxWindowOpenReason(format.day(CalendarDate.parse(until))),
       if (notice != null)
-        l10n.taxUnlistedReason(format.date(notice.buyTs, zone)),
+        switch (territory) {
+          Territory.bizkaia => l10n.taxUnlistedReason,
+          Territory.comun => l10n.taxUnlistedReasonComun,
+        }(format.date(notice.buyTs, zone)),
     ];
 
     return Padding(
@@ -207,7 +214,7 @@ class TaxSaleSheet extends StatelessWidget {
           if (wash != null)
             FoldSection(
               title: l10n.taxHowRepurchase,
-              summary: l10n.taxHowWashSource,
+              summary: wash.source,
               children: [
                 held(l10n.taxBefore(wash.windowMonths), wash.assessment.before),
                 held(l10n.taxRemainingAfter, wash.assessment.remainingAfter),

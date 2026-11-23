@@ -112,3 +112,14 @@ Object? at(Object? json, String path) {
 
 Map<String, Object?> byHandFigures(Json contractCase) =>
     ((contractCase['byHand'] as Json?)?['figures'] as Json?) ?? const {};
+
+Json step(PoolStep s) => {
+      'year': s.year,
+      'ownNet': '${s.ownNet}',
+      'crossOffset': '${s.crossOffset}',
+      'consumedFromCarryforward': '${s.consumedFromCarryforward}',
+      'absorbedFromOther': '${s.absorbedFromOther}',
+      'crossedToOther': '${s.crossedToOther}',
+      'finalNet': '${s.finalNet}',
+      'pendingLossRemaining': '${s.pendingLossRemaining}',
+    };

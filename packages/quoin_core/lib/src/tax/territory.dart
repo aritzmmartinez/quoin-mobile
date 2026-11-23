@@ -1,9 +1,6 @@
 import '../domain/residence.dart';
 import 'config.dart';
 
-/// A sale of [assetClass] that no repurchase rule covers, at a loss, followed
-/// by a purchase of the same asset within [windowMonths], is pointed out.
-/// Informative only: it changes no figure.
 final class UnlistedNoticeRule {
   const UnlistedNoticeRule({
     required this.assetClass,
@@ -14,8 +11,6 @@ final class UnlistedNoticeRule {
   final int windowMonths;
 }
 
-/// Dividends exempt up to [limit] euros a year. With
-/// [excludesCollectiveInvestment], those of a fund or ETF are never exempt.
 final class DividendExemptionRule {
   const DividendExemptionRule({
     required this.limit,
@@ -28,11 +23,21 @@ final class DividendExemptionRule {
   final String source;
 }
 
-/// Everything the tax engine reads that depends on the territory, and only
-/// that. Same table as Quoin's `TERRITORY_RULES` (core/tax/territory.ts),
-/// which says why each value is what it is.
+final class TerritoryCitations {
+  const TerritoryCitations({
+    required this.repurchase,
+    required this.incomeCarryforward,
+    required this.gainsCarryforward,
+  });
+
+  final String repurchase;
+  final String incomeCarryforward;
+  final String gainsCarryforward;
+}
+
 final class TerritoryRules {
   const TerritoryRules({
+    required this.citations,
     required this.savingsScales,
     required this.repurchase,
     required this.swapValuation,
@@ -42,26 +47,27 @@ final class TerritoryRules {
     required this.unlistedNotice,
   });
 
+  final TerritoryCitations citations;
   final List<SavingsBaseTaxScale> savingsScales;
   final List<RepurchaseRule> repurchase;
   final List<SwapValuationRule> swapValuation;
   final int lossCarryforwardYears;
-
-  /// Share of one savings pool's positive balance that the other pool's
-  /// negative balance may offset, as a decimal string. Zero keeps the pools
-  /// apart.
   final String crossOffsetLimit;
   final DividendExemptionRule? dividendExemption;
   final UnlistedNoticeRule unlistedNotice;
 }
 
-// An exhaustive switch over Territory: a new territory does not compile
-// until it has its rules, as `satisfies Record<Territory, …>` does in Quoin.
 TerritoryRules territoryRules(Territory territory) => switch (territory) {
       Territory.bizkaia => _bizkaia,
+      Territory.comun => _comun,
     };
 
 const _bizkaia = TerritoryRules(
+  citations: TerritoryCitations(
+    repurchase: 'Art. 43 NF 13/2013',
+    incomeCarryforward: 'Art. 66.1.a NF 13/2013',
+    gainsCarryforward: 'Art. 66.1.b NF 13/2013',
+  ),
   savingsScales: [
     SavingsBaseTaxScale(
       year: 2025,
@@ -94,7 +100,6 @@ const _bizkaia = TerritoryRules(
   ],
   repurchase: [
     RepurchaseRule(
-      letter: RepurchaseLetter.g,
       assetClass: RepurchaseAssetClass.listedSecurity,
       windowMonths: 2,
       acquisitions: RepurchaseAcquisitions.all,
@@ -103,7 +108,6 @@ const _bizkaia = TerritoryRules(
       source: 'Art. 43.g NF 13/2013 de Bizkaia',
     ),
     RepurchaseRule(
-      letter: RepurchaseLetter.i,
       assetClass: RepurchaseAssetClass.fungibleCrypto,
       windowMonths: 2,
       acquisitions: RepurchaseAcquisitions.all,
@@ -131,6 +135,60 @@ const _bizkaia = TerritoryRules(
     excludesCollectiveInvestment: true,
     source: 'Art. 9.24 NF 13/2013 de Bizkaia',
   ),
+  unlistedNotice: UnlistedNoticeRule(
+    assetClass: RepurchaseAssetClass.fungibleCrypto,
+    windowMonths: 12,
+  ),
+);
+
+const _comun = TerritoryRules(
+  citations: TerritoryCitations(
+    repurchase: 'art. 33.5 LIRPF',
+    incomeCarryforward: 'art. 49.1.a LIRPF',
+    gainsCarryforward: 'art. 49.1.b LIRPF',
+  ),
+  // Arts. 66.1 (state) and 76 (regional) LIRPF add up to one scale, the same
+  // in every autonomous community. Ley 7/2024 added the 30% bracket from 2025;
+  // no earlier scale is on file.
+  savingsScales: [
+    SavingsBaseTaxScale(
+      year: 2025,
+      source: 'Arts. 66.1 y 76 Ley 35/2006 del IRPF, redacción de la Ley '
+          '7/2024, efectos 1-1-2025',
+      brackets: [
+        TaxBracket('0', '6000', '0.19'),
+        TaxBracket('6000', '50000', '0.21'),
+        TaxBracket('50000', '200000', '0.23'),
+        TaxBracket('200000', '300000', '0.27'),
+        TaxBracket('300000', null, '0.30'),
+      ],
+    ),
+  ],
+  // Art. 33.5.f: two months for securities admitted to trading on a regulated
+  // EEA market or an equivalent one (the US included, DGT V0778-25). Letter g
+  // gives one year to those not admitted; the app does not know the market a
+  // security trades on, so stocks and ETFs take letter f. Crypto has no
+  // repurchase rule.
+  repurchase: [
+    RepurchaseRule(
+      assetClass: RepurchaseAssetClass.listedSecurity,
+      windowMonths: 2,
+      acquisitions: RepurchaseAcquisitions.all,
+      from: null,
+      to: null,
+      source: 'Art. 33.5.f Ley 35/2006 del IRPF',
+    ),
+  ],
+  // Art. 37.1.h LIRPF: a swap is valued at the greater of the two.
+  swapValuation: [
+    SwapValuationRule(source: 'Art. 37.1.h Ley 35/2006 del IRPF; DGT V0999-18'),
+  ],
+  lossCarryforwardYears: 4,
+  // Art. 49.1.a and b LIRPF: up to 25% of the other pool's positive balance.
+  crossOffsetLimit: '0.25',
+  dividendExemption: null,
+  // Whether art. 33.5.e reaches crypto rebought within a year is unsettled by
+  // the DGT.
   unlistedNotice: UnlistedNoticeRule(
     assetClass: RepurchaseAssetClass.fungibleCrypto,
     windowMonths: 12,

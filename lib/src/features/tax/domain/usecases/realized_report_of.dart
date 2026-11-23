@@ -14,6 +14,8 @@ RealizedReport realizedReportOf(PortfolioLedger ledger, DateTime now) {
 
   return RealizedReport(
     hasLedger: ledger.events.isNotEmpty,
+    residence: ledger.residence,
+    residenceChosen: ledger.residenceChosen,
     sales: [
       for (final sale in computeRealizedGains(ledger.events, jurisdiction))
         SaleLine(

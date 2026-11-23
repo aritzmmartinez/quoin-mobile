@@ -28,7 +28,8 @@ final class WashSaleDetail {
   final WashSaleAssessment assessment;
   final List<WashSaleRecipientDetail> recipients;
 
-  RepurchaseLetter get letter => assessment.rule.letter;
+  String get source => assessment.rule.source;
+  RepurchaseAssetClass get assetClass => assessment.rule.assetClass;
   int get windowMonths => assessment.rule.windowMonths;
 }
 
@@ -48,7 +49,7 @@ final class RealizedGainDetail {
   final Money nonComputable;
   final Money carriedOver;
   final WashSaleDetail? washSale;
-  final ({RepurchaseLetter letter, WashSaleWindow window})? repurchaseWindow;
+  final ({String source, WashSaleWindow window})? repurchaseWindow;
   final UnlistedRepurchaseNotice? unlistedNotice;
 
   String get eventId => sale.trade.id;
@@ -145,7 +146,7 @@ TaxHistory computeTaxHistory(List<LedgerEvent> events, RepurchaseScope scope) {
           : null,
       repurchaseWindow: assessment == null
           ? null
-          : (letter: assessment.rule.letter, window: assessment.window),
+          : (source: assessment.rule.source, window: assessment.window),
       unlistedNotice: deferral.notice,
     ));
     for (final piece in deferral.integrated) {

@@ -58,6 +58,8 @@ class SalesTotals {
 class RealizedReport {
   const RealizedReport({
     required this.hasLedger,
+    required this.residence,
+    required this.residenceChosen,
     required this.sales,
     required this.names,
     required this.instruments,
@@ -71,6 +73,8 @@ class RealizedReport {
   });
 
   final bool hasLedger;
+  final Residence residence;
+  final bool residenceChosen;
   final List<SaleLine> sales;
   final Map<String, String> names;
   final Map<String, Instrument> instruments;

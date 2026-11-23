@@ -27,6 +27,7 @@ extension PortfolioRowsModel on PortfolioRows {
       residence:
           Residence.values.asNameMap()[settings.residence] ??
           (throw UnsupportedResidenceException(settings.residence)),
+      residenceChosen: settings.residenceHlc != null,
       instruments: [for (final row in instruments) row.toEntity()],
       events: [for (final row in entries) row.toEntity()],
       latestPrices: latest,
