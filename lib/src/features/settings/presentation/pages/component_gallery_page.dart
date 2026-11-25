@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:quoin_core/quoin_core.dart';
 
 import 'package:quoin/src/core/error/failures.dart';
+import 'package:quoin/src/core/l10n/quoin_format.dart';
 import 'package:quoin/src/core/theme/quoin_colors.dart';
 import 'package:quoin/src/core/theme/quoin_icons.dart';
 import 'package:quoin/src/core/theme/quoin_tokens.dart';
@@ -33,6 +34,7 @@ import 'package:quoin/src/ui/molecules/stat_columns.dart';
 import 'package:quoin/src/ui/molecules/stat_tile.dart';
 import 'package:quoin/src/ui/organisms/quoin_bottom_bar.dart';
 import 'package:quoin/src/ui/organisms/quoin_dropdown.dart';
+import 'package:quoin/src/ui/organisms/quoin_line_chart.dart';
 import 'package:quoin/src/ui/organisms/settings_section.dart';
 import 'package:quoin/src/ui/templates/quoin_page.dart';
 
@@ -47,6 +49,31 @@ const _positions = [
   ('Salud Mundial', 'SAM', '980,30 €', '+0,21 %', 1),
 ];
 
+// An invented walk, the same on every run: whole cents from a fixed LCG.
+final List<DayValue> _walk = () {
+  var seed = 7;
+  var cents = 4200000;
+  return [
+    for (var i = 0; i < 720; i++)
+      () {
+        seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+        cents += (seed % 120001) - 59000;
+        return DayValue(
+          shiftDay('2024-12-06', i),
+          Dec.fromInt(cents).dividedBy(Dec.fromInt(100)),
+        );
+      }(),
+  ];
+}();
+
+const _chartRanges = {
+  ChartRange.week: '1S',
+  ChartRange.month: '1M',
+  ChartRange.halfYear: '6M',
+  ChartRange.year: '1A',
+  ChartRange.max: 'Máx',
+};
+
 class ComponentGalleryPage extends StatefulWidget {
   const ComponentGalleryPage({super.key});
 
@@ -56,11 +83,74 @@ class ComponentGalleryPage extends StatefulWidget {
 
 class _ComponentGalleryPageState extends State<ComponentGalleryPage> {
   var _range = '1M';
+  var _chartRange = ChartRange.year;
+  DayValue? _scrubbed;
   var _segment = 0;
   var _filter = 'Todas';
   var _placement = QuoinBarActionPlacement.trailing;
   var _tab = 0;
   final _choices = <String, Resolution>{};
+
+  List<Widget> _chart(BuildContext context) {
+    final type = QuoinType.of(context);
+    final c = QuoinColors.of(context);
+    // Spanish like every other line here: the gallery is not localised.
+    const format = QuoinFormat('es');
+    final window = cutRange(_walk, _chartRange, _walk.last.day)!;
+    final shown = _scrubbed ?? window.last;
+    final change = shown.value - window.first.value;
+    return [
+      Text(format.price(Money.of(shown.value)), style: type.title.mono),
+      Text(
+        '${format.percent(change.dividedBy(window.first.value), signed: true)}'
+        ' · ${format.day(CalendarDate.parse(shown.day))}',
+        style: type.secondary.mono.copyWith(
+          color: change.isNegative ? c.negative : c.positive,
+        ),
+      ),
+      const SizedBox(height: QuoinSpace.m),
+      QuoinLineChart(
+        points: window.points,
+        semanticLabel: 'Gráfico de ejemplo',
+        formatValue: (v) => format.price(Money.of(v)),
+        reference: ChartReference(
+          Dec.parse('43000'),
+          'Tu precio medio · ${format.price(Money.parse('43000'))}',
+        ),
+        marks: [
+          for (final (i, day) in [
+            '2026-02-10',
+            '2026-06-18',
+            '2026-09-03',
+          ].indexed)
+            ChartMark(
+              id: day,
+              day: day,
+              kind: i == 1 ? ChartMarkKind.ring : ChartMarkKind.filled,
+              label: i == 1 ? 'Venta' : 'Compra',
+            ),
+        ],
+        onScrub: (p) => setState(() => _scrubbed = p),
+        onMarkTap: (m) => showQuoinToast(
+          context,
+          tone: QuoinToastTone.neutral,
+          title: m.label,
+        ),
+      ),
+      const SizedBox(height: QuoinSpace.s),
+      Wrap(
+        spacing: QuoinSpace.s,
+        children: [
+          for (final r in rangesOf(_walk, _walk.last.day))
+            QuoinChip.code(
+              label: _chartRanges[r]!,
+              selected: r == _chartRange,
+              onTap: () => setState(() => _chartRange = r),
+            ),
+        ],
+      ),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -111,6 +201,8 @@ class _ComponentGalleryPageState extends State<ComponentGalleryPage> {
                 ),
             ],
           ),
+          label('Gráfico de línea'),
+          ..._chart(context),
           label('Chips de filtro'),
           Wrap(
             spacing: QuoinSpace.s,

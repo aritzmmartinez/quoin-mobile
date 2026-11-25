@@ -61,6 +61,27 @@ class QuoinFormat {
     return _es ? '$sign$number$_nbsp€' : '$sign€$number';
   }
 
+  String price(Money value) {
+    final amount = value.amount;
+    if (amount.isZero || amount.abs() >= Dec.one) return money(value);
+    final rounded = amount.roundTo(_leadingZeros(amount) + 4);
+    if (rounded.abs() >= Dec.one) return money(Money.of(rounded));
+    final zeros = _leadingZeros(rounded);
+    final number = _number(
+      rounded.abs(),
+      minDecimals: zeros + 2,
+      maxDecimals: zeros + 4,
+    );
+    final sign = rounded.isNegative ? '-' : '';
+    return _es ? '$sign$number$_nbsp€' : '$sign€$number';
+  }
+
+  static int _leadingZeros(Dec fraction) {
+    final text = fraction.abs().toString();
+    final decimals = text.substring(text.indexOf('.') + 1);
+    return decimals.length - decimals.replaceFirst(RegExp('^0+'), '').length;
+  }
+
   ({String text, int sign}) signedMoney(Money value) {
     final magnitude = money(value.isNegative ? value.negate() : value);
     final sign = value.amount.sign;
