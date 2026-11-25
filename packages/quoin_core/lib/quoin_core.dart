@@ -26,6 +26,8 @@ export 'src/ingest/kraken.dart';
 export 'src/ingest/reasons.dart';
 export 'src/ingest/trade_republic.dart';
 export 'src/money/money.dart';
+export 'src/prices/kraken.dart';
+export 'src/prices/kraken_plan.dart';
 export 'src/projections/avco.dart';
 export 'src/projections/market_value.dart';
 export 'src/projections/portfolio.dart';
