@@ -41,3 +41,7 @@ SELECT p.* FROM "PriceSnapshot" p
 WHERE p."asOf" = (
     SELECT MAX("asOf") FROM "PriceSnapshot" WHERE "instrumentId" = p."instrumentId"
 );
+
+-- One instrument's whole series, oldest first, for its chart.
+seriesOf:
+SELECT * FROM "PriceSnapshot" WHERE "instrumentId" = :instrument_id ORDER BY "asOf";

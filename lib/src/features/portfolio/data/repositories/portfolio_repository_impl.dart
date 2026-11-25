@@ -6,6 +6,7 @@ import 'package:quoin/src/core/error/result.dart';
 import 'package:quoin/src/features/portfolio/data/datasources/portfolio_local_datasource.dart';
 import 'package:quoin/src/features/portfolio/data/models/portfolio_rows.dart';
 import 'package:quoin/src/features/portfolio/domain/entities/portfolio_ledger.dart';
+import 'package:quoin/src/features/portfolio/domain/entities/price_series.dart';
 import 'package:quoin/src/features/portfolio/domain/repositories/portfolio_repository.dart';
 
 class PortfolioRepositoryImpl implements PortfolioRepository {
@@ -22,6 +23,27 @@ class PortfolioRepositoryImpl implements PortfolioRepository {
     } on StorageException {
       return const Err(StorageFailure());
     } on UnreadableRow {
+      return const Err(StorageFailure());
+    } on DecimalError {
+      return const Err(StorageFailure());
+    } on ArgumentError {
+      return const Err(StorageFailure());
+    }
+  }
+
+  @override
+  Future<Result<PriceSeries?>> priceSeries(String instrumentId) async {
+    try {
+      final rows = await _source.priceSeries(instrumentId);
+      if (rows.isEmpty) return const Ok(null);
+      final kraken = rows.any((r) => r.source.startsWith('KRAKEN'));
+      return Ok(
+        PriceSeries(
+          history: [for (final row in rows) row.toEntity()],
+          source: kraken ? PriceSource.kraken : PriceSource.pc,
+        ),
+      );
+    } on StorageException {
       return const Err(StorageFailure());
     } on DecimalError {
       return const Err(StorageFailure());

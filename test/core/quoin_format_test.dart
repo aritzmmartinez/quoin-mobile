@@ -30,7 +30,38 @@ void main() {
       expect(es.money(Money.parse(value)), intl(inEs), reason: value);
       expect(en.money(Money.parse(value)), inEn, reason: value);
     }
-    expect(es.money(Money.parse('0.004'), floorNonZero: true), intl('< 0,01~€'));
+    expect(
+      es.money(Money.parse('0.004'), floorNonZero: true),
+      intl('< 0,01~€'),
+    );
+  });
+
+  test('price', () {
+    final cases = {
+      '769.05': ('769,05~€', '€769.05'),
+      '1': ('1,00~€', '€1.00'),
+      '0': ('0,00~€', '€0.00'),
+      '0.5': ('0,50~€', '€0.50'),
+      '0.1234567': ('0,1235~€', '€0.1235'),
+      '0.17345': ('0,1735~€', '€0.1735'),
+      '0.000006123456': ('0,000006123~€', '€0.000006123'),
+      '0.00000438': ('0,00000438~€', '€0.00000438'),
+      '0.0999996': ('0,10~€', '€0.10'),
+      '0.99996': ('1,00~€', '€1.00'),
+      '84123.4567': ('84.123,46~€', '€84,123.46'),
+    };
+    for (final MapEntry(key: value, value: (inEs, inEn)) in cases.entries) {
+      expect(es.price(Money.parse(value)), intl(inEs), reason: value);
+      expect(en.price(Money.parse(value)), inEn, reason: value);
+    }
+  });
+
+  test('signed price keeps a small change', () {
+    expect(es.signedPrice(Money.parse('-0.0023')), (
+      text: intl('_0,0023~€'),
+      sign: -1,
+    ));
+    expect(en.signedPrice(Money.parse('12.5')), (text: '+€12.50', sign: 1));
   });
 
   test('signed money', () {

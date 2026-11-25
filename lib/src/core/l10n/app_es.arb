@@ -573,6 +573,87 @@
   "instrumentValue": "Valor de la posición",
   "instrumentNoPrice": "Sin precio todavía: llega al sincronizar con el PC.",
   "instrumentNoHistory": "Todavía no hay histórico de precios para dibujar su evolución.",
+  "chartPrice": "Precio",
+  "chartAverageLine": "Tu precio medio · {price}",
+  "@chartAverageLine": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "chartRange": "{range, select, week{1S} month{1M} halfYear{6M} year{1A} other{Máx}}",
+  "@chartRange": {
+    "placeholders": {
+      "range": {
+        "type": "String"
+      }
+    }
+  },
+  "chartPeriod": "{range, select, week{última semana} month{último mes} halfYear{últimos 6 meses} year{último año} other{todo el histórico}}",
+  "@chartPeriod": {
+    "placeholders": {
+      "range": {
+        "type": "String"
+      }
+    }
+  },
+  "chartSummary": "{name}, {period}, de {from} a {to}, {change}",
+  "@chartSummary": {
+    "description": "Lo que el lector de pantalla dice del gráfico de precio.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "period": {
+        "type": "String"
+      },
+      "from": {
+        "type": "String"
+      },
+      "to": {
+        "type": "String"
+      },
+      "change": {
+        "type": "String"
+      }
+    }
+  },
+  "chartMarkBuy": "Compra, {date}",
+  "@chartMarkBuy": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "chartMarkSell": "Venta, {date}",
+  "@chartMarkSell": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "chartMarkMany": "{count, plural, =1{1 operación, {date}} other{{count} operaciones, {date}}}",
+  "@chartMarkMany": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "chartUnrated": "{count, plural, =1{1 cierre fuera: sin tipo de cambio de su día} other{{count} cierres fuera: sin tipo de cambio de su día}}",
+  "@chartUnrated": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "instrumentClosed": "Posición cerrada",
   "instrumentCost": "Te costaron",
   "instrumentAverageCost": "Precio medio",

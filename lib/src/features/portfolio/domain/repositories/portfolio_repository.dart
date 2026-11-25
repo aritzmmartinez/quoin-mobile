@@ -2,9 +2,12 @@ import 'package:quoin_core/quoin_core.dart';
 
 import 'package:quoin/src/core/error/result.dart';
 import 'package:quoin/src/features/portfolio/domain/entities/portfolio_ledger.dart';
+import 'package:quoin/src/features/portfolio/domain/entities/price_series.dart';
 
 abstract interface class PortfolioRepository {
   Future<Result<PortfolioLedger>> load();
+
+  Future<Result<PriceSeries?>> priceSeries(String instrumentId);
 
   /// Debug builds only.
   Future<Result<void>> loadSample(DateTime now);
