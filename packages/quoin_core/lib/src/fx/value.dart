@@ -53,6 +53,24 @@ PricesInBase pricesInBase(
   return PricesInBase(prices: converted, unrated: unrated);
 }
 
+({List<PriceSnapshot> history, int unrated}) historyInBase(
+  List<PriceSnapshot> history,
+  RateBook book,
+  String zone,
+) {
+  final converted = <PriceSnapshot>[];
+  var unrated = 0;
+  for (final snapshot in history) {
+    final based = _inBase(snapshot, book, dayOf(snapshot.asOf, zone));
+    if (based == null) {
+      unrated += 1;
+    } else {
+      converted.add(based);
+    }
+  }
+  return (history: converted, unrated: unrated);
+}
+
 PriceSnapshot? _inBase(PriceSnapshot price, RateBook book, String day) {
   if (price.currency == baseCurrency) return price;
   final rate = valuationRate(book, price.currency, day);
@@ -63,5 +81,6 @@ PriceSnapshot? _inBase(PriceSnapshot price, RateBook book, String day) {
         price.price, price.currency, rate.rate, FxDirection.quotePerBase),
     currency: baseCurrency,
     asOf: price.asOf,
+    source: price.source,
   );
 }

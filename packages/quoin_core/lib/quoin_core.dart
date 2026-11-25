@@ -34,6 +34,8 @@ export 'src/projections/portfolio.dart';
 export 'src/projections/positions.dart';
 export 'src/projections/realized.dart';
 export 'src/series/as_of.dart';
+export 'src/series/chart_range.dart';
+export 'src/series/lttb.dart';
 export 'src/sort.dart';
 export 'src/swap/values.dart';
 export 'src/sync/apply_plan.dart';
