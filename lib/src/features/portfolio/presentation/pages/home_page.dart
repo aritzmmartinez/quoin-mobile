@@ -37,7 +37,7 @@ class HomePage extends ConsumerWidget {
     return PortfolioView(
       title: l10n.tabHome,
       overview: ref.watch(portfolioOverviewProvider),
-      onRefresh: () => refreshFromPc(context, ref),
+      onRefresh: () => refreshPrices(context, ref),
       empty: EmptyState(
         icon: QuoinIcons.portfolio,
         title: l10n.emptyPortfolioTitle,
@@ -48,7 +48,7 @@ class HomePage extends ConsumerWidget {
       builder: (overview) => QuoinPage.list(
         title: l10n.tabHome,
         trailing: const SyncStamp(),
-        onRefresh: () => refreshFromPc(context, ref),
+        onRefresh: () => refreshPrices(context, ref),
         children: _content(context, overview, switch (ref
             .watch(realizedReportProvider)
             .value) {

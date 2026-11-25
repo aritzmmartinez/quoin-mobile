@@ -571,7 +571,7 @@
   },
   "instrumentNotFound": "No hay ningún instrumento con ese identificador.",
   "instrumentValue": "Valor de la posición",
-  "instrumentNoPrice": "Sin precio todavía: la app aún no descarga cotizaciones.",
+  "instrumentNoPrice": "Sin precio todavía: llega al sincronizar con el PC.",
   "instrumentNoHistory": "Todavía no hay histórico de precios para dibujar su evolución.",
   "instrumentClosed": "Posición cerrada",
   "instrumentCost": "Te costaron",
@@ -771,8 +771,8 @@
       }
     }
   },
-  "taxBelowCent": "< {cent}",
-  "@taxBelowCent": {
+  "belowCent": "< {cent}",
+  "@belowCent": {
     "placeholders": {
       "cent": {
         "type": "String"
@@ -1447,5 +1447,19 @@
   "portfolioFilterAllCategories": "Todas las categorías",
   "movementsFilterInstrument": "Instrumento",
   "movementsFilterType": "Tipo",
-  "movementsAllTypes": "Todos los tipos"
+  "movementsAllTypes": "Todos los tipos",
+  "settingsKrakenPrices": "Precios de cripto",
+  "krakenOn": "Activados",
+  "krakenOff": "Desactivados",
+  "krakenAttribution": "Market Data: Kraken",
+  "krakenSheetTitle": "Precios de cripto desde Kraken",
+  "krakenSheetBody": "El móvil pide a la API pública de Kraken el cierre de cada día y la última operación de cada cripto que tienes, sin necesidad de PC. Kraken ve la dirección IP del móvil y qué pares pide (BTC/EUR, por ejemplo); ninguna cantidad, operación ni otro dato de tu cartera sale del móvil. Se pide al abrir la app y al deslizar para actualizar. Si un PC vinculado tiene precios de esa cripto de la última semana, mandan los del PC.",
+  "krakenTurnOn": "Activar",
+  "krakenTurnOff": "Desactivar",
+  "krakenTurnOffDetail": "Borra los precios que vinieron de Kraken; los del PC se quedan.",
+  "krakenInvite": "Criptos sin precio: el móvil puede pedirlo a Kraken.",
+  "instrumentNoPriceKraken": "Sin precio todavía: Kraken aún no lo ha dado.",
+  "krakenFailedTitle": "No se han podido traer precios de Kraken",
+  "krakenFailedBody": "Sin conexión o Kraken no responde; se intentará de nuevo al deslizar.",
+  "syncSomePcFailedTitle": "Algún PC no se ha sincronizado"
 }

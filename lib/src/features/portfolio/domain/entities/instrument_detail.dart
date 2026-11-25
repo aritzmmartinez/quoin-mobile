@@ -11,6 +11,7 @@ class InstrumentDetail {
     required this.firstBuy,
     required this.sales,
     required this.movements,
+    this.priceSource,
   });
 
   final Instrument instrument;
@@ -20,6 +21,7 @@ class InstrumentDetail {
   final DateTime? firstBuy;
   final List<RealizedSale> sales;
   final List<Movement> movements;
+  final String? priceSource;
 
   Dec? get unrealizedPnLPct {
     final pnl = value?.unrealizedPnL;

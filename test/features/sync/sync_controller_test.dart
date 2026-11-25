@@ -4,6 +4,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:quoin/src/core/error/result.dart';
+import 'package:quoin/src/features/settings/presentation/providers/settings_providers.dart';
 import 'package:quoin/src/features/sync/domain/entities/sync_outcome.dart';
 import 'package:quoin/src/core/error/failures.dart';
 import 'package:quoin/src/core/l10n/gen/app_localizations.dart';
@@ -194,6 +195,7 @@ void main() {
   ) async {
     final scope = ProviderContainer(
       overrides: [
+        krakenPricesProvider.overrideWith(_KrakenOff.new),
         syncNowProvider.overrideWithValue(held),
         finishSyncProvider.overrideWithValue(finish),
         ledgerProvider.overrideWith((ref) => const Err(StorageFailure())),
@@ -251,4 +253,9 @@ void main() {
     held.ends.last.complete(const Ok(SyncPass(pcs: [])));
     await second;
   });
+}
+
+class _KrakenOff extends KrakenPricesController {
+  @override
+  bool build() => false;
 }

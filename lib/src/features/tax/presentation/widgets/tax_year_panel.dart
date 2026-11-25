@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:quoin_core/quoin_core.dart';
 
+import 'package:quoin/src/core/l10n/below_cent.dart';
 import 'package:quoin/src/core/l10n/gen/app_localizations.dart';
 import 'package:quoin/src/core/l10n/quoin_format.dart';
 import 'package:quoin/src/core/theme/quoin_colors.dart';
@@ -275,5 +276,5 @@ class TaxYearPanel extends StatelessWidget {
 
 String deferredText(AppLocalizations l10n, QuoinFormat format, Money value) =>
     isBelowCent(value)
-    ? l10n.taxBelowCent(format.money(Money.parse('0.01')))
+    ? belowCentText(l10n, format)
     : format.signedMoney(value).text;

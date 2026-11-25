@@ -68,10 +68,13 @@ decimal text, days `YYYY-MM-DD`, instants ISO-8601 UTC text.
 
 The price histories live apart, in `PricesDatabase` (`prices.drift`, under
 `files/prices/`): `PriceSnapshot` with Quoin's columns and unique key but no
-foreign key to `Instrument`, and `PriceSeries`, the version of each series as
-the PC named it. They are a cache: derived, fetched again from the PC, never
-synced, and left out of every Android backup, which a separate file makes a
-single rule. Version 3 of the main database drops its `PriceSnapshot`.
+foreign key to `Instrument`; `PriceSeries`, the version of each series as
+the PC named it; and `KrakenSeries`, the pair of each series the phone took
+from Kraken itself. An instrument has a row in one of the two, never both,
+and that origin owns all its rows. They are a cache: derived, fetched again,
+never synced, and left out of every Android backup, which a separate file
+makes a single rule. Version 3 of the main database drops its
+`PriceSnapshot`; version 2 of `PricesDatabase` adds `KrakenSeries`.
 
 Migrations are hand-written steps in `QuoinDatabase.migration`, one per
 version, each against that version's frozen schema (`quoin_database.steps.dart`),
@@ -143,6 +146,45 @@ reads no rate book back (`withBook: false`). Tests answer for the ECB with
 the only other traffic is the sync with the user's PC (`docs/privacy.md`).
 Kraken rewards and swaps without Kraken's own USD figure are valued from
 stored prices only; the price histories come from the PC.
+
+## Prices from Kraken
+
+Optional (Settings → Prices, off by default, a device preference): the phone
+asks Kraken's public API itself, with the rule Quoin uses (`readKrakenOhlc`,
+`readKrakenTrade`, checked against `kraken.json`). The pair is
+`effectiveKrakenSymbol`: the instrument's own when it has a «/», else, for a
+`CRYPTO`, `krakenSymbolFor(id)`, also when it carries a Yahoo symbol the
+phone cannot use. It is worked out on reading and never written to the
+instrument, so it changes neither sync nor its marks.
+
+**Who owns a series.** A PC's series with a candle in the last 7 days
+(counted from yesterday's) wins and Kraken leaves it alone; one without goes
+to Kraken whole, whether or not a PC is paired, since a paired PC may not
+answer for weeks. A PC answer with rows as recent takes the instrument back
+(the phone sent no version, so it is a full series); an empty answer or one
+as stale never replaces Kraken's, or the two would take turns on every sync.
+A change of origin or pair deletes every row first, as Quoin's
+`replaceHistory` does with a new symbol: series are never mixed. Turning the
+switch off deletes every Kraken series; the PC's are untouched.
+
+**A pass** (`PullKrakenPrices`, after the sync on opening and on pull to
+refresh) plans each instrument (`planKrakenStep`): the 720 daily candles
+Kraken keeps the first time or after a change of owner, else the candles
+from a week before the newest one, only when yesterday's is missing; and the
+last trade (`Trades?count=1`) as the live quote, if under 7 days old. A pair
+is held in memory for 5 minutes after it answers and 12 hours when Kraken
+has nothing for it (`KrakenHold`). Every request waits its turn in one
+`KrakenQueue` per process, a second apart, as Kraken asks; the first failure
+(offline, rate limit, any error other than an unknown pair) ends the pass.
+Then `EnsureRates` brings the rates of a dollar pair.
+
+**Writing** (`planKrakenWrite`) is Quoin's `planDailyWrite` reduced, with no
+contract of its own: there is no second writer in a Kraken series to
+reconcile, and days are UTC days, which Kraken's candles are. A candle
+replaces every row of its day, the live quote included; a new live quote
+(`KRAKEN_LIVE`) replaces the older one and is kept only while its day has no
+candle. The local data source plans again inside the transaction and writes
+nothing if the series changed hands meanwhile.
 
 ## Sync
 

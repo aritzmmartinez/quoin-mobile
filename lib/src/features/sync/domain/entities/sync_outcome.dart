@@ -107,17 +107,27 @@ final class SyncPass {
     return tried.isNotEmpty &&
         tried.every(
           (pc) => switch (pc.result) {
-            Err(
-              failure: PcUnreachableFailure() ||
-                  PcNotFoundOnNetworkFailure() ||
-                  NoLocalNetworkFailure() ||
-                  LocalNetworkDeniedFailure(),
-            ) =>
-              true,
+            Err(:final failure) => _absent(failure),
             _ => false,
           },
         );
   }
+
+  bool get anySynced => pcs.any((pc) => pc.done);
+
+  List<PcSync> get refused => [
+    for (final pc in pcs)
+      if (!pc.pairing.shared)
+        if (pc.result case Err(:final failure) when !_absent(failure)) pc,
+  ];
+
+  static bool _absent(Failure failure) => switch (failure) {
+    PcUnreachableFailure() ||
+    PcNotFoundOnNetworkFailure() ||
+    NoLocalNetworkFailure() ||
+    LocalNetworkDeniedFailure() => true,
+    _ => false,
+  };
 }
 
 final class SyncFollowUp {

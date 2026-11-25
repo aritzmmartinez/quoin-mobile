@@ -11,6 +11,7 @@ import 'package:quoin/src/core/theme/quoin_icons.dart';
 import 'package:quoin/src/core/theme/quoin_tokens.dart';
 import 'package:quoin/src/features/portfolio/presentation/providers/portfolio_providers.dart';
 import 'package:quoin/src/features/settings/presentation/providers/settings_providers.dart';
+import 'package:quoin/src/features/settings/presentation/widgets/kraken_prices_sheet.dart';
 import 'package:quoin/src/features/settings/presentation/widgets/residence_sheet.dart';
 import 'package:quoin/src/features/sync/presentation/widgets/sync_settings_section.dart';
 import 'package:quoin/src/ui/molecules/settings_row.dart';
@@ -28,6 +29,7 @@ class SettingsPage extends ConsumerWidget {
     final themeMode = ref.watch(themeModeProvider);
     final locale = ref.watch(localeProvider);
     final version = ref.watch(appVersionProvider).value;
+    final kraken = ref.watch(krakenPricesProvider);
     final residence = switch (ref.watch(residenceProvider).value) {
       Ok(:final value) => value,
       Err() || null => null,
@@ -91,6 +93,13 @@ class SettingsPage extends ConsumerWidget {
         SettingsSection(
           title: l10n.settingsPortfolio,
           rows: [
+            SettingsRow(
+              icon: QuoinIcons.crypto,
+              label: l10n.settingsKrakenPrices,
+              subtitle: l10n.krakenAttribution,
+              value: kraken ? l10n.krakenOn : l10n.krakenOff,
+              onTap: () => openKrakenPrices(context, ref),
+            ),
             SettingsRow(
               icon: QuoinIcons.dataSources,
               label: l10n.settingsDataSources,

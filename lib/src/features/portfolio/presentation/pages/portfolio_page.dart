@@ -15,11 +15,14 @@ import 'package:quoin/src/features/portfolio/domain/entities/portfolio_overview.
 import 'package:quoin/src/features/portfolio/presentation/providers/portfolio_providers.dart';
 import 'package:quoin/src/features/portfolio/presentation/widgets/category_sheet.dart';
 import 'package:quoin/src/features/portfolio/presentation/widgets/portfolio_view.dart';
+import 'package:quoin/src/features/settings/presentation/providers/settings_providers.dart';
+import 'package:quoin/src/features/settings/presentation/widgets/kraken_prices_sheet.dart';
 import 'package:quoin/src/features/sync/presentation/widgets/sync_actions.dart';
 import 'package:quoin/src/ui/atoms/quoin_icon.dart';
 import 'package:quoin/src/ui/atoms/quoin_pill_button.dart';
 import 'package:quoin/src/ui/molecules/empty_state.dart';
 import 'package:quoin/src/ui/molecules/group_header.dart';
+import 'package:quoin/src/ui/molecules/notice_row.dart';
 import 'package:quoin/src/ui/molecules/position_row.dart';
 import 'package:quoin/src/ui/molecules/stat_columns.dart';
 import 'package:quoin/src/ui/organisms/quoin_dropdown.dart';
@@ -43,7 +46,7 @@ class _PortfolioPageState extends ConsumerState<PortfolioPage> {
     return PortfolioView(
       title: l10n.tabPortfolio,
       overview: ref.watch(portfolioOverviewProvider),
-      onRefresh: () => refreshFromPc(context, ref),
+      onRefresh: () => refreshPrices(context, ref),
       empty: EmptyState(
         icon: QuoinIcons.portfolio,
         title: l10n.emptyPortfolioTitle,
@@ -53,7 +56,7 @@ class _PortfolioPageState extends ConsumerState<PortfolioPage> {
       ),
       builder: (overview) => QuoinPage.list(
         title: l10n.tabPortfolio,
-        onRefresh: () => refreshFromPc(context, ref),
+        onRefresh: () => refreshPrices(context, ref),
         trailing: QuoinType.largeText(context)
             ? IconButton(
                 icon: const QuoinIcon(QuoinIcons.movements),
@@ -118,6 +121,15 @@ class _PortfolioPageState extends ConsumerState<PortfolioPage> {
         ],
       ),
       ...unconvertibleNote(context, overview),
+      if (!ref.watch(krakenPricesProvider) &&
+          overview.holdings.any((h) => h.type == 'CRYPTO' && !h.isPriced)) ...[
+        const SizedBox(height: QuoinSpace.gutter),
+        NoticeRow(
+          text: l10n.krakenInvite,
+          action: l10n.krakenTurnOn,
+          onTap: () => openKrakenPrices(context, ref),
+        ),
+      ],
       const SizedBox(height: QuoinSpace.gutter),
       Wrap(
         spacing: QuoinSpace.s,

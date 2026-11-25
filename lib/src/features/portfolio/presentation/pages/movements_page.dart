@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:quoin_core/quoin_core.dart';
 
+import 'package:quoin/src/core/l10n/below_cent.dart';
 import 'package:quoin/src/app/router.dart';
 import 'package:quoin/src/core/l10n/gen/app_localizations.dart';
 import 'package:quoin/src/core/l10n/quoin_format.dart';
@@ -83,7 +85,9 @@ class _MovementsPageState extends ConsumerState<MovementsPage> {
       for (final month in months) ...[
         (_) => GroupHeader(
           label: format.month(month.month),
-          total: format.signedMoney(month.net).text,
+          total: isBelowCent(month.net)
+              ? belowCentText(l10n, format)
+              : format.signedMoney(month.net).text,
         ),
         for (final m in month.rows)
           (context) => movementTile(

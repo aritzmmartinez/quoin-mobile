@@ -30,6 +30,10 @@ class SettingsRepositoryImpl implements SettingsRepository {
     ),
   );
 
+  @override
+  Future<Result<void>> setKrakenPrices(bool on) =>
+      _write(() => _source.writeKrakenPrices(on));
+
   Future<Result<void>> _write(Future<void> Function() body) async {
     try {
       await body();

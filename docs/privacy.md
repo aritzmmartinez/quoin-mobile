@@ -6,8 +6,8 @@ form; when the app starts sending anything new, this page changes first.
 
 The app has no account, no server of its own, no analytics, no ads and no
 crash reporting. The portfolio, its database and every calculation stay on
-the phone. Only two things go out, both started by the user or by data the
-user put there.
+the phone. Only three things go out, each started by the user or by data the
+user put there; the third only once the user turns it on.
 
 ## The European Central Bank
 
@@ -23,6 +23,33 @@ user put there.
 
 The ECB sees the phone's IP address, as any website does. Its own terms
 apply to what it logs.
+
+## Kraken, only when the user turns it on
+
+Off by default. Settings → Crypto prices explains what is below before it can
+be turned on; turning it off deletes every price that came from Kraken.
+
+- **What:** requests to Kraken's public market data, with no account and no
+  key: the daily closes (`OHLC`) and the last trade (`Trades`) of a pair. Each
+  request carries the pair's name (`BTC/EUR`) and, for closes, the time from
+  which they are wanted; nothing else about the portfolio or the user (no
+  quantity, amount, trade, instrument name or device id).
+- **Which pairs:** one per crypto in the portfolio, the one chosen for it on
+  the PC or else its code against the euro (`USDG/USD` where Kraken has no euro
+  pair), except a crypto whose prices a paired PC sent with a close from the
+  last week.
+- **Where:** `api.kraken.com`, over HTTPS with the system's trusted
+  certificates.
+- **Why:** to value crypto without a PC.
+- **When:** each time the app opens and on pull to refresh, one request a
+  second; closes once a day per pair, the last trade at most every five
+  minutes, a pair Kraken does not list at most every twelve hours.
+
+Kraken sees the phone's IP address and which pairs it asks for, and so which
+crypto the user is likely to hold. Its own terms apply to what it logs. The
+prices are kept with the rest of the price histories (`files/prices/`) and,
+as Kraken asks, never leave the phone: they are not sent to the PC. Where a
+price from Kraken is shown, the app says «Market Data: Kraken».
 
 ## The user's PCs, over the local network
 
@@ -95,14 +122,14 @@ things never do:
 | --- | --- |
 | `files/install_id` | A restored copy must know it is a copy and take a device id of its own, so two phones never sign as one. |
 | `shared_prefs/FlutterSecureStorage.xml`, `FlutterSecureKeyStorage.xml` | The pairing and its device token. A restored phone is a new device and pairs again; it never arrives paired. |
-| `files/prices/` | The price histories, a cache the restored phone gets again from the PC. |
+| `files/prices/` | The price histories, a cache the restored phone gets again from the PC or Kraken. |
 
 The rules are `android/app/src/main/res/xml/data_extraction_rules.xml`
 (Android 12 and later) and `backup_rules.xml` (Android 11 and earlier).
 
 ## Permissions
 
-- `INTERNET`: the ECB and the PC.
+- `INTERNET`: the ECB, Kraken (when turned on) and the PC.
 - `CAMERA`, asked at run time: the pairing QR.
 
 Searching the local network needs no other permission on the Android versions
@@ -117,11 +144,14 @@ removes both, since the app uses neither.
 From the above, to be checked against Play's definitions when the form is
 filled in:
 
-- Data collected: none. Nothing reaches the developer or a third party; the
-  sync goes only to the user's own PC, at their request.
-- Data shared: none. The ECB request carries a currency code and dates, no
-  user data.
-- Data encrypted in transit: yes (HTTPS to the ECB; pinned HTTPS to the PC).
+- Data collected and shared: nothing reaches the developer; the sync goes
+  only to the user's own PC, at their request. The ECB request carries a
+  currency code and dates, no user data. With Kraken turned on, Kraken
+  receives the phone's IP address and the names of the pairs asked for, as
+  described above; how that is declared is decided when the form is filled
+  in.
+- Data encrypted in transit: yes (HTTPS to the ECB and Kraken; pinned HTTPS
+  to the PC).
 - Data deletion: everything is on the phone; uninstalling or clearing the
   app's data deletes it. Unpairing a PC deletes its pairing and its token on the
   phone; the PC keeps listing the phone until it is revoked there.

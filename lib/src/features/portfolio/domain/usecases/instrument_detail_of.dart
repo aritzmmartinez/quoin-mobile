@@ -41,5 +41,6 @@ InstrumentDetail? instrumentDetailOf(
       for (final m in movementsOf(ledger))
         if (m.instrumentId == id) m,
     ],
+    priceSource: ledger.latestPrices[id]?.source,
   );
 }
