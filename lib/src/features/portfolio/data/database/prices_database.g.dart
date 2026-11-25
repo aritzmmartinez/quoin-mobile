@@ -694,6 +694,229 @@ class PriceSeriesCompanion extends UpdateCompanion<PriceSeriesRow> {
   }
 }
 
+class KrakenSeries extends Table with TableInfo<KrakenSeries, KrakenSeriesRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  KrakenSeries(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _instrumentIdMeta = const VerificationMeta(
+    'instrumentId',
+  );
+  late final GeneratedColumn<String> instrumentId = GeneratedColumn<String>(
+    'instrumentId',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL PRIMARY KEY',
+  );
+  static const VerificationMeta _symbolMeta = const VerificationMeta('symbol');
+  late final GeneratedColumn<String> symbol = GeneratedColumn<String>(
+    'symbol',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  @override
+  List<GeneratedColumn> get $columns => [instrumentId, symbol];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'KrakenSeries';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<KrakenSeriesRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('instrumentId')) {
+      context.handle(
+        _instrumentIdMeta,
+        instrumentId.isAcceptableOrUnknown(
+          data['instrumentId']!,
+          _instrumentIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_instrumentIdMeta);
+    }
+    if (data.containsKey('symbol')) {
+      context.handle(
+        _symbolMeta,
+        symbol.isAcceptableOrUnknown(data['symbol']!, _symbolMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_symbolMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {instrumentId};
+  @override
+  KrakenSeriesRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return KrakenSeriesRow(
+      instrumentId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}instrumentId'],
+      )!,
+      symbol: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}symbol'],
+      )!,
+    );
+  }
+
+  @override
+  KrakenSeries createAlias(String alias) {
+    return KrakenSeries(attachedDatabase, alias);
+  }
+
+  @override
+  bool get dontWriteConstraints => true;
+}
+
+class KrakenSeriesRow extends DataClass implements Insertable<KrakenSeriesRow> {
+  final String instrumentId;
+  final String symbol;
+  const KrakenSeriesRow({required this.instrumentId, required this.symbol});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['instrumentId'] = Variable<String>(instrumentId);
+    map['symbol'] = Variable<String>(symbol);
+    return map;
+  }
+
+  KrakenSeriesCompanion toCompanion(bool nullToAbsent) {
+    return KrakenSeriesCompanion(
+      instrumentId: Value(instrumentId),
+      symbol: Value(symbol),
+    );
+  }
+
+  factory KrakenSeriesRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return KrakenSeriesRow(
+      instrumentId: serializer.fromJson<String>(json['instrumentId']),
+      symbol: serializer.fromJson<String>(json['symbol']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'instrumentId': serializer.toJson<String>(instrumentId),
+      'symbol': serializer.toJson<String>(symbol),
+    };
+  }
+
+  KrakenSeriesRow copyWith({String? instrumentId, String? symbol}) =>
+      KrakenSeriesRow(
+        instrumentId: instrumentId ?? this.instrumentId,
+        symbol: symbol ?? this.symbol,
+      );
+  KrakenSeriesRow copyWithCompanion(KrakenSeriesCompanion data) {
+    return KrakenSeriesRow(
+      instrumentId: data.instrumentId.present
+          ? data.instrumentId.value
+          : this.instrumentId,
+      symbol: data.symbol.present ? data.symbol.value : this.symbol,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('KrakenSeriesRow(')
+          ..write('instrumentId: $instrumentId, ')
+          ..write('symbol: $symbol')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(instrumentId, symbol);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is KrakenSeriesRow &&
+          other.instrumentId == this.instrumentId &&
+          other.symbol == this.symbol);
+}
+
+class KrakenSeriesCompanion extends UpdateCompanion<KrakenSeriesRow> {
+  final Value<String> instrumentId;
+  final Value<String> symbol;
+  final Value<int> rowid;
+  const KrakenSeriesCompanion({
+    this.instrumentId = const Value.absent(),
+    this.symbol = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  KrakenSeriesCompanion.insert({
+    required String instrumentId,
+    required String symbol,
+    this.rowid = const Value.absent(),
+  }) : instrumentId = Value(instrumentId),
+       symbol = Value(symbol);
+  static Insertable<KrakenSeriesRow> custom({
+    Expression<String>? instrumentId,
+    Expression<String>? symbol,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (instrumentId != null) 'instrumentId': instrumentId,
+      if (symbol != null) 'symbol': symbol,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  KrakenSeriesCompanion copyWith({
+    Value<String>? instrumentId,
+    Value<String>? symbol,
+    Value<int>? rowid,
+  }) {
+    return KrakenSeriesCompanion(
+      instrumentId: instrumentId ?? this.instrumentId,
+      symbol: symbol ?? this.symbol,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (instrumentId.present) {
+      map['instrumentId'] = Variable<String>(instrumentId.value);
+    }
+    if (symbol.present) {
+      map['symbol'] = Variable<String>(symbol.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('KrakenSeriesCompanion(')
+          ..write('instrumentId: $instrumentId, ')
+          ..write('symbol: $symbol, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$PricesDatabase extends GeneratedDatabase {
   _$PricesDatabase(QueryExecutor e) : super(e);
   late final PriceSnapshot priceSnapshot = PriceSnapshot(this);
@@ -710,6 +933,7 @@ abstract class _$PricesDatabase extends GeneratedDatabase {
     'CREATE UNIQUE INDEX PriceSnapshot_instrumentId_asOf_key ON PriceSnapshot (instrumentId, asOf)',
   );
   late final PriceSeries priceSeries = PriceSeries(this);
+  late final KrakenSeries krakenSeries = KrakenSeries(this);
   Selectable<PriceSnapshotRow> latestPrices() {
     return customSelect(
       'SELECT p.* FROM PriceSnapshot AS p WHERE p.asOf = (SELECT MAX(asOf) FROM PriceSnapshot WHERE instrumentId = p.instrumentId)',
@@ -728,6 +952,7 @@ abstract class _$PricesDatabase extends GeneratedDatabase {
     priceSnapshotAsOfIdx,
     priceSnapshotInstrumentIdAsOfKey,
     priceSeries,
+    krakenSeries,
   ];
   @override
   DriftDatabaseOptions get options =>

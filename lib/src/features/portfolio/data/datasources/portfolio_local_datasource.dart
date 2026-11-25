@@ -113,6 +113,7 @@ class PortfolioLocalDataSource {
   Future<void> _deletePrices() async {
     await _prices.delete(_prices.priceSnapshot).go();
     await _prices.delete(_prices.priceSeries).go();
+    await _prices.delete(_prices.krakenSeries).go();
   }
 
   Future<T> _guard<T>(Future<T> Function() body) async {

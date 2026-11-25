@@ -90,9 +90,18 @@ class PricesLocalDataSource {
         };
         if (version == null) continue;
         final id = answer.instrumentId;
+        final kraken = _prices.delete(_prices.krakenSeries)
+          ..where((k) => k.instrumentId.equals(id));
+        final fromKraken = await (_prices.select(
+          _prices.krakenSeries,
+        )..where((k) => k.instrumentId.equals(id))).getSingleOrNull();
+        if (fromKraken != null) {
+          if (!_fresh(rows, now)) continue;
+          await kraken.go();
+        }
         final drop = _prices.delete(_prices.priceSnapshot)
           ..where((p) => p.instrumentId.equals(id));
-        if (answer case TailPrices(:final from)) {
+        if (answer case TailPrices(:final from) when fromKraken == null) {
           drop.where((p) => p.asOf.isBiggerOrEqualValue(DateTime.parse(from)));
         }
         await drop.go();
@@ -154,8 +163,21 @@ class PricesLocalDataSource {
       await (_prices.delete(
         _prices.priceSeries,
       )..where((s) => s.instrumentId.equals(instrumentId))).go();
+      await (_prices.delete(
+        _prices.krakenSeries,
+      )..where((k) => k.instrumentId.equals(instrumentId))).go();
     }),
   );
+
+  static bool _fresh(List<PriceRow> rows, DateTime now) {
+    DateTime? newest;
+    for (final row in rows) {
+      if (row.source.endsWith('_LIVE')) continue;
+      final at = row.instant.toUtc();
+      if (newest == null || at.isAfter(newest)) newest = at;
+    }
+    return !isStaleSeries(newest, now);
+  }
 
   Future<T> _guard<T>(Future<T> Function() body) async {
     try {
