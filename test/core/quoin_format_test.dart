@@ -30,7 +30,7 @@ void main() {
       expect(es.money(Money.parse(value)), intl(inEs), reason: value);
       expect(en.money(Money.parse(value)), inEn, reason: value);
     }
-    expect(es.money(Money.parse('0.004'), floorNonZero: true), intl('<0,01~€'));
+    expect(es.money(Money.parse('0.004'), floorNonZero: true), intl('< 0,01~€'));
   });
 
   test('signed money', () {

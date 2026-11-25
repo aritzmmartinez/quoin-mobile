@@ -16,10 +16,13 @@ import 'package:quoin/src/features/portfolio/presentation/widgets/fact_grid.dart
 import 'package:quoin/src/features/portfolio/presentation/widgets/ledger_tiles.dart';
 import 'package:quoin/src/features/portfolio/presentation/widgets/portfolio_view.dart';
 import 'package:quoin/src/features/portfolio/presentation/widgets/result_view.dart';
+import 'package:quoin/src/features/settings/presentation/providers/settings_providers.dart';
+import 'package:quoin/src/features/settings/presentation/widgets/kraken_prices_sheet.dart';
 import 'package:quoin/src/ui/atoms/display_figure.dart';
 import 'package:quoin/src/ui/atoms/instrument_icon.dart';
 import 'package:quoin/src/ui/atoms/marked_span.dart';
 import 'package:quoin/src/ui/molecules/empty_state.dart';
+import 'package:quoin/src/ui/molecules/notice_row.dart';
 import 'package:quoin/src/ui/molecules/settings_row.dart';
 import 'package:quoin/src/ui/templates/quoin_page.dart';
 import 'package:quoin/src/ui/atoms/quoin_section_label.dart';
@@ -46,11 +49,15 @@ class InstrumentPage extends ConsumerWidget {
                 body: l10n.instrumentNotFound,
               ),
             )
-          : QuoinPage.list(title: '', children: _content(context, detail)),
+          : QuoinPage.list(title: '', children: _content(context, ref, detail)),
     );
   }
 
-  List<Widget> _content(BuildContext context, InstrumentDetail d) {
+  List<Widget> _content(
+    BuildContext context,
+    WidgetRef ref,
+    InstrumentDetail d,
+  ) {
     final l10n = AppLocalizations.of(context);
     final format = QuoinFormat.of(context);
     final c = QuoinColors.of(context);
@@ -68,6 +75,8 @@ class InstrumentPage extends ConsumerWidget {
       final kind => categoryLabel(l10n, kind.code),
     };
     final isin = i.type == 'CRYPTO' ? null : i.id;
+    final crypto = i.type == 'CRYPTO';
+    final kraken = ref.watch(krakenPricesProvider);
 
     return [
       Row(
@@ -128,7 +137,11 @@ class InstrumentPage extends ConsumerWidget {
               )
             else if (marketValue == null)
               Text(
-                l10n.instrumentNoPrice,
+                switch ((crypto, kraken)) {
+                  (true, false) => l10n.positionUnpriced,
+                  (true, true) => l10n.instrumentNoPriceKraken,
+                  _ => l10n.instrumentNoPrice,
+                },
                 style: type.row.copyWith(color: c.muted),
               )
             else ...[
@@ -158,6 +171,23 @@ class InstrumentPage extends ConsumerWidget {
           ],
         ),
       ),
+      if (held && marketValue == null && crypto && !kraken) ...[
+        const SizedBox(height: QuoinSpace.m),
+        NoticeRow(
+          text: l10n.krakenInvite,
+          action: l10n.krakenTurnOn,
+          onTap: () => openKrakenPrices(context, ref),
+        ),
+      ],
+      if (held &&
+          marketValue != null &&
+          (d.priceSource?.startsWith('KRAKEN') ?? false)) ...[
+        const SizedBox(height: QuoinSpace.xs),
+        Text(
+          l10n.krakenAttribution,
+          style: type.secondary.copyWith(color: c.muted),
+        ),
+      ],
       const SizedBox(height: QuoinSpace.m),
       Text(
         l10n.instrumentNoHistory,

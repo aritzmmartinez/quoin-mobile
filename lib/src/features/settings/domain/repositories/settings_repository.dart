@@ -7,4 +7,6 @@ abstract interface class SettingsRepository {
   Future<Result<void>> setTheme(ThemePreference theme);
 
   Future<Result<void>> setLanguage(LanguagePreference language);
+
+  Future<Result<void>> setKrakenPrices(bool on);
 }

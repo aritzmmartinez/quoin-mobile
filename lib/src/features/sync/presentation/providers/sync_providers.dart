@@ -85,6 +85,7 @@ final class SyncStatus {
     this.running = false,
     this.failure,
     this.failures = const {},
+    this.synced = false,
     this.finishing = false,
     this.followUp,
     this.searching = const {},
@@ -93,10 +94,12 @@ final class SyncStatus {
   final bool running;
   final Failure? failure;
   final Map<String, Failure> failures;
+  final bool synced;
   final bool finishing;
   final SyncFollowUp? followUp;
 
   final Set<String> searching;
+  bool get failed => failures.isNotEmpty && !synced;
 
   SyncStatus copy({
     bool? running,
@@ -107,6 +110,7 @@ final class SyncStatus {
     running: running ?? this.running,
     failure: failure,
     failures: failures,
+    synced: synced,
     finishing: finishing ?? this.finishing,
     followUp: followUp ?? this.followUp,
     searching: searching ?? this.searching,
@@ -184,6 +188,7 @@ class SyncController extends Notifier<SyncStatus> {
           for (final pc in pass.pcs)
             if (pc.result case Err(:final failure)) pc.pairing.sha256: failure,
         },
+        synced: pass.anySynced,
         followUp: state.followUp,
       ),
     };

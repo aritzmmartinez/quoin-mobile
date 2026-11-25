@@ -26,6 +26,14 @@ CREATE TABLE "PriceSeries" (
     "seriesVersion" TEXT NOT NULL
 ) AS PriceSeriesRow;
 
+-- The series the phone took from Kraken itself, and the pair it asked for.
+-- An instrument has a row here or in PriceSeries, never both: whoever wrote
+-- last owns every row of its PriceSnapshot.
+CREATE TABLE "KrakenSeries" (
+    "instrumentId" TEXT NOT NULL PRIMARY KEY,
+    "symbol" TEXT NOT NULL
+) AS KrakenSeriesRow;
+
 -- The newest price of each instrument. asOf is ISO-8601 UTC text of one
 -- width, so the greatest text is the latest instant.
 latestPrices:

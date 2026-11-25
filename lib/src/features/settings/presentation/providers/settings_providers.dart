@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:collection';
 
 import 'package:flutter/foundation.dart';
@@ -13,6 +14,8 @@ import 'package:quoin/src/features/settings/domain/repositories/residence_reposi
 import 'package:quoin/src/features/settings/domain/repositories/settings_repository.dart';
 import 'package:quoin/src/features/settings/domain/usecases/get_residence.dart';
 import 'package:quoin/src/features/settings/domain/usecases/get_preferences.dart';
+import 'package:quoin/src/features/portfolio/domain/usecases/pull_kraken_prices.dart';
+import 'package:quoin/src/features/settings/domain/usecases/set_kraken_prices.dart';
 import 'package:quoin/src/features/settings/domain/usecases/set_language.dart';
 import 'package:quoin/src/features/settings/domain/usecases/set_residence.dart';
 import 'package:quoin/src/features/settings/domain/usecases/set_theme.dart';
@@ -30,6 +33,57 @@ final setThemeProvider = Provider(
 final setLanguageProvider = Provider(
   (ref) => SetLanguage(ref.watch(settingsRepositoryProvider)),
 );
+
+final setKrakenPricesProvider = Provider(
+  (ref) => SetKrakenPrices(
+    ref.watch(settingsRepositoryProvider),
+    ref.watch(krakenRepositoryProvider),
+  ),
+);
+
+final krakenPricesProvider = NotifierProvider<KrakenPricesController, bool>(
+  KrakenPricesController.new,
+);
+
+class KrakenPricesController extends Notifier<bool> {
+  Future<Result<KrakenOutcome>?>? _running;
+
+  @override
+  bool build() => switch (ref.watch(getPreferencesProvider)()) {
+    Ok(:final value) => value.krakenPrices,
+    Err() => false,
+  };
+
+  /// Null when the switch is off.
+  Future<Result<KrakenOutcome>?> pull() {
+    if (!state) return Future.value();
+    return _running ??= _pass().whenComplete(() => _running = null);
+  }
+
+  Future<Result<KrakenOutcome>?> _pass() async {
+    final result = await ref.read(pullKrakenPricesProvider)();
+    if (result case Ok(value: KrakenOutcome(updated: > 0)) when ref.mounted) {
+      ref.invalidate(ledgerProvider);
+    }
+    return result;
+  }
+
+  Future<Result<void>> set(bool on) async {
+    state = on;
+    if (!on) await _running;
+    final result = await ref.read(setKrakenPricesProvider)(on);
+    if (!ref.mounted) return result;
+    switch (result) {
+      case Err():
+        state = !on;
+      case Ok() when on:
+        unawaited(pull());
+      case Ok():
+        ref.invalidate(ledgerProvider);
+    }
+    return result;
+  }
+}
 
 final residenceRepositoryProvider = Provider<ResidenceRepository>(
   (ref) => throw UnimplementedError('residenceRepositoryProvider not bound'),

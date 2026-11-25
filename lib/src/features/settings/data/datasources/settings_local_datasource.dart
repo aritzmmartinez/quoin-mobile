@@ -6,8 +6,9 @@ import 'package:quoin/src/features/settings/data/models/preferences_model.dart';
 
 const _themeModeKey = 'themeMode';
 const _localeKey = 'locale';
+const _krakenPricesKey = 'krakenPrices';
 
-const preferenceKeys = {_themeModeKey, _localeKey};
+const preferenceKeys = {_themeModeKey, _localeKey, _krakenPricesKey};
 
 final sharedPreferencesProvider = Provider<SharedPreferencesWithCache>(
   (ref) => throw UnimplementedError('sharedPreferencesProvider not overridden'),
@@ -27,6 +28,7 @@ class SettingsLocalDataSource {
       return PreferencesModel(
         theme: _prefs.getString(_themeModeKey),
         language: _prefs.getString(_localeKey),
+        krakenPrices: _prefs.getBool(_krakenPricesKey),
       );
     } on Exception catch (e) {
       throw StorageException(e);
@@ -41,6 +43,9 @@ class SettingsLocalDataSource {
         ? _prefs.remove(_localeKey)
         : _prefs.setString(_localeKey, code),
   );
+
+  Future<void> writeKrakenPrices(bool on) =>
+      _write(() => _prefs.setBool(_krakenPricesKey, on));
 
   Future<void> _write(Future<void> Function() body) async {
     try {

@@ -214,7 +214,7 @@ void main() {
     await tester.tap(find.text('Fondo Emergentes'));
     await tester.pumpAndSettle();
     expect(
-      find.text('Sin precio todavía: la app aún no descarga cotizaciones.'),
+      find.text('Sin precio todavía: llega al sincronizar con el PC.'),
       findsOneWidget,
     );
   });

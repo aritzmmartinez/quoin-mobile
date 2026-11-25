@@ -121,6 +121,8 @@ void main() {
           )
           .last,
     );
+    await tester.ensureVisible(finder);
+    await tester.pumpAndSettle();
     await tester.tap(finder);
     await settle(tester);
   }

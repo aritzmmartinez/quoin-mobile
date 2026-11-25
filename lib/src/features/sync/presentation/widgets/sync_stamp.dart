@@ -49,7 +49,7 @@ class _SyncStampState extends ConsumerState<SyncStamp> {
     }
     if (last == null) return const SizedBox.shrink();
 
-    final failed = ref.watch(syncControllerProvider).failures.isNotEmpty;
+    final failed = ref.watch(syncControllerProvider).failed;
     final ago = ref.watch(nowProvider)().difference(last);
     final text = switch (ago) {
       _ when ago.inMinutes < 1 => l10n.syncedJustNow,

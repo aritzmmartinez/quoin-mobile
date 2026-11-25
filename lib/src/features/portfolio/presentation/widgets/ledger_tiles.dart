@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:quoin_core/quoin_core.dart';
 
+import 'package:quoin/src/core/l10n/below_cent.dart';
 import 'package:quoin/src/core/l10n/gen/app_localizations.dart';
 import 'package:quoin/src/core/l10n/quoin_format.dart';
 import 'package:quoin/src/core/theme/quoin_icons.dart';
@@ -26,8 +27,10 @@ Widget movementTile(
     Movement(inKind: true, type: 'BUY' || 'DIVIDEND') => '${m.type}_IN_KIND',
     _ => m.type,
   });
+  final belowCent = m.amount != null && isBelowCent(m.amount!);
   final amount = switch (m.amount) {
     null => '—',
+    _ when belowCent => belowCentText(l10n, format),
     final amount when m.isSwap => format.money(amount),
     final amount => format.signedMoney(amount).text,
   };
@@ -40,7 +43,7 @@ Widget movementTile(
       title: kind,
       detail: [format.date(m.ts, zone), ...marks].join(' · '),
       amount: amount,
-      quiet: m.isSwap,
+      quiet: m.isSwap || belowCent,
       onTap: onTap,
     );
   }
@@ -63,7 +66,7 @@ Widget movementTile(
       ...marks,
     ].join(' · '),
     amount: amount,
-    quiet: m.isSwap,
+    quiet: m.isSwap || belowCent,
     onTap: onTap,
   );
 }

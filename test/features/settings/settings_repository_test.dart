@@ -18,6 +18,10 @@ class _BrokenSource implements SettingsLocalDataSource {
   @override
   Future<void> writeLanguage(String? code) async =>
       throw const StorageException('write');
+
+  @override
+  Future<void> writeKrakenPrices(bool on) async =>
+      throw const StorageException('write');
 }
 
 void main() {
@@ -28,6 +32,7 @@ void main() {
     ).toEntity();
     expect(prefs.theme, ThemePreference.system);
     expect(prefs.language, LanguagePreference.system);
+    expect(prefs.krakenPrices, isFalse);
   });
 
   test('storage exceptions come back as StorageFailure', () async {
@@ -36,6 +41,7 @@ void main() {
       repository.get(),
       await repository.setTheme(ThemePreference.dark),
       await repository.setLanguage(LanguagePreference.en),
+      await repository.setKrakenPrices(true),
     ]) {
       expect((result as Err).failure, isA<StorageFailure>());
     }
