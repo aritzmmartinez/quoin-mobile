@@ -56,6 +56,14 @@ void main() {
     }
   });
 
+  test('signed price keeps a small change', () {
+    expect(es.signedPrice(Money.parse('-0.0023')), (
+      text: intl('_0,0023~€'),
+      sign: -1,
+    ));
+    expect(en.signedPrice(Money.parse('12.5')), (text: '+€12.50', sign: 1));
+  });
+
   test('signed money', () {
     expect(es.signedMoney(Money.parse('6.8')), (
       text: intl('+6,80~€'),

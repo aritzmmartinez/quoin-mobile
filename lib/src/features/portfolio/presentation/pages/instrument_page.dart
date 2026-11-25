@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:quoin/src/app/router.dart';
 import 'package:quoin/src/core/l10n/gen/app_localizations.dart';
+import 'package:quoin/src/core/error/result.dart';
 import 'package:quoin/src/core/theme/quoin_icons.dart';
 import 'package:quoin/src/core/l10n/quoin_format.dart';
 import 'package:quoin/src/core/theme/quoin_colors.dart';
@@ -15,6 +16,7 @@ import 'package:quoin/src/features/portfolio/presentation/widgets/category_sheet
 import 'package:quoin/src/features/portfolio/presentation/widgets/fact_grid.dart';
 import 'package:quoin/src/features/portfolio/presentation/widgets/ledger_tiles.dart';
 import 'package:quoin/src/features/portfolio/presentation/widgets/portfolio_view.dart';
+import 'package:quoin/src/features/portfolio/presentation/widgets/price_chart_section.dart';
 import 'package:quoin/src/features/portfolio/presentation/widgets/result_view.dart';
 import 'package:quoin/src/features/settings/presentation/providers/settings_providers.dart';
 import 'package:quoin/src/features/settings/presentation/widgets/kraken_prices_sheet.dart';
@@ -77,6 +79,11 @@ class InstrumentPage extends ConsumerWidget {
     final isin = i.type == 'CRYPTO' ? null : i.id;
     final crypto = i.type == 'CRYPTO';
     final kraken = ref.watch(krakenPricesProvider);
+    final chartResult = ref.watch(instrumentChartProvider(i.id)).value;
+    final chart = switch (chartResult) {
+      Ok(:final value) => value,
+      _ => null,
+    };
 
     return [
       Row(
@@ -136,14 +143,11 @@ class InstrumentPage extends ConsumerWidget {
                 style: type.row.copyWith(color: c.muted),
               )
             else if (marketValue == null)
-              Text(
-                switch ((crypto, kraken)) {
-                  (true, false) => l10n.positionUnpriced,
-                  (true, true) => l10n.instrumentNoPriceKraken,
-                  _ => l10n.instrumentNoPrice,
-                },
-                style: type.row.copyWith(color: c.muted),
-              )
+              Text(switch ((crypto, kraken)) {
+                (true, false) => l10n.positionUnpriced,
+                (true, true) => l10n.instrumentNoPriceKraken,
+                _ => l10n.instrumentNoPrice,
+              }, style: type.row.copyWith(color: c.muted))
             else ...[
               DisplayFigure(format.money(marketValue)),
               if (pnl != null)
@@ -181,6 +185,7 @@ class InstrumentPage extends ConsumerWidget {
       ],
       if (held &&
           marketValue != null &&
+          chart == null &&
           (d.priceSource?.startsWith('KRAKEN') ?? false)) ...[
         const SizedBox(height: QuoinSpace.xs),
         Text(
@@ -188,11 +193,20 @@ class InstrumentPage extends ConsumerWidget {
           style: type.secondary.copyWith(color: c.muted),
         ),
       ],
-      const SizedBox(height: QuoinSpace.m),
-      Text(
-        l10n.instrumentNoHistory,
-        style: type.secondary.copyWith(color: c.muted),
-      ),
+      const SizedBox(height: QuoinSpace.section),
+      if (chart != null)
+        PriceChartSection(
+          chart: chart,
+          name: i.name,
+          zone: d.zone,
+          movements: d.movements,
+          averageCost: held ? position.averageCost : null,
+        )
+      else if (chartResult != null)
+        Text(
+          l10n.instrumentNoHistory,
+          style: type.secondary.copyWith(color: c.muted),
+        ),
       if (held) ...[
         const SizedBox(height: QuoinSpace.section),
         FactGrid(

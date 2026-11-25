@@ -942,6 +942,14 @@ abstract class _$PricesDatabase extends GeneratedDatabase {
     ).asyncMap(this.priceSnapshot.mapFromRow);
   }
 
+  Selectable<PriceSnapshotRow> seriesOf(String instrumentId) {
+    return customSelect(
+      'SELECT * FROM PriceSnapshot WHERE instrumentId = ?1 ORDER BY asOf',
+      variables: [Variable<String>(instrumentId)],
+      readsFrom: {this.priceSnapshot},
+    ).asyncMap(this.priceSnapshot.mapFromRow);
+  }
+
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();

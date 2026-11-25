@@ -82,8 +82,13 @@ class QuoinFormat {
     return decimals.length - decimals.replaceFirst(RegExp('^0+'), '').length;
   }
 
-  ({String text, int sign}) signedMoney(Money value) {
-    final magnitude = money(value.isNegative ? value.negate() : value);
+  ({String text, int sign}) signedMoney(Money value) =>
+      _signed(value, money(value.isNegative ? value.negate() : value));
+
+  ({String text, int sign}) signedPrice(Money value) =>
+      _signed(value, price(value.isNegative ? value.negate() : value));
+
+  ({String text, int sign}) _signed(Money value, String magnitude) {
     final sign = value.amount.sign;
     final prefix = switch (sign) {
       > 0 => '+',

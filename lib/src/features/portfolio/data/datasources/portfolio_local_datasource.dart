@@ -63,6 +63,9 @@ class PortfolioLocalDataSource {
     );
   });
 
+  Future<List<PriceSnapshotRow>> priceSeries(String instrumentId) =>
+      _guard(() => _prices.seriesOf(instrumentId).get());
+
   Future<void> replaceWithSample(DateTime now) => _guard(() async {
     final sample = SamplePortfolio(now);
     await _db.transaction(() async {
